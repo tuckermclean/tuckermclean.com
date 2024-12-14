@@ -60,7 +60,6 @@ body {
     background-image: var(--bg-image);
     background-repeat: repeat;
     color: var(--text);
-    display: flex;
     font-family: 'Noto Sans Mono', monospace;
     height: 100%;
     justify-content: center;
@@ -223,7 +222,7 @@ Resize Handle (Grippy)
     z-index: 10;
 }
 
-.window.minimized .grippy {
+.window.minimized .grippy, .window.maximized .grippy, .window.closed .grippy, .window.shaded .grippy {
     display: none;
 }
 
@@ -258,12 +257,12 @@ Utility Classes
     --scroll-hover: var(--scroll-hover-light);
 }
 
-.window.minimized {
+.window.shaded {
     height: 2.5rem !important;
-    left: 1.25rem !important;
+    /* left: 1.25rem !important;
     top: calc(100% - 4rem) !important;
     transform: none !important;
-    width: calc(100% - 2.5rem) !important;
+    width: calc(100% - 2.5rem) !important; */
 }
 
 .window.maximized {
@@ -278,30 +277,50 @@ Utility Classes
     border: 0;
 }
 
-.window.closed {
-    display: none !important;
-}
-
-.icon.closed {
-    display: block !important;
-}
-
-.icon {
+.window.minimized {
     background: var(--header-bg-gradient);
     background-color: var(--header-bg);
     border: 1px solid var(--border);
     border-radius: 5px;
-    bottom: 1rem;
+    position: fixed; /* Anchor it to the viewport */
+    top: calc(100vh - 4.5rem) !important; /* Distance from the top of the viewport */
+    bottom: 1rem !important; /* Distance from the bottom of the viewport */
+    left: 1rem !important; /* Distance from the left of the viewport */
+    width: 8rem; /* Adjust width for compact display */
+    height: auto; /* Fit content without stretching */
+    overflow: hidden; /* Ensure no extra content shows */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     color: var(--header-text);
     cursor: pointer;
-    left: 1rem;
     padding: 0.5rem 1rem;
-    position: fixed;
+    transform: none !important; /* Ensure no transforms interfere */
 }
 
-.icon.opened {
+/* Hide unnecessary sections when minimized */
+.window.minimized .window-body,
+.window.minimized .window-status-bar,
+.window.minimized .buttons {
     display: none;
+}
+
+/* Keep header visible and styled appropriately */
+.window.minimized .window-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    border: none;
+    background: none; /* Remove extra styling from header */
+    cursor: pointer;
+}
+
+/* Ensure the title remains visible and styled */
+.window.minimized .window-title {
+    display: block;
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--header-text);
+    font-weight: normal;
 }
 
 header {

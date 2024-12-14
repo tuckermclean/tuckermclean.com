@@ -1,4 +1,5 @@
 // Dynamically manage multiple windows using a template
+let zIndexCounter = 100; // Starting point for z-index values
 
 // Create and manage windows programmatically
 function createWindow(id, title, content) {
@@ -21,21 +22,33 @@ function createWindow(id, title, content) {
     body.innerHTML = content;
     
     // Add event listeners
+    windowElement.addEventListener('mousedown', () => bringToFront(windowElement));
+    windowElement.addEventListener('touchstart', () => bringToFront(windowElement));
+    windowElement.addEventListener('click', (e) => restoreWindow(e, windowElement));
+    windowElement.addEventListener('touchstart', (e) => restoreWindow(e, windowElement), { passive: false });
     closeBtn.addEventListener('click', () => closeWindow(windowElement));
+    header.addEventListener('dblclick', (e) => toggleShade(e, windowElement));
     minimizeBtn.addEventListener('click', () => toggleMinimize(windowElement));
     maximizeBtn.addEventListener('click', () => toggleMaximize(windowElement));
     header.addEventListener('mousedown', (e) => startDrag(e, windowElement));
+    header.addEventListener('touchstart', (e) => startDrag(e, windowElement), { passive: false });
     grippy.addEventListener('mousedown', (e) => startResize(e, windowElement));
+    grippy.addEventListener('touchstart', (e) => startResize(e, windowElement), { passive: false });
     
     // Append to the DOM
     document.body.appendChild(windowElement);
     return windowElement;
 }
 
+function bringToFront(windowElement) {
+    zIndexCounter++; // Increment global counter
+    windowElement.style.zIndex = zIndexCounter; // Assign new z-index to the element
+}
+
 // Dragging Functionality
 function startDrag(e, windowElement) {
-    if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
-    
+    if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons 
+    if (e.target.closest('.minimized')) return; // Prevent dragging when minimized
     e.preventDefault();
     
     const isTouch = e.type === 'touchstart';
@@ -94,14 +107,40 @@ function closeWindow(windowElement) {
     windowElement.remove();
 }
 
+function toggleShade(e, windowElement) {
+    if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
+    e.preventDefault();
+
+    topDistance = windowElement.getBoundingClientRect().top;
+    if (!windowElement.classList.contains('shaded')) {
+        headerHeight = windowElement.querySelector('.window-header').getBoundingClientRect().height;
+        windowElement.style.top = `${topDistance + headerHeight / 2}px`;
+        windowElement.classList.toggle('shaded');
+    } else {
+        windowElement.classList.toggle('shaded');
+        windowHeight = windowElement.getBoundingClientRect().height;
+        windowElement.style.top = `${topDistance + windowHeight / 2}px`;
+    }
+    windowElement.classList.remove('maximized', 'minimized');
+}
+
 function toggleMinimize(windowElement) {
     windowElement.classList.toggle('minimized');
-    windowElement.classList.remove('maximized');
+    windowElement.classList.remove('maximized', 'shaded');
 }
 
 function toggleMaximize(windowElement) {
     windowElement.classList.toggle('maximized');
-    windowElement.classList.remove('minimized');
+    windowElement.classList.remove('minimized', 'shaded');
+}
+
+function restoreWindow(e, windowElement) {
+    if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
+
+    if (windowElement.classList.contains('minimized')) {
+        e.preventDefault();
+        windowElement.classList.remove('minimized');
+    }
 }
 
 // Toggle Light/Dark Mode
