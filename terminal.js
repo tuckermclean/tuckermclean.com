@@ -4,8 +4,9 @@ const terminalIcon = document.getElementById('terminal-icon');
 const closeBtn = document.querySelector('.close');
 const minimizeBtn = document.querySelector('.minimize');
 const maximizeBtn = document.querySelector('.maximize');
+const grippy = document.getElementById('grippy');
 
-// Add event listeners for all buttons (close, minimize, maximize)
+// Event Listeners for Buttons
 closeBtn.addEventListener('click', closeTerminal);
 closeBtn.addEventListener('touchstart', closeTerminal, { passive: false });
 
@@ -15,14 +16,12 @@ minimizeBtn.addEventListener('touchstart', minimizeTerminal, { passive: false })
 maximizeBtn.addEventListener('click', maximizeTerminal);
 maximizeBtn.addEventListener('touchstart', maximizeTerminal, { passive: false });
 
-
-// Dragging functionality
+// Dragging Functionality
 terminalHeader.addEventListener('mousedown', startDrag);
 terminalHeader.addEventListener('touchstart', startDrag, { passive: false });
 
 function startDrag(e) {
-    // Prevent dragging when clicking on buttons
-    if (e.target.closest('.button')) return;
+    if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
 
     e.preventDefault();
 
@@ -35,7 +34,7 @@ function startDrag(e) {
         const clientY = isTouch ? event.touches[0].clientY : event.clientY;
 
         if (!terminal.classList.contains('minimized')) {
-            // Prevent terminal header from leaving the viewport
+            // Prevent header from leaving viewport
             if (clientY > terminalHeader.getBoundingClientRect().height / 2) {
                 terminal.style.top = `${clientY - offsetY}px`;
             }
@@ -52,9 +51,7 @@ function startDrag(e) {
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', stopDrag);
 }
 
-
-// Resizing functionality
-const grippy = document.getElementById('grippy'); // Ensure the grippy is styled and functional
+// Resizing Functionality
 grippy.addEventListener('mousedown', startResize);
 grippy.addEventListener('touchstart', startResize, { passive: false });
 
@@ -83,38 +80,14 @@ function startResize(e) {
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', stopResize);
 }
 
-
-// // Drag functionality
-// terminalHeader.addEventListener('mousedown', (e) => {
-//     let offsetX = e.clientX - terminal.offsetLeft;
-//     let offsetY = e.clientY - terminal.offsetTop;
-    
-//     function onMouseMove(event) {
-//         if (!terminal.classList.contains('minimized')) {
-//             // Prevent terminal header from going off screen on top
-//             if (event.clientY > (terminalHeader.getBoundingClientRect().height / 2)) {
-//                 terminal.style.top = `${event.clientY - offsetY}px`;
-//             }
-//             terminal.style.left = `${event.clientX - offsetX}px`;
-//         }
-//     }
-    
-//     document.addEventListener('mousemove', onMouseMove);
-    
-//     document.addEventListener('mouseup', () => {
-//         document.removeEventListener('mousemove', onMouseMove);
-//     }, { once: true });
-// });
-
+// Button Actions
 function closeTerminal() {
     terminal.classList.add('closed');
     terminalIcon.classList.remove('opened');
-    terminal.classList.remove('minimized');
-    terminal.classList.remove('maximized');
+    terminal.classList.remove('minimized', 'maximized');
 }
 
 function minimizeTerminal() {
-    const body = terminal.querySelector('.terminal-body');
     if (terminal.classList.contains('minimized')) {
         terminal.classList.remove('minimized');
     } else {
@@ -125,10 +98,8 @@ function minimizeTerminal() {
 
 function maximizeTerminal() {
     if (terminal.classList.contains('maximized')) {
-        // Restore previous state
         terminal.classList.remove('maximized');
     } else {
-        // Maximize and adjust height
         terminal.classList.add('maximized');
     }
     terminal.classList.remove('minimized');
@@ -136,8 +107,7 @@ function maximizeTerminal() {
 
 function openTerminal() {
     terminal.style = {};
-    terminal.classList.remove('minimized');
-    terminal.classList.remove('closed');
+    terminal.classList.remove('minimized', 'closed');
     terminalIcon.classList.add('opened');
 }
 
@@ -145,6 +115,7 @@ function toggleMode() {
     document.body.classList.toggle('light-mode');
 }
 
+// Load External HTML
 function loadHTML(url, targetElementId) {
     fetch(url)
         .then(response => {
@@ -161,5 +132,5 @@ function loadHTML(url, targetElementId) {
         });
 }
 
-// Load the resume into the container
+// Initialize Resume Content
 loadHTML('resume.html', 'resume-container');
