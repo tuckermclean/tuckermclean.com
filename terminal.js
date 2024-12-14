@@ -144,3 +144,22 @@ function openTerminal() {
 function toggleMode() {
     document.body.classList.toggle('light-mode');
 }
+
+function loadHTML(url, targetElementId) {
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById(targetElementId).innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading HTML:', error);
+        });
+}
+
+// Load the resume into the container
+loadHTML('resume.html', 'resume-container');
