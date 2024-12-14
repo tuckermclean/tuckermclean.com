@@ -1,0 +1,381 @@
+:root {
+    --bg-light: #ffffff;
+    --text-light: #000000;
+    --bg-dark: #181818;
+    --text-dark: #ebebeb;
+    --cursor-light: #000000;
+    --cursor-dark: #ffffff;
+    --header-bg-dark: #333333;
+    --header-bg-light: #f0f0f0;
+    --header-bg-gradient-dark: linear-gradient(0deg, #222222, #444444);
+    --header-bg-gradient-light: linear-gradient(0deg, #cccccc, #ffffff);
+    --header-text-dark: #ebebeb;
+    --header-text-light: #000000;
+    --directory-color: #4e9a06;
+    --symlink-color: #3465a4;
+    --executable-color: #cc0000;
+    --close-bg: #ff5f56;
+    --close-bg-gradient: linear-gradient(0deg, #ff4c43, #ff9088);
+    --minimize-bg: #ffbd2e;
+    --minimize-bg-gradient: linear-gradient(0deg, #ffae00, #f7d885);
+    --maximize-bg: #27c93f;
+    --maximize-bg-gradient: linear-gradient(0deg, #18bd31, #a1ffaf);    
+    --border-dark: #666666;
+    --border-light: #888888;
+    --scroll-hover-dark: #b0b0b0;
+    --scroll-hover-light: #555555;
+    --bg-image-dark: url('Eliminator-Funk-2.jpg');
+    --bg-image-light: url('Round-Trip-1.jpg');
+    --bg: var(--bg-dark);
+    --text: var(--text-dark);
+    --cursor: var(--cursor-dark);
+    --border: var(--border-dark);
+    --bg-image: var(--bg-image-dark);
+    --header-bg: var(--header-bg-dark);
+    --header-bg-gradient: var(--header-bg-gradient-dark);
+    --header-text: var(--header-text-dark);
+    --scroll-hover: var(--scroll-hover-dark);
+}
+
+body {
+    font-family: 'Noto Sans Mono', monospace;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background-color: var(--bg);
+    background-image: var(--bg-image);
+    background-repeat: repeat;
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s, background-image 0.3s;
+}
+
+.terminal {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    height: 70%;
+    background-color: var(--header-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    /*transition: all 0.3s ease;*/
+}
+
+/* Media query for making terminal fill more of a small screen */
+@media (max-width: 768px) {
+    .terminal {
+        width: calc(100vw - 2.5rem);
+        height: calc(100vh - 5rem);
+    }
+}
+
+.grippy {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -1px;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 0.25rem,
+    var(--border) 0.25rem,
+    var(--border) 0.35rem
+    );
+    z-index: 10;
+    cursor: nwse-resize; /* Indicates functionality */
+    border-left: 1px solid var(--border);
+}
+
+.terminal.minimized .grippy {
+    display: none;
+}
+
+.terminal.minimized {
+    resize: none;
+}
+
+.terminal-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--header-bg-gradient);
+    background-color: var(--header-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid var(--border);
+    cursor: move;
+}
+
+.terminal.minimized .terminal-header {
+    cursor: default;
+}
+
+.terminal-header .buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.terminal-header .button {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+}
+
+.terminal-header span {
+    width: 100%;
+    text-align: center;
+    color: var(--header-text);
+    font-weight: bold;
+}
+
+.close, .minimize, .maximize {
+    cursor: default;
+    box-shadow: 0 1px 2px var(--border), 0 -1px 2px var(--bg);
+}
+
+.close {
+    background: var(--close-bg-gradient);
+    background-color: var(--close-bg);
+}
+
+.close:active {
+    background: var(--close-bg);
+}
+
+.minimize {
+    background: var(--minimize-bg-gradient);
+    background-color: var(--minimize-bg);
+}
+
+.minimize:active {
+    background: var(--minimize-bg);
+}
+
+.maximize {
+    background: var(--maximize-bg-gradient);
+    background-color: var(--maximize-bg);
+}
+
+.maximize:active {
+    background: var(--maximize-bg);
+}
+
+.terminal-body {
+    padding: 1rem;
+    overflow-y: auto; /* Enable scrolling only in the body */
+    overflow-x: hidden; /* Enable scrolling only in the body */
+    height: calc(100% - 2.5rem); /* Adjust for header height */
+    flex-grow: 1;
+    background-color: var(--bg);
+}
+
+.terminal-status-bar {
+    flex-shrink: 0;
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    text-align: left;
+    border-top: 1px solid var(--border); /* Optional separator line */
+    line-height: 1.5rem;
+    padding-left: 0.4rem;
+}
+
+.terminal-body::-webkit-scrollbar {
+    width: 1.5rem; /* Standard width for better visibility */
+    background-color: var(--header-bg); /* Matches header background */
+    opacity: 0.5; /* Slightly transparent for a better look */
+    border-left: 1px solid var(--border); /* Optional separator line */
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+    background-color: var(--border); /* Matches header text color */
+    /*border-radius: 0.25rem; /* Smooth corners for a better look */
+    /*border: 2px solid var(--header-bg); /* Adds space between thumb and track */
+}
+
+.terminal-body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scroll-hover); /* Lighter color on hover for accessibility */
+}
+
+.terminal-body::-webkit-scrollbar-button {
+    display: none; /* Hides the scrollbar buttons for a cleaner look */
+}
+.terminal.minimized .terminal-body {
+    display: none;
+}
+
+.terminal.closed {
+    display: none !important;
+}
+
+.icon.closed {
+    display: block !important;
+} 
+
+.terminal.minimized {
+    height: 2.5rem !important;
+    top: calc(100% - 4rem) !important;
+    width: calc(100% - 2.5rem) !important;
+    left: 1.25rem !important;
+    transform: none !important;
+}
+
+.terminal.maximized {
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    position: fixed !important;
+    box-sizing: border-box;
+}
+
+.icon {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    background-color: var(--header-bg);
+    background: var(--header-bg-gradient);
+    color: var(--header-text);
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    border: 1px solid var(--border);
+}
+
+.icon.opened {
+    display: none;
+}
+
+header {
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+header p {
+    font-size: 1rem;
+    margin: 0.5rem 0 0;
+}
+
+section {
+    margin-bottom: 2rem;
+}
+
+section h2 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--text);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+section p {
+    margin: 0.5rem 0;
+}
+
+footer {
+    margin-top: auto;
+    padding-bottom: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.directory {
+    color: var(--directory-color);
+}
+
+.symlink, a {
+    color: var(--symlink-color);
+}
+
+a:hover {
+    border-radius: 0.25rem;
+    text-decoration: none;
+    background: var(--symlink-color);
+    color: var(--bg);
+    padding: 0 0.25rem;
+    margin: 0 -0.25rem;
+}
+
+.executable {
+    color: var(--executable-color);
+}
+
+.blink {
+    animation: blink 1s steps(1, start) infinite;
+}
+
+@keyframes blink {
+    0%, 100% {
+        background-color: var(--bg);
+    }
+    50% {
+        background-color: var(--cursor);
+    }
+}
+
+.blink::after {
+    content: ' ';
+    display: inline-block;
+    width: 1ch;
+    height: 1em;
+    color: currentColor;
+    vertical-align: middle;
+}
+
+.toggle-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--header-bg-light);
+    background: var(--header-bg-gradient-light);
+    color: var(--header-text-light);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Noto Sans Mono', monospace;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.light-mode .toggle-btn {
+    background-color: var(--header-bg-dark);
+    background: var(--header-bg-gradient-dark);
+    color: var(--header-text-dark);
+}
+
+.toggle-btn:hover {
+    opacity: 0.8;
+}
+
+.light-mode {
+    --bg: var(--bg-light);
+    --text: var(--text-light);
+    --cursor: var(--cursor-light);
+    --bg-image: var(--bg-image-light);
+    --header-bg: var(--header-bg-light);
+    --header-bg-gradient: var(--header-bg-gradient-light);
+    --header-text: var(--header-text-light);
+    --border: var(--border-light);
+    --scroll-hover: var(--scroll-hover-light);
+}
