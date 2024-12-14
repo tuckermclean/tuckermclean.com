@@ -9,22 +9,24 @@
 </head>
 <body>
     <button class="toggle-btn" onclick="toggleMode()">Toggle Mode</button>
-    <div class="terminal" id="terminal">
-        <div class="terminal-header" id="terminal-header">
-            <div class="buttons">
-                <div class="button close" aria-label="Close"></div>
-                <div class="button minimize" aria-label="Minimize"></div>
-                <div class="button maximize" aria-label="Maximize"></div>
+ 
+    <!-- Template for window -->
+    <template id="window-template">
+        <div class="window">
+            <div class="window-header">
+                <div class="buttons">
+                    <div class="button close" aria-label="Close"></div>
+                    <div class="button minimize" aria-label="Minimize"></div>
+                    <div class="button maximize" aria-label="Maximize"></div>
+                </div>
+                <span class="window-title">Window</span>
             </div>
-            <span>Resume</span>
+            <div class="window-body"></div>
+            <div class="window-status-bar">Status: Ready to work!</div>
+            <div class="grippy"></div>
         </div>
-        <div class="terminal-body">
-            <div id="resume-container" aria-live="polite" aria-busy="false"></div>
-        </div>
-        <div class="terminal-status-bar">Status: Ready to work!</div>
-        <div class="grippy" id="grippy"></div>
-    </div>
-    <div class="icon opened" id="terminal-icon" onclick="openTerminal()">Resume</div>
-<script src="terminal.js"></script>
+    </template>
+
+    <script src="terminal.js"></script>
 </body>
 </html>

@@ -1,116 +1,110 @@
-const terminal = document.getElementById('terminal');
-const terminalHeader = document.getElementById('terminal-header');
-const terminalIcon = document.getElementById('terminal-icon');
-const closeBtn = document.querySelector('.close');
-const minimizeBtn = document.querySelector('.minimize');
-const maximizeBtn = document.querySelector('.maximize');
-const grippy = document.getElementById('grippy');
+// Dynamically manage multiple windows using a template
 
-// Event Listeners for Buttons
-closeBtn.addEventListener('click', closeTerminal);
-closeBtn.addEventListener('touchstart', closeTerminal, { passive: false });
-
-minimizeBtn.addEventListener('click', minimizeTerminal);
-minimizeBtn.addEventListener('touchstart', minimizeTerminal, { passive: false });
-
-maximizeBtn.addEventListener('click', maximizeTerminal);
-maximizeBtn.addEventListener('touchstart', maximizeTerminal, { passive: false });
+// Create and manage windows programmatically
+function createWindow(id, title, content) {
+    const template = document.getElementById('window-template');
+    const windowClone = template.content.cloneNode(true);
+    
+    // Assign unique IDs and classes
+    const windowElement = windowClone.querySelector('.window');
+    windowElement.id = `window-${id}`;
+    
+    const header = windowElement.querySelector('.window-header');
+    const body = windowElement.querySelector('.window-body');
+    const closeBtn = windowElement.querySelector('.close');
+    const minimizeBtn = windowElement.querySelector('.minimize');
+    const maximizeBtn = windowElement.querySelector('.maximize');
+    const grippy = windowElement.querySelector('.grippy');
+    
+    // Set window title and content
+    header.querySelector('.window-title').textContent = title;
+    body.innerHTML = content;
+    
+    // Add event listeners
+    closeBtn.addEventListener('click', () => closeWindow(windowElement));
+    minimizeBtn.addEventListener('click', () => toggleMinimize(windowElement));
+    maximizeBtn.addEventListener('click', () => toggleMaximize(windowElement));
+    header.addEventListener('mousedown', (e) => startDrag(e, windowElement));
+    grippy.addEventListener('mousedown', (e) => startResize(e, windowElement));
+    
+    // Append to the DOM
+    document.body.appendChild(windowElement);
+    return windowElement;
+}
 
 // Dragging Functionality
-terminalHeader.addEventListener('mousedown', startDrag);
-terminalHeader.addEventListener('touchstart', startDrag, { passive: false });
-
-function startDrag(e) {
+function startDrag(e, windowElement) {
     if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
-
+    
     e.preventDefault();
-
+    
     const isTouch = e.type === 'touchstart';
-    const offsetX = (isTouch ? e.touches[0].clientX : e.clientX) - terminal.offsetLeft;
-    const offsetY = (isTouch ? e.touches[0].clientY : e.clientY) - terminal.offsetTop;
-
+    const offsetX = (isTouch ? e.touches[0].clientX : e.clientX) - windowElement.offsetLeft;
+    const offsetY = (isTouch ? e.touches[0].clientY : e.clientY) - windowElement.offsetTop;
+    
     function onMove(event) {
         const clientX = isTouch ? event.touches[0].clientX : event.clientX;
         const clientY = isTouch ? event.touches[0].clientY : event.clientY;
-
-        if (!terminal.classList.contains('minimized')) {
-            // Prevent header from leaving viewport
-            if (clientY > terminalHeader.getBoundingClientRect().height / 2) {
-                terminal.style.top = `${clientY - offsetY}px`;
+        
+        if (!windowElement.classList.contains('minimized')) {
+            if (clientY > windowElement.querySelector('.window-header').getBoundingClientRect().height / 2) {
+                windowElement.style.top = `${clientY - offsetY}px`;
             }
-            terminal.style.left = `${clientX - offsetX}px`;
+            windowElement.style.left = `${clientX - offsetX}px`;
         }
     }
-
+    
     function stopDrag() {
         document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onMove);
         document.removeEventListener(isTouch ? 'touchend' : 'mouseup', stopDrag);
     }
-
+    
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove, { passive: false });
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', stopDrag);
 }
 
 // Resizing Functionality
-grippy.addEventListener('mousedown', startResize);
-grippy.addEventListener('touchstart', startResize, { passive: false });
-
-function startResize(e) {
+function startResize(e, windowElement) {
     e.preventDefault();
     const isTouch = e.type === 'touchstart';
-    const startWidth = terminal.offsetWidth;
-    const startHeight = terminal.offsetHeight;
+    const startWidth = windowElement.offsetWidth;
+    const startHeight = windowElement.offsetHeight;
     const startX = isTouch ? e.touches[0].clientX : e.clientX;
     const startY = isTouch ? e.touches[0].clientY : e.clientY;
-
+    
     function onResize(event) {
         const clientX = isTouch ? event.touches[0].clientX : event.clientX;
         const clientY = isTouch ? event.touches[0].clientY : event.clientY;
-
-        terminal.style.width = `${startWidth + (clientX - startX)}px`;
-        terminal.style.height = `${startHeight + (clientY - startY)}px`;
+        
+        windowElement.style.width = `${startWidth + (clientX - startX)}px`;
+        windowElement.style.height = `${startHeight + (clientY - startY)}px`;
     }
-
+    
     function stopResize() {
         document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onResize);
         document.removeEventListener(isTouch ? 'touchend' : 'mouseup', stopResize);
     }
-
+    
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onResize, { passive: false });
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', stopResize);
 }
 
 // Button Actions
-function closeTerminal() {
-    terminal.classList.add('closed');
-    terminalIcon.classList.remove('opened');
-    terminal.classList.remove('minimized', 'maximized');
+function closeWindow(windowElement) {
+    windowElement.remove();
 }
 
-function minimizeTerminal() {
-    if (terminal.classList.contains('minimized')) {
-        terminal.classList.remove('minimized');
-    } else {
-        terminal.classList.add('minimized');
-    }
-    terminal.classList.remove('maximized');
+function toggleMinimize(windowElement) {
+    windowElement.classList.toggle('minimized');
+    windowElement.classList.remove('maximized');
 }
 
-function maximizeTerminal() {
-    if (terminal.classList.contains('maximized')) {
-        terminal.classList.remove('maximized');
-    } else {
-        terminal.classList.add('maximized');
-    }
-    terminal.classList.remove('minimized');
+function toggleMaximize(windowElement) {
+    windowElement.classList.toggle('maximized');
+    windowElement.classList.remove('minimized');
 }
 
-function openTerminal() {
-    terminal.style = {};
-    terminal.classList.remove('minimized', 'closed');
-    terminalIcon.classList.add('opened');
-}
-
+// Toggle Light/Dark Mode
 function toggleMode() {
     document.body.classList.toggle('light-mode');
 }
@@ -118,19 +112,24 @@ function toggleMode() {
 // Load External HTML
 function loadHTML(url, targetElementId) {
     fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            document.getElementById(targetElementId).innerHTML = html;
-        })
-        .catch(error => {
-            console.error('Error loading HTML:', error);
-        });
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(html => {
+        document.getElementById(targetElementId).innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error loading HTML:', error);
+    });
 }
+
+// Example Usage
+createWindow(1, 'Resume', '<div id="resume-container">Loading resume...</div>');
+//createWindow(2, 'Project Notes', '<p>Notes about ongoing projects...</p>');
 
 // Initialize Resume Content
 loadHTML('resume.html', 'resume-container');
+
