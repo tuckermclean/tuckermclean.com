@@ -1,16 +1,24 @@
+/* ==================================
+Variables
+================================== */
 :root {
+    /* Colors */
     --bg-light: #ffffff;
     --text-light: #000000;
     --bg-dark: #181818;
     --text-dark: #ebebeb;
     --cursor-light: #000000;
     --cursor-dark: #ffffff;
+    
+    /* Header Colors */
     --header-bg-dark: #333333;
     --header-bg-light: #f0f0f0;
     --header-bg-gradient-dark: linear-gradient(0deg, #222222, #444444);
     --header-bg-gradient-light: linear-gradient(0deg, #cccccc, #ffffff);
     --header-text-dark: #ebebeb;
     --header-text-light: #000000;
+    
+    /* Terminal Elements */
     --directory-color: #4e9a06;
     --symlink-color: #3465a4;
     --executable-color: #cc0000;
@@ -19,13 +27,19 @@
     --minimize-bg: #ffbd2e;
     --minimize-bg-gradient: linear-gradient(0deg, #ffae00, #f7d885);
     --maximize-bg: #27c93f;
-    --maximize-bg-gradient: linear-gradient(0deg, #18bd31, #a1ffaf);    
+    --maximize-bg-gradient: linear-gradient(0deg, #18bd31, #a1ffaf);
+    
+    /* Borders and Hover */
     --border-dark: #666666;
     --border-light: #888888;
     --scroll-hover-dark: #b0b0b0;
     --scroll-hover-light: #555555;
+    
+    /* Backgrounds */
     --bg-image-dark: url('Eliminator-Funk-2.jpg');
     --bg-image-light: url('Round-Trip-1.jpg');
+    
+    /* Defaults */
     --bg: var(--bg-dark);
     --text: var(--text-dark);
     --cursor: var(--cursor-dark);
@@ -37,93 +51,65 @@
     --scroll-hover: var(--scroll-hover-dark);
 }
 
+/* ==================================
+Base Styles
+================================== */
 body {
-    font-family: 'Noto Sans Mono', monospace;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
+    align-items: center;
     background-color: var(--bg);
-    background-image: var(--bg-image), var(--bg-image-dark), var(--bg-image-light);
+    background-image: var(--bg-image);
     background-repeat: repeat;
     color: var(--text);
     display: flex;
+    font-family: 'Noto Sans Mono', monospace;
+    height: 100%;
     justify-content: center;
-    align-items: center;
+    margin: 0;
     min-height: 100vh;
+    overflow: hidden;
+    padding: 0;
     transition: background-color 0.3s, color 0.3s, background-image 0.3s;
 }
 
+/* ==================================
+Terminal Window
+================================== */
 .terminal {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    width: 90%;
-    height: 70%;
     background-color: var(--header-bg);
-    color: var(--text);
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     box-sizing: border-box;
-    resize: none;
-    overflow: hidden;
-    transform: translate(-50%, -50%);
-    top: 50%;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 70%;
     left: 50%;
-    /*transition: all 0.3s ease;*/
+    overflow: hidden;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
 }
 
-/* Media query for making terminal fill more of a small screen */
+/* Media query for responsive adjustments */
 @media (max-width: 768px) {
     .terminal {
         width: calc(100vw - 2.5rem);
-        height: calc(100vh - 5rem);
+        height: calc(100vh - 10rem);
     }
 }
 
-.grippy {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: -1px;
-    width: 1.5rem;
-    height: 1.5rem;
-    background: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 0.25rem,
-    var(--border) 0.25rem,
-    var(--border) 0.35rem
-    );
-    z-index: 10;
-    cursor: nwse-resize; /* Indicates functionality */
-    border-left: 1px solid var(--border);
-}
-
-.terminal.minimized .grippy {
-    display: none;
-}
-
-.terminal.minimized {
-    resize: none;
-}
-
 .terminal-header {
-    flex-shrink: 0;
-    display: flex;
     align-items: center;
-    justify-content: space-between;
     background: var(--header-bg-gradient);
-    background-color: var(--header-bg);
-    padding: 0.5rem 1rem;
-    border-radius: 6px 6px 0 0;
     border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
     cursor: move;
-}
-
-.terminal.minimized .terminal-header {
-    cursor: default;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
 }
 
 .terminal-header .buttons {
@@ -131,27 +117,46 @@ body {
     gap: 0.5rem;
 }
 
-.terminal-header .button {
-    width: 1rem;
-    height: 1rem;
-    border-radius: 50%;
-}
-
 .terminal-header span {
     width: 100%;
     text-align: center;
     color: var(--header-text);
+    font-size: 1rem;
     font-weight: bold;
 }
 
-.close, .minimize, .maximize {
-    cursor: default;
+.terminal-body {
+    background-color: var(--bg);
+    flex-grow: 1;
+    height: calc(100% - 2.5rem); /* Adjust for header height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
+}
+
+.terminal-status-bar {
+    background-color: var(--header-bg);
+    border-top: 1px solid var(--border);
+    color: var(--header-text);
+    flex-shrink: 0;
+    line-height: 1.5rem;
+    padding-left: 0.4rem;
+    text-align: left;
+}
+
+/* ==================================
+Terminal Buttons
+================================== */
+.terminal-header .button {
+    border-radius: 50%;
     box-shadow: 0 1px 2px var(--border), 0 -1px 2px var(--bg);
+    cursor: default;
+    height: 1rem;
+    width: 1rem;
 }
 
 .close {
     background: var(--close-bg-gradient);
-    background-color: var(--close-bg);
 }
 
 .close:active {
@@ -160,7 +165,6 @@ body {
 
 .minimize {
     background: var(--minimize-bg-gradient);
-    background-color: var(--minimize-bg);
 }
 
 .minimize:active {
@@ -169,70 +173,97 @@ body {
 
 .maximize {
     background: var(--maximize-bg-gradient);
-    background-color: var(--maximize-bg);
 }
 
 .maximize:active {
     background: var(--maximize-bg);
 }
 
-.terminal-body {
-    padding: 1rem;
-    overflow-y: auto; /* Enable scrolling only in the body */
-    overflow-x: hidden; /* Enable scrolling only in the body */
-    height: calc(100% - 2.5rem); /* Adjust for header height */
-    flex-grow: 1;
-    background-color: var(--bg);
-}
-
-.terminal-status-bar {
-    flex-shrink: 0;
-    background-color: var(--header-bg);
-    color: var(--header-text);
-    text-align: left;
-    border-top: 1px solid var(--border); /* Optional separator line */
-    line-height: 1.5rem;
-    padding-left: 0.4rem;
-}
-
+/* ==================================
+Scrollbars
+================================== */
 .terminal-body::-webkit-scrollbar {
-    width: 1.5rem; /* Standard width for better visibility */
-    background-color: var(--header-bg); /* Matches header background */
-    opacity: 0.5; /* Slightly transparent for a better look */
-    border-left: 1px solid var(--border); /* Optional separator line */
+    background-color: var(--header-bg);
+    border-left: 1px solid var(--border);
+    opacity: 0.5;
+    width: 1.5rem;
 }
 
 .terminal-body::-webkit-scrollbar-thumb {
-    background-color: var(--border); /* Matches header text color */
-    /*border-radius: 0.25rem; /* Smooth corners for a better look */
-    /*border: 2px solid var(--header-bg); /* Adds space between thumb and track */
+    background-color: var(--border);
 }
 
 .terminal-body::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scroll-hover); /* Lighter color on hover for accessibility */
+    background-color: var(--scroll-hover);
 }
 
 .terminal-body::-webkit-scrollbar-button {
-    display: none; /* Hides the scrollbar buttons for a cleaner look */
-}
-.terminal.minimized .terminal-body {
     display: none;
 }
 
-.terminal.closed {
-    display: none !important;
+/* ==================================
+Resize Handle (Grippy)
+================================== */
+.grippy {
+    background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 0.25rem,
+    var(--border) 0.25rem,
+    var(--border) 0.35rem
+    );
+    border-left: 1px solid var(--border);
+    bottom: 0;
+    content: '';
+    cursor: nwse-resize;
+    height: 1.5rem;
+    position: absolute;
+    right: -1px;
+    width: 1.5rem;
+    z-index: 10;
 }
 
-.icon.closed {
-    display: block !important;
-} 
+.terminal.minimized .grippy {
+    display: none;
+}
+
+/* ==================================
+Animations and Effects
+================================== */
+.blink {
+    animation: blink 1s steps(1, start) infinite;
+}
+
+@keyframes blink {
+    0%, 100% {
+        background-color: var(--bg);
+    }
+    50% {
+        background-color: var(--cursor);
+    }
+}
+
+/* ==================================
+Utility Classes
+================================== */
+.light-mode {
+    --bg: var(--bg-light);
+    --text: var(--text-light);
+    --cursor: var(--cursor-light);
+    --bg-image: var(--bg-image-light);
+    --header-bg: var(--header-bg-light);
+    --header-bg-gradient: var(--header-bg-gradient-light);
+    --header-text: var(--header-text-light);
+    --border: var(--border-light);
+    --scroll-hover: var(--scroll-hover-light);
+}
 
 .terminal.minimized {
     height: 2.5rem !important;
-    top: calc(100% - 4rem) !important;
-    width: calc(100% - 2.5rem) !important;
     left: 1.25rem !important;
+    top: calc(100% - 4rem) !important;
     transform: none !important;
+    width: calc(100% - 2.5rem) !important;
 }
 
 .terminal.maximized {
@@ -243,20 +274,30 @@ body {
     transform: none !important;
     position: fixed !important;
     box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+}
+
+.terminal.closed {
+    display: none !important;
+}
+
+.icon.closed {
+    display: block !important;
 }
 
 .icon {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    background-color: var(--header-bg);
     background: var(--header-bg-gradient);
-    color: var(--header-text);
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
+    background-color: var(--header-bg);
     border: 1px solid var(--border);
+    border-radius: 5px;
+    bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    color: var(--header-text);
+    cursor: pointer;
+    left: 1rem;
+    padding: 0.5rem 1rem;
+    position: fixed;
 }
 
 .icon.opened {
@@ -264,8 +305,8 @@ body {
 }
 
 header {
-    text-align: left;
     margin-bottom: 2rem;
+    text-align: left;
 }
 
 header h1 {
@@ -283,10 +324,10 @@ section {
 }
 
 section h2 {
-    font-size: 1.5rem;
     border-bottom: 1px solid var(--text);
-    padding-bottom: 0.5rem;
+    font-size: 1.5rem;
     margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
 }
 
 section p {
@@ -309,73 +350,48 @@ footer {
 }
 
 a:hover {
-    border-radius: 0.25rem;
-    text-decoration: none;
     background: var(--symlink-color);
+    border-radius: 0.25rem;
     color: var(--bg);
-    padding: 0 0.25rem;
     margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+    text-decoration: none;
 }
 
 .executable {
     color: var(--executable-color);
 }
 
-.blink {
-    animation: blink 1s steps(1, start) infinite;
-}
-
-@keyframes blink {
-    0%, 100% {
-        background-color: var(--bg);
-    }
-    50% {
-        background-color: var(--cursor);
-    }
-}
-
 .blink::after {
+    color: currentColor;
     content: ' ';
     display: inline-block;
-    width: 1ch;
     height: 1em;
-    color: currentColor;
     vertical-align: middle;
+    width: 1ch;
 }
 
 .toggle-btn {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--header-bg-light);
     background: var(--header-bg-gradient-light);
-    color: var(--header-text-light);
+    background-color: var(--header-bg-light);
     border: none;
     border-radius: 5px;
+    color: var(--header-text-light);
     cursor: pointer;
     font-family: 'Noto Sans Mono', monospace;
+    padding: 0.5rem 1rem;
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
     transition: background-color 0.3s, color 0.3s;
 }
 
 .light-mode .toggle-btn {
-    background-color: var(--header-bg-dark);
     background: var(--header-bg-gradient-dark);
+    background-color: var(--header-bg-dark);
     color: var(--header-text-dark);
 }
 
 .toggle-btn:hover {
     opacity: 0.8;
-}
-
-.light-mode {
-    --bg: var(--bg-light);
-    --text: var(--text-light);
-    --cursor: var(--cursor-light);
-    --bg-image: var(--bg-image-light);
-    --header-bg: var(--header-bg-light);
-    --header-bg-gradient: var(--header-bg-gradient-light);
-    --header-text: var(--header-text-light);
-    --border: var(--border-light);
-    --scroll-hover: var(--scroll-hover-light);
 }
