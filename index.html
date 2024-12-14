@@ -12,20 +12,19 @@
     <div class="terminal" id="terminal">
         <div class="terminal-header" id="terminal-header">
             <div class="buttons">
-                <div class="button close"></div>
-                <div class="button minimize"></div>
-                <div class="button maximize"></div>
+                <div class="button close" aria-label="Close"></div>
+                <div class="button minimize" aria-label="Minimize"></div>
+                <div class="button maximize" aria-label="Maximize"></div>
             </div>
             <span>Resume</span>
         </div>
         <div class="terminal-body">
-            <div id="resume-container"></div>
+            <div id="resume-container" aria-live="polite" aria-busy="false"></div>
         </div>
         <div class="terminal-status-bar">Status: Ready to work!</div>
         <div class="grippy" id="grippy"></div>
     </div>
-</div>
-<div class="icon opened" id="terminal-icon" onclick="openTerminal()">Resume</div>
+    <div class="icon opened" id="terminal-icon" onclick="openTerminal()">Resume</div>
 <script src="terminal.js"></script>
 </body>
 </html>
