@@ -54,9 +54,43 @@ function createWindow(title, content) {
 
 function cascadeWindows() {
     windows.forEach((windowElement, i) => {
+        windowElement.classList.remove('minimized', 'maximized', 'shaded');
         let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height;
         windowElement.style.top = `${windowElement.offsetHeight / 2 + offset * i + offset}px`;
         windowElement.style.left = `${windowElement.offsetWidth / 2 + offset * i + offset}px`;
+        bringToFront(windowElement);
+    });
+}
+
+function tileWindows() {
+    const windowCount = windows.length;
+    if (windowCount === 0) return;
+
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate grid dimensions
+    const columns = Math.ceil(Math.sqrt(windowCount));
+    const rows = Math.ceil(windowCount / columns);
+
+    // Calculate size of each window
+    const windowWidth = Math.floor(viewportWidth / columns);
+    const windowHeight = Math.floor(viewportHeight / rows);
+
+    // Position each window in the grid
+    windows.forEach((windowElement, index) => {
+        windowElement.classList.remove('minimized', 'maximized', 'shaded');
+
+        const row = Math.floor(index / columns);
+        const column = index % columns;
+
+        windowElement.style.position = 'absolute';
+        windowElement.style.width = `${windowWidth}px`;
+        windowElement.style.height = `${windowHeight}px`;
+        windowElement.style.top = `${windowHeight / 2 + row * windowHeight}px`;
+        windowElement.style.left = `${windowWidth / 2 + column * windowWidth}px`;
+        windowElement.classList.remove('minimized', 'maximized', 'shaded'); // Reset states
         bringToFront(windowElement);
     });
 }
