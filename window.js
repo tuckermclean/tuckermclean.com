@@ -40,11 +40,25 @@ function createWindow(title, content) {
     // Append to the DOM
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
+    // Bake the window
     windowElement.style.top = `${windowElement.offsetTop + windowElement.querySelector('.window-header').getBoundingClientRect().height * id}px`;
     windowElement.style.left = `${windowElement.offsetLeft + windowElement.querySelector('.window-header').getBoundingClientRect().height * id}px`;
+    windowElement.style.width = `${windowElement.offsetWidth}px`;
+    windowElement.style.height = `${windowElement.offsetHeight}px`;
+    // Bring to front
     bringToFront(windowElement);
+    // Save window state
     saveWindowState(windowElement);
     return windowElement;
+}
+
+function cascadeWindows() {
+    windows.forEach((windowElement, i) => {
+        let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height;
+        windowElement.style.top = `${windowElement.offsetHeight / 2 + offset * i + offset}px`;
+        windowElement.style.left = `${windowElement.offsetWidth / 2 + offset * i + offset}px`;
+        bringToFront(windowElement);
+    });
 }
 
 function bringToFront(windowElement) {
