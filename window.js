@@ -41,9 +41,16 @@ function createWindow(title, content) {
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
     // Bake the window
-    windowElement.style.top = `${windowElement.offsetTop + windowElement.querySelector('.window-header').getBoundingClientRect().height * id}px`;
-    windowElement.style.left = `${windowElement.offsetLeft + windowElement.querySelector('.window-header').getBoundingClientRect().height * id}px`;
-    windowElement.style.width = `${windowElement.offsetWidth}px`;
+    let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height * (id);
+    // If on mobile, only offset by half the address bar height, and shrink the width by that amount
+    if (window.innerWidth <= 768) {
+        offset = offset / 2;
+        windowElement.style.width = `${windowElement.offsetWidth - offset}px `;
+    } else {
+        windowElement.style.width = `${windowElement.offsetWidth}px`;
+    }
+    windowElement.style.top = `${windowElement.offsetTop + offset}px`;
+    windowElement.style.left = `${windowElement.offsetLeft + offset}px`;
     windowElement.style.height = `${windowElement.offsetHeight}px`;
     // Bring to front
     bringToFront(windowElement);
@@ -56,6 +63,10 @@ function cascadeWindows() {
     windows.forEach((windowElement, i) => {
         windowElement.classList.remove('minimized', 'maximized', 'shaded');
         let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height;
+        // If on mobile, only offset by half the address bar height
+        if (window.innerWidth <= 768) {
+            offset = offset / 2;
+        }
         windowElement.style.top = `${windowElement.offsetHeight / 2 + offset * i + offset}px`;
         windowElement.style.left = `${windowElement.offsetWidth / 2 + offset * i + offset}px`;
         bringToFront(windowElement);
