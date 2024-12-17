@@ -36,7 +36,7 @@ function createWindow(title, content) {
     header.addEventListener('touchstart', (e) => startDrag(e, windowElement), { passive: false });
     grippy.addEventListener('mousedown', (e) => startResize(e, windowElement));
     grippy.addEventListener('touchstart', (e) => startResize(e, windowElement), { passive: false });
-    
+
     // Append to the DOM
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
@@ -297,11 +297,12 @@ function getAddressBarHeight() {
 }
 
 // Example Usage
-createWindow('Resume', '<div id="resume-container">Loading resume...</div>');
-createWindow('Project Notes', '<p>Notes about ongoing projects...</p>');
-createWindow('doink', '<p>doink</p>');
-createWindow('boink', '<p>boink</p>');
-
+function openPage(name, niceName) {
+    createWindow(niceName, `<div id="${name}-container">Loading ${niceName}...</div>`);
+    loadHTML(`${name}.html`, `${name}-container`);
+}
 // Initialize Resume Content
-loadHTML('resume.html', 'resume-container');
+openPage('welcome', 'Welcome!');
+//loadHTML('resume.html', 'resume-container');
+//loadHTML('intro.html', 'intro-container');
 bringToFront(windows[0]);
