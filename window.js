@@ -61,15 +61,19 @@ function createWindow(name, title, content) {
 
 function cascadeWindows() {
     windows.forEach((windowElement, i) => {
-        windowElement.classList.remove('minimized', 'maximized', 'shaded');
-        let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height;
+        resetWindow(windowElement);
+        let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height * i;
         // If on mobile, only offset by half the address bar height
         if (window.innerWidth <= 768) {
             offset = offset / 2;
+            windowElement.style.width = `${windowElement.offsetWidth - offset}px `;
+        } else {
+            windowElement.style.width = `${windowElement.offsetWidth}px`;
         }
-        windowElement.style.top = `${windowElement.offsetHeight / 2 + offset * i + offset}px`;
-        windowElement.style.left = `${windowElement.offsetWidth / 2 + offset * i + offset}px`;
-        bringToFront(windowElement);
+        windowElement.style.top = `${windowElement.offsetTop + offset}px`;
+        windowElement.style.left = `${windowElement.offsetLeft + offset}px`;
+        windowElement.style.height = `${windowElement.offsetHeight}px`;
+            bringToFront(windowElement);
     });
 }
 
