@@ -231,6 +231,13 @@ Resize Handle (Grippy)
 Animations and Effects
 ================================== */
 .blink {
+    border: 1px solid var(--cursor);
+    background-color: transparent;
+    animation: none;
+}
+
+.front .blink {
+    border: none;
     animation: blink 1s steps(1, start) infinite;
 }
 

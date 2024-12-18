@@ -109,6 +109,10 @@ function tileWindows() {
 function bringToFront(windowElement) {
     zIndexCounter++; // Increment global counter
     windowElement.style.zIndex = zIndexCounter; // Assign new z-index to the element
+    // Remove 'front' class from all windows
+    windows.forEach(w => w.classList.remove('front'));
+    // Add 'front' class to the clicked window
+    windowElement.classList.add('front');
 }
 
 // Dragging Functionality
