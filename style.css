@@ -82,11 +82,11 @@ Window
     color: var(--text);
     display: flex;
     flex-direction: column;
-    height: 70%;
+    height: 80%;
     left: 50%;
     overflow: hidden;
     position: absolute;
-    top: 50%;
+    top: calc(50% - 2.5rem);
     transform: translate(-50%, -50%);
     width: 90%;
 }
@@ -94,6 +94,7 @@ Window
 /* Media query for responsive adjustments */
 @media (max-width: 768px) {
     .window {
+        top: 50%;
         width: calc(100vw - 1.5rem);
         height: calc(100vh - 10rem);
     }
