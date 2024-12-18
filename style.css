@@ -51,6 +51,44 @@ Variables
     --scroll-hover: var(--scroll-hover-dark);
 }
 
+.toggled {
+    --bg: var(--bg-light);
+    --text: var(--text-light);
+    --cursor: var(--cursor-light);
+    --border: var(--border-light);
+    --bg-image: var(--bg-image-light);
+    --header-bg: var(--header-bg-light);
+    --header-bg-gradient: var(--header-bg-gradient-light);
+    --header-text: var(--header-text-light);
+    --scroll-hover: var(--scroll-hover-light);
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: var(--bg-light);
+        --text: var(--text-light);
+        --cursor: var(--cursor-light);
+        --border: var(--border-light);
+        --bg-image: var(--bg-image-light);
+        --header-bg: var(--header-bg-light);
+        --header-bg-gradient: var(--header-bg-gradient-light);
+        --header-text: var(--header-text-light);
+        --scroll-hover: var(--scroll-hover-light);
+    }
+
+    .toggled {
+        --bg: var(--bg-dark);
+        --text: var(--text-dark);
+        --cursor: var(--cursor-dark);
+        --border: var(--border-dark);
+        --bg-image: var(--bg-image-dark);
+        --header-bg: var(--header-bg-dark);
+        --header-bg-gradient: var(--header-bg-gradient-dark);
+        --header-text: var(--header-text-dark);
+        --scroll-hover: var(--scroll-hover-dark);
+    }
+}
+
 /* ==================================
 Base Styles
 ================================== */
@@ -319,18 +357,6 @@ Animations and Effects
 /* ==================================
 Utility Classes
 ================================== */
-.light-mode {
-    --bg: var(--bg-light);
-    --text: var(--text-light);
-    --cursor: var(--cursor-light);
-    --bg-image: var(--bg-image-light);
-    --header-bg: var(--header-bg-light);
-    --header-bg-gradient: var(--header-bg-gradient-light);
-    --header-text: var(--header-text-light);
-    --border: var(--border-light);
-    --scroll-hover: var(--scroll-hover-light);
-}
-
 .window.shaded {
     height: 2.5rem !important;
     /* left: 1.25rem !important;
@@ -467,31 +493,6 @@ a:hover {
     height: 1em;
     vertical-align: middle;
     width: 1ch;
-}
-
-.toggle-btn {
-    background: var(--header-bg-gradient-light);
-    background-color: var(--header-bg-light);
-    border: none;
-    border-radius: 5px;
-    color: var(--header-text-light);
-    cursor: pointer;
-    font-family: 'Noto Sans Mono', monospace;
-    padding: 0.5rem 1rem;
-    position: fixed;
-    right: 1rem;
-    top: 1rem;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.light-mode .toggle-btn {
-    background: var(--header-bg-gradient-dark);
-    background-color: var(--header-bg-dark);
-    color: var(--header-text-dark);
-}
-
-.toggle-btn:hover {
-    opacity: 0.8;
 }
 
 /* ==================================

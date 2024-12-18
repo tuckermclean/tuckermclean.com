@@ -285,7 +285,7 @@ function restoreWindow(e, windowElement) {
 
 // Toggle Light/Dark Mode
 function toggleMode() {
-    document.body.classList.toggle('light-mode');
+    document.body.classList.toggle('toggled');
 }
 
 // Load External HTML
