@@ -8,7 +8,22 @@
     <link href="style.css" rel="stylesheet">
 </head>
 <body>
-    <button class="toggle-btn" onclick="toggleMode()">Toggle Mode</button>
+    <!-- Menu button (start button)-->
+    <div class="start-button" id="start-button">
+        <div class="start-button-icon">☰</div>
+    </div>
+
+    <!-- Menu -->
+    <div class="menu" id="menu">
+        <div class="menu-item" onclick="openPage('welcome', 'Welcome');">Welcome</div>
+        <div class="menu-item" onclick="openPage('intro', 'Introduction');">Introduction</div>
+        <div class="menu-item" onclick="openPage('resume', 'Resume');">Resume</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" onclick="toggleMode();">Toggle Mode</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" onclick="cascadeWindows();">Cascade</div>
+        <div class="menu-item" onclick="tileWindows();">Tile</div>
+    </div>
  
     <!-- Template for window -->
     <template id="window-template">

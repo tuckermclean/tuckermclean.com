@@ -70,23 +70,88 @@ body {
     transition: background-color 0.3s, color 0.3s, background-image 0.3s;
 }
 
+.menu {
+    display: none;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.menu.active {
+    display: flex;
+    position: fixed;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.menu-item {
+    padding: 1rem;
+    margin: 0px;
+}
+
+.menu-item:last-child {
+    padding-bottom: 1rem;
+}
+
+.menu-separator {
+    border-top: 1px solid var(--border);
+    padding: 0 0.5rem;
+}
+
+.menu-item:hover, .menu-separator:hover {
+    background: var(--header-bg-gradient);
+    border-radius: 0.25rem;
+    color: var(--header-text);
+}
+
+.start-button {
+/* Use animated GIF or WebP for better performance as background image */
+    background: url('start-button.gif') no-repeat;
+    background-size: cover;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--header-bg);
+    cursor: pointer;
+    font-family: 'Noto Sans Mono', monospace;
+    height: 5rem;
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
+    transition: background-color 0.3s, color 0.3s;
+    width: 5rem;
+}
+.start-button .start-button-icon {
+    line-height: 5rem;
+    font-size: 2rem;
+    width: 5rem;
+    text-align: center;
+    color: var(--header-text-dark);
+}
+@supports (background-image: url('start-button.webp')) {
+    .start-button {
+      background-image: url('start-button.webp') no-repeat; /* Modern WebP image */
+    }
+  }
+
 /* ==================================
 Window
 ================================== */
-.window {
+.window, .menu {
     background-color: var(--header-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     box-sizing: border-box;
     color: var(--text);
+}
+
+.window {
     display: flex;
     flex-direction: column;
     height: 80%;
     left: 50%;
     overflow: hidden;
     position: absolute;
-    top: calc(50% - 2.5rem);
+    top: calc(50%);
     transform: translate(-50%, -50%);
     width: 90%;
 }

@@ -323,6 +323,61 @@ function openPage(name, niceName) {
         loadHTML(`${name}.html`, `${name}-container`);
     }
 }
+
+// Toggle menu, and place it at the given coordinates
+function toggleMenu(x, y, offset = false) {
+    const contextMenu = document.getElementById('menu');
+    contextMenu.classList.toggle('active');
+    contextMenu.style.top = `${y}px`;
+    // Subtract width of menu from x position to prevent overflow if offset === true
+    if (offset) {
+        contextMenu.style.left = `${x - contextMenu.offsetWidth}px`;
+    } else {
+        contextMenu.style.left = `${x}px`;
+    }
+    contextMenu.style.zIndex = zIndexCounter + 1;
+}
+
+const startButton = document.getElementById('start-button');
+
+// When clicking on the start button, open the menu
+startButton.addEventListener('click', e => {
+    if (document.getElementById('menu').classList.contains('active')) {
+        document.getElementById('menu').classList.remove('active');
+    }
+    console.log(e.clientX, e.clientY);
+    // Set menu to open at the center of the start button
+    toggleMenu(startButton.getBoundingClientRect().left + startButton.offsetWidth / 2, startButton.getBoundingClientRect().top, true);
+});
+
+document.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    // If context menu element is not body, exit
+    //if (e.target.tagName !== 'BODY')
+    //    return;
+    // If context menu is already open, kill it
+    if (document.getElementById('menu').classList.contains('active')) {
+        document.getElementById('menu').classList.remove('active');
+    }
+    console.log(e.clientX, e.clientY);
+    toggleMenu(e.clientX, e.clientY);
+});
+
+// Make context menu go away when clicking outside of it
+document.addEventListener('click', e => {
+    const contextMenu = document.getElementById('menu');
+    if (e.target.closest('.menu')) return;
+    if (e.target.closest('.start-button')) return;
+    contextMenu.classList.remove('active');
+});
+
+// Make context menu go away when clicking on a menu item
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+        document.getElementById('menu').classList.remove('active');
+    });
+});
+
 // Initialize Resume Content
 openPage('welcome', 'Welcome!');
 //loadHTML('resume.html', 'resume-container');
