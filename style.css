@@ -495,6 +495,82 @@ a:hover {
 }
 
 /* ==================================
+Print Styles
+================================== */
+
+@media print {
+    body, p {
+        color: #000000 !important; /* Ensure text is black */
+        font-size: 10pt !important; /* Use a readable font size */
+    }
+
+    .window-body {
+        background-color: #ffffff !important; /* Ensure white background */
+    }
+
+    .window, .window-header, .window-status-bar, .menu, .start-button, .grippy {
+        display: none !important; /* Hide all windows */
+    }
+
+    /* Override inline styles */
+    .front {
+        all: unset !important; /* Resets most styles */
+    }
+
+    /* Show and style the element with class 'front' */
+    .front {
+        display: block !important;
+        width: 100%; /* Let it adapt to page width */
+        height: auto; /* Allow natural height for content */
+        margin: 0;
+        padding: 0;
+        position: static; /* Ensure it flows naturally across pages */
+    }
+
+    /* Reduce the size of headers slightly */
+    h1 {
+        font-size: 1.25rem !important;
+    }
+    h2 {
+        font-size: 1rem !important;
+    }
+    section h2 {
+        border-bottom: 1px solid #000000 !important;
+    }
+    h3 {
+        font-size: 0.9rem !important;
+    }
+    h4 {
+        font-size: 0.8rem !important;
+    }
+    h3, h4 {
+        float: left;
+    }
+
+    h2 + p.date, h3 + p.date, h4 + p.date {
+        float: right;
+        text-align: right;
+    }
+
+    h3 + p.date, h4 + p.date {
+        margin: 1rem 0px !important;
+    }
+
+    /* Reduce margin for each p.date after the first one */
+    p.date:n {
+        margin: 0.9rem 0px !important;
+    }
+
+    p.summary, ul {
+        clear: both;
+    }
+
+    h4 {
+        clear: left;
+    }
+}
+
+/* ==================================
 Resume Styles
 ================================== */
 #resume-container p, #resume-container ul, #resume-container li, #resume-container h3, #resume-container h4 {
