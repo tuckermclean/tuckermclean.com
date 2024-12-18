@@ -565,11 +565,6 @@ Print Styles
         margin: 1rem 0px !important;
     }
 
-    /* Reduce margin for each p.date after the first one */
-    p.date:n {
-        margin: 0.9rem 0px !important;
-    }
-
     p.summary, ul {
         clear: both;
     }
@@ -610,15 +605,11 @@ p.date {
     h2 + p.date, h3 + p.date, h4 + p.date {
         float: right;
         text-align: right;
+        clear: inline-end;
     }
 
     h3 + p.date, h4 + p.date {
         margin: 1.3rem 0px;
-    }
-
-    /* Reduce margin for each p.date after the first one */
-    p.date:n {
-        margin: 1.22rem 0px;
     }
 
     p.summary, ul {
