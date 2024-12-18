@@ -500,9 +500,17 @@ Print Styles
 ================================== */
 
 @media print {
-    body, p {
+    body, p, #resume-container a {
         color: #000000 !important; /* Ensure text is black */
         font-size: 10pt !important; /* Use a readable font size */
+    }
+
+    #resume-container a {
+        text-decoration: none !important; /* Remove underline */
+    }
+
+    span {
+        color: #000000 !important; /* Ensure text is black */
     }
 
     .window-body {
