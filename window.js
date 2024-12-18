@@ -3,14 +3,14 @@ let zIndexCounter = 100; // Starting point for z-index values
 let windows = Array(); // Store window elements
 
 // Create and manage windows programmatically
-function createWindow(title, content) {
+function createWindow(name, title, content) {
     const id = windows.length;
     const template = document.getElementById('window-template');
     const windowClone = template.content.cloneNode(true);
     
     // Assign unique IDs and classes
     const windowElement = windowClone.querySelector('.window');
-    windowElement.id = `window-${id}`;
+    windowElement.id = `window-${name}`;
     
     const header = windowElement.querySelector('.window-header');
     const body = windowElement.querySelector('.window-body');
@@ -311,10 +311,17 @@ function getAddressBarHeight() {
     return totalScreenHeight - visibleViewportHeight; // Address bar height
 }
 
-// Example Usage
 function openPage(name, niceName) {
-    createWindow(niceName, `<div id="${name}-container">Loading ${niceName}...</div>`);
-    loadHTML(`${name}.html`, `${name}-container`);
+    // If window with name already open, bring to front and then stop function
+    const windowExists = windows.some(w => w.id === `window-${name}`);
+    if (windowExists) {
+        bringToFront(windows.find(w => w.id === `window-${name}`));
+        return;
+    } else {
+        // If window does not exist, create new window
+        createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`);
+        loadHTML(`${name}.html`, `${name}-container`);
+    }
 }
 // Initialize Resume Content
 openPage('welcome', 'Welcome!');
