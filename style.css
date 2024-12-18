@@ -36,8 +36,8 @@ Variables
     --scroll-hover-light: #555555;
     
     /* Backgrounds */
-    --bg-image-dark: url('Eliminator-Funk-2.jpg');
-    --bg-image-light: url('Round-Trip-1.jpg');
+    --bg-image-dark: url('I-Know-Better-2.jpg');
+    --bg-image-light: url('I-Know-Better-1.jpg');
     
     /* Defaults */
     --bg: var(--bg-dark);
