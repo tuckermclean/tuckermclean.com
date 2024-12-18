@@ -104,8 +104,9 @@ body {
 }
 
 .start-button {
-/* Use animated GIF or WebP for better performance as background image */
-    background: url('start-button.gif') no-repeat;
+    /* Use animated GIF or WebP for better performance as background image */
+    background-image: url('start-button.gif');
+    background-repeat: no-repeat;
     background-size: cover;
     border: none;
     border-radius: 50%;
@@ -128,9 +129,9 @@ body {
 }
 @supports (background-image: url('start-button.webp')) {
     .start-button {
-      background-image: url('start-button.webp') no-repeat; /* Modern WebP image */
+        background-image: url('start-button.webp'); /* Modern WebP image */
     }
-  }
+}
 
 /* ==================================
 Window
@@ -441,6 +442,11 @@ footer {
     color: var(--symlink-color);
 }
 
+a, .nowrap {
+    /* Don't allow a line break during a link */
+    white-space: nowrap;
+}
+
 a:hover {
     background: var(--symlink-color);
     border-radius: 0.25rem;
@@ -486,4 +492,55 @@ a:hover {
 
 .toggle-btn:hover {
     opacity: 0.8;
+}
+
+/* ==================================
+Resume Styles
+================================== */
+#resume-container p, #resume-container ul, #resume-container li, #resume-container h3, #resume-container h4 {
+    text-align: left;
+}
+
+#resume-container, #resume-container * {
+    text-align: center;
+}
+
+.center {
+    text-align: center !important;
+}
+
+span.location {
+    font-weight: normal;
+}
+
+p.date {
+    margin: -1rem 0px 1.3rem;
+}
+
+@media (min-width: 769px) {
+    h3, h4 {
+        float: left;
+    }
+
+    h2 + p.date, h3 + p.date, h4 + p.date {
+        float: right;
+        text-align: right;
+    }
+
+    h3 + p.date, h4 + p.date {
+        margin: 1.3rem 0px;
+    }
+
+    /* Reduce margin for each p.date after the first one */
+    p.date:n {
+        margin: 1.22rem 0px;
+    }
+
+    p.summary, ul {
+        clear: both;
+    }
+
+    h4 {
+        clear: left;
+    }
 }
