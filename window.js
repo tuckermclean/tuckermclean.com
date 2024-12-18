@@ -40,8 +40,16 @@ function createWindow(name, title, content) {
     // Append to the DOM
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
-    // Bake the window
-    let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height * (id);
+    // Reset the window
+    resetWindow(windowElement);
+    return windowElement;
+}
+
+// Bake the window
+function bakeWindow(windowElement) {
+    // Get window's ordinal position
+    const index = windows.indexOf(windowElement);
+    let offset = (windowElement.querySelector('.window-header').getBoundingClientRect().height * index ) + 1;
     // If on mobile, only offset by half the address bar height, and shrink the width by that amount
     if (window.innerWidth <= 768) {
         offset = offset / 2;
@@ -52,28 +60,15 @@ function createWindow(name, title, content) {
     windowElement.style.top = `${windowElement.offsetTop + offset}px`;
     windowElement.style.left = `${windowElement.offsetLeft + offset}px`;
     windowElement.style.height = `${windowElement.offsetHeight}px`;
-    // Bring to front
-    bringToFront(windowElement);
+
     // Save window state
     saveWindowState(windowElement);
-    return windowElement;
 }
 
 function cascadeWindows() {
     windows.forEach((windowElement, i) => {
         resetWindow(windowElement);
-        let offset = windowElement.querySelector('.window-header').getBoundingClientRect().height * i;
-        // If on mobile, only offset by half the address bar height
-        if (window.innerWidth <= 768) {
-            offset = offset / 2;
-            windowElement.style.width = `${windowElement.offsetWidth - offset}px `;
-        } else {
-            windowElement.style.width = `${windowElement.offsetWidth}px`;
-        }
-        windowElement.style.top = `${windowElement.offsetTop + offset}px`;
-        windowElement.style.left = `${windowElement.offsetLeft + offset}px`;
-        windowElement.style.height = `${windowElement.offsetHeight}px`;
-            bringToFront(windowElement);
+        bringToFront(windowElement);
     });
 }
 
@@ -276,6 +271,15 @@ function resetWindow(windowElement) {
     windowElement.classList.remove('maximized');
     windowElement.classList.remove('minimized');
     windowElement.classList.remove('shaded');
+    if (window.innerWidth > 768) {
+        windowElement.style.maxHeight = '60vh';
+        windowElement.style.maxWidth = '70vw';
+    }
+    bakeWindow(windowElement);
+    windowElement.style.maxHeight = '';
+    windowElement.style.maxWidth = '';
+    // Bring to front
+    bringToFront(windowElement);
 }
 
 function restoreWindow(e, windowElement) {
