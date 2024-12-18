@@ -272,8 +272,8 @@ function resetWindow(windowElement) {
     windowElement.classList.remove('minimized');
     windowElement.classList.remove('shaded');
     if (window.innerWidth > 768) {
-        windowElement.style.maxHeight = '60vh';
-        windowElement.style.maxWidth = '70vw';
+        windowElement.style.maxWidth = '1024px';
+        windowElement.style.maxHeight = '768px';
     }
     bakeWindow(windowElement);
     windowElement.style.maxHeight = '';
