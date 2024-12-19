@@ -355,7 +355,7 @@ function getAddressBarHeight() {
     return totalScreenHeight - visibleViewportHeight; // Address bar height
 }
 
-function openPage(name, niceName, icon = '⚙️') {
+function openPage(name, niceName, icon = '⚙️', minimize = false) {
     // If window with name already open, bring to front and then stop function
     const windowExists = windows.some(w => w.id === `window-${name}`);
     if (windowExists) {
@@ -365,6 +365,10 @@ function openPage(name, niceName, icon = '⚙️') {
         // If window does not exist, create new window
         createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`, icon);
         loadHTML(`${name}.html`, `${name}-container`);
+        // If minimize is true, minimize the window
+        if (minimize) {
+            toggleMinimize(windows.find(w => w.id === `window-${name}`));
+        }
     }
 }
 
@@ -424,6 +428,6 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
 // Initialize Resume Content
 openPage('welcome', 'Welcome!', '👋');
-//loadHTML('resume.html', 'resume-container');
-//loadHTML('intro.html', 'intro-container');
+openPage('intro', 'Introduction', '🧠', true);
+openPage('resume', 'Resume', '📜', true)
 bringToFront(windows[0]);
