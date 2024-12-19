@@ -414,6 +414,7 @@ Utility Classes
 .window.minimized .window-header {
     padding: 0;
     background: none;
+    cursor: inherit;
 }
 
 .window.minimized .window-title {
