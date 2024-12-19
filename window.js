@@ -482,12 +482,18 @@ if (window.location.hash) {
     switch (page) {
         case '/welcome':
         openPage('welcome', 'Welcome!', '👋');
+        openPage('intro', 'Introduction', '🧠', undefined, true);
+        openPage('resume', 'Resume', '📜', undefined, true);
         break;
         case '/intro':
         openPage('intro', 'Introduction', '🧠');
+        openPage('welcome', 'Welcome!', '👋', undefined, true);
+        openPage('resume', 'Resume', '📜', undefined, true);
         break;
         case '/resume':
         openPage('resume', 'Resume', '📜');
+        openPage('welcome', 'Welcome!', '👋', undefined, true);
+        openPage('intro', 'Introduction', '🧠', undefined, true);
         break;
         default:
         openPage('welcome', 'Welcome!', '👋', undefined, false, false);
