@@ -3,7 +3,7 @@ let zIndexCounter = 100; // Starting point for z-index values
 let windows = Array(); // Store window elements
 
 // Create and manage windows programmatically
-function createWindow(name, title, content, icon = '⚙️') {
+function createWindow(name, title, content, icon = '⚙️', bringToFront_ = true) {
     const id = windows.length;
     const template = document.getElementById('window-template');
     const windowClone = template.content.cloneNode(true);
@@ -11,6 +11,8 @@ function createWindow(name, title, content, icon = '⚙️') {
     // Assign unique IDs and classes
     const windowElement = windowClone.querySelector('.window');
     windowElement.id = `window-${name}`;
+    windowElement.name = name;
+    windowElement.title = title;
     
     const header = windowElement.querySelector('.window-header');
     const body = windowElement.querySelector('.window-body');
@@ -25,8 +27,16 @@ function createWindow(name, title, content, icon = '⚙️') {
     body.innerHTML = content;
     
     // Add event listeners
-    windowElement.addEventListener('mousedown', () => bringToFront(windowElement));
-    windowElement.addEventListener('touchstart', () => bringToFront(windowElement));
+    windowElement.addEventListener('mousedown', (e) => {
+        // If clicking on a link, don't bring window to front
+        if (e.target.tagName === 'A') return;
+        bringToFront(windowElement)
+    });
+    windowElement.addEventListener('touchstart', (e) => {
+        // If clicking on a link, don't bring window to front
+        if (e.target.tagName === 'A') return;
+        bringToFront(windowElement)
+    });
     windowElement.addEventListener('click', (e) => restoreWindow(e, windowElement));
     windowElement.addEventListener('touchstart', (e) => restoreWindow(e, windowElement), { passive: false });
     closeBtn.addEventListener('click', () => closeWindow(windowElement));
@@ -42,7 +52,7 @@ function createWindow(name, title, content, icon = '⚙️') {
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
     // Reset the window
-    resetWindow(windowElement);
+    resetWindow(windowElement, true, bringToFront_);
     return windowElement;
 }
 
@@ -120,7 +130,7 @@ function tileWindows() {
     });
 }
 
-function bringToFront(windowElement) {
+function bringToFront(windowElement, changeHash = true) {
     // If window is minimized, un-minimize it
     if (windowElement.classList.contains('minimized')) {
         toggleMinimize(windowElement, false);
@@ -131,6 +141,9 @@ function bringToFront(windowElement) {
     windows.forEach(w => w.classList.remove('front'));
     // Add 'front' class to the clicked window
     windowElement.classList.add('front');
+    if (changeHash) {
+        window.location.hash = `/${windowElement.name}`;
+    }
 }
 
 // Dragging Functionality
@@ -239,13 +252,13 @@ function clearWindowState(windowElement) {
 
 function windowHasState(windowElement) {
     return typeof(windowElement.lastWidth) !== 'undefined' &&
-        typeof(windowElement.lastHeight) !== 'undefined' &&
-        typeof(windowElement.lastTop) !== 'undefined' &&
-        typeof(windowElement.lastLeft) !== 'undefined' &&
-        typeof(windowElement.lastZIndex) !== 'undefined' &&
-        typeof(windowElement.maximized) !== 'undefined' &&
-        typeof(windowElement.minimized) !== 'undefined' &&
-        typeof(windowElement.shaded) !== 'undefined';
+    typeof(windowElement.lastHeight) !== 'undefined' &&
+    typeof(windowElement.lastTop) !== 'undefined' &&
+    typeof(windowElement.lastLeft) !== 'undefined' &&
+    typeof(windowElement.lastZIndex) !== 'undefined' &&
+    typeof(windowElement.maximized) !== 'undefined' &&
+    typeof(windowElement.minimized) !== 'undefined' &&
+    typeof(windowElement.shaded) !== 'undefined';
 }
 
 function restoreWindowState(windowElement) {
@@ -264,9 +277,9 @@ function restoreWindowState(windowElement) {
 }
 
 function toggleMinimize(windowElement, force = undefined) {
-   if (!windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === true)) {
+    if (!windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === true)) {
         saveWindowState(windowElement);
-        resetWindow(windowElement, false);
+        resetWindow(windowElement, false, false);
         windowElement.classList.add('minimized');
         windowElement.classList.remove('front');
         document.body.removeChild(windowElement);
@@ -292,7 +305,7 @@ function toggleMaximize(windowElement, force = undefined) {
     }
 }
 
-function resetWindow(windowElement, bake = true) {
+function resetWindow(windowElement, bake = true, bringToFront_ = true) {
     windowElement.style.width = '';
     windowElement.style.height = '';
     windowElement.style.top = '';
@@ -315,7 +328,9 @@ function resetWindow(windowElement, bake = true) {
         windowElement.style.maxWidth = '';
     }
     // Bring to front
-    bringToFront(windowElement);
+    if (bringToFront_) {
+        bringToFront(windowElement);
+    }
 }
 
 function restoreWindow(e, windowElement) {
@@ -355,20 +370,26 @@ function getAddressBarHeight() {
     return totalScreenHeight - visibleViewportHeight; // Address bar height
 }
 
-function openPage(name, niceName, icon = '⚙️', minimize = false) {
+function openPage(name, niceName, icon = '⚙️', event = undefined, minimize = false, changeHash = true) {
+    if (typeof(event) !== 'undefined') {
+        event.preventDefault();
+    }
     // If window with name already open, bring to front and then stop function
-    const windowExists = windows.some(w => w.id === `window-${name}`);
+    let windowElement = windows.find(w => w.id === `window-${name}`);
+    let windowExists = typeof(windowElement) !== 'undefined';
     if (windowExists) {
-        bringToFront(windows.find(w => w.id === `window-${name}`));
+        bringToFront(windowElement, changeHash);
         return;
     } else {
         // If window does not exist, create new window
-        createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`, icon);
+        windowElement = createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`, icon, false);
         loadHTML(`${name}.html`, `${name}-container`);
-        // If minimize is true, minimize the window
-        if (minimize) {
-            toggleMinimize(windows.find(w => w.id === `window-${name}`));
-        }
+    }
+    // If minimize is true, minimize the window
+    if (minimize) {
+        toggleMinimize(windowElement);
+    } else {
+        bringToFront(windowElement, changeHash);
     }
 }
 
@@ -426,8 +447,32 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
-// Initialize Resume Content
-openPage('welcome', 'Welcome!', '👋');
-openPage('intro', 'Introduction', '🧠', true);
-openPage('resume', 'Resume', '📜', true)
-bringToFront(windows[0]);
+// If the page name is in the URL anchor, open the page
+if (window.location.hash) {
+    const page = window.location.hash.substring(1);
+    switch (page) {
+        case '/welcome':
+        openPage('welcome', 'Welcome!', '👋');
+        break;
+        case '/intro':
+        openPage('intro', 'Introduction', '🧠');
+        break;
+        case '/resume':
+        openPage('resume', 'Resume', '📜');
+        break;
+        default:
+        openPage('welcome', 'Welcome!', '👋', undefined, false, false);
+        openPage('intro', 'Introduction', '🧠', undefined, true);
+        openPage('resume', 'Resume', '📜', undefined, true);
+        bringToFront(windows[0], false);
+        window.location.hash = '';
+        break;
+    }
+} else {
+    // Initialize Resume Content
+    openPage('welcome', 'Welcome!', '👋', undefined, false, false);
+    openPage('intro', 'Introduction', '🧠', undefined, true);
+    openPage('resume', 'Resume', '📜', undefined, true);
+    bringToFront(windows[0], false);
+    window.location.hash = '';
+}
