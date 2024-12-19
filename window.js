@@ -76,6 +76,8 @@ function promoteTopWindow() {
         } else {
             window.location.hash = '';
         }
+    } else {
+        window.location.hash = '';
     }
 }
 
