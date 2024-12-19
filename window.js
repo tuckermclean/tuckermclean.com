@@ -56,6 +56,29 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     return windowElement;
 }
 
+// Function to determine the topmost window
+function getTopWindow() {
+    // Sort windows by z-index (descending) and return the first one
+    try {
+        return windows
+        .map(w => ({ element: w, zIndex: parseInt(w.style.zIndex || 0, 10) }))
+        .sort((a, b) => b.zIndex - a.zIndex)[0].element;
+    } catch (e) {
+        return undefined;
+    }
+}
+
+function promoteTopWindow() {
+    const topWindow = getTopWindow();
+    if (typeof(topWindow) !== 'undefined') {
+        if (!topWindow.classList.contains('minimized')) {
+            bringToFront(topWindow);
+        } else {
+            window.location.hash = '';
+        }
+    }
+}
+
 // Bake the window
 function bakeWindow(windowElement) {
     // Get window's ordinal position
@@ -207,6 +230,7 @@ function startResize(e, windowElement) {
 function closeWindow(windowElement) {
     windowElement.remove();
     windows = windows.filter(w => w !== windowElement);
+    promoteTopWindow();
 }
 
 function toggleShade(e, windowElement, force = undefined) {
@@ -284,7 +308,7 @@ function toggleMinimize(windowElement, force = undefined) {
         windowElement.classList.remove('front');
         document.body.removeChild(windowElement);
         document.getElementById('tasks').appendChild(windowElement);
-     } else if (windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === false)) {
+    } else if (windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === false)) {
         restoreWindowState(windowElement);
         clearWindowState(windowElement);
         windowElement.classList.remove('minimized');
@@ -292,6 +316,7 @@ function toggleMinimize(windowElement, force = undefined) {
         document.body.appendChild(windowElement);
         bringToFront(windowElement);
     }
+    promoteTopWindow();
 }
 
 function toggleMaximize(windowElement, force = undefined) {
@@ -303,6 +328,7 @@ function toggleMaximize(windowElement, force = undefined) {
         clearWindowState(windowElement);
         windowElement.classList.remove('maximized');
     }
+    promoteTopWindow();
 }
 
 function resetWindow(windowElement, bake = true, bringToFront_ = true) {
@@ -331,6 +357,7 @@ function resetWindow(windowElement, bake = true, bringToFront_ = true) {
     if (bringToFront_) {
         bringToFront(windowElement);
     }
+    promoteTopWindow();
 }
 
 function restoreWindow(e, windowElement) {
