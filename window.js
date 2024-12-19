@@ -3,7 +3,7 @@ let zIndexCounter = 100; // Starting point for z-index values
 let windows = Array(); // Store window elements
 
 // Create and manage windows programmatically
-function createWindow(name, title, content) {
+function createWindow(name, title, content, icon = '⚙️') {
     const id = windows.length;
     const template = document.getElementById('window-template');
     const windowClone = template.content.cloneNode(true);
@@ -21,6 +21,7 @@ function createWindow(name, title, content) {
     
     // Set window title and content
     header.querySelector('.window-title').textContent = title;
+    header.querySelector('.window-icon').textContent = icon;
     body.innerHTML = content;
     
     // Add event listeners
@@ -65,8 +66,19 @@ function bakeWindow(windowElement) {
     saveWindowState(windowElement);
 }
 
+function minimizeWindows() {
+    windows.forEach(windowElement => {
+        if (windowElement.classList.contains('minimized')) return;
+        toggleMinimize(windowElement);
+    });
+}
+
 function cascadeWindows() {
     windows.forEach((windowElement, i) => {
+        // If window is minimized, un-minimize it
+        if (windowElement.classList.contains('minimized')) {
+            toggleMinimize(windowElement, false);
+        }
         resetWindow(windowElement);
         bringToFront(windowElement);
     });
@@ -90,7 +102,11 @@ function tileWindows() {
 
     // Position each window in the grid
     windows.forEach((windowElement, index) => {
-        windowElement.classList.remove('minimized', 'maximized', 'shaded');
+        // If window is minimized, un-minimize it
+        if (windowElement.classList.contains('minimized')) {
+            toggleMinimize(windowElement, false);
+        }
+        windowElement.classList.remove('maximized', 'shaded');
 
         const row = Math.floor(index / columns);
         const column = index % columns;
@@ -100,7 +116,6 @@ function tileWindows() {
         windowElement.style.height = `${windowHeight}px`;
         windowElement.style.top = `${windowHeight / 2 + row * windowHeight}px`;
         windowElement.style.left = `${windowWidth / 2 + column * windowWidth}px`;
-        windowElement.classList.remove('minimized', 'maximized', 'shaded'); // Reset states
         bringToFront(windowElement);
     });
 }
@@ -201,6 +216,7 @@ function saveWindowState(windowElement) {
     windowElement.lastHeight = windowElement.style.height;
     windowElement.lastTop = windowElement.style.top;
     windowElement.lastLeft = windowElement.style.left;
+    windowElement.lastZIndex = windowElement.style.zIndex;
     windowElement.maximized = windowElement.classList.contains('maximized');
     windowElement.minimized = windowElement.classList.contains('minimized');
     windowElement.shaded = windowElement.classList.contains('shaded');
@@ -211,6 +227,7 @@ function clearWindowState(windowElement) {
     windowElement.lastHeight = undefined;
     windowElement.lastTop = undefined;
     windowElement.lastLeft = undefined;
+    windowElement.lastZIndex = undefined;
     windowElement.maximized = undefined;
     windowElement.minimized = undefined;
     windowElement.shaded = undefined;
@@ -221,6 +238,7 @@ function windowHasState(windowElement) {
         typeof(windowElement.lastHeight) !== 'undefined' &&
         typeof(windowElement.lastTop) !== 'undefined' &&
         typeof(windowElement.lastLeft) !== 'undefined' &&
+        typeof(windowElement.lastZIndex) !== 'undefined' &&
         typeof(windowElement.maximized) !== 'undefined' &&
         typeof(windowElement.minimized) !== 'undefined' &&
         typeof(windowElement.shaded) !== 'undefined';
@@ -232,6 +250,7 @@ function restoreWindowState(windowElement) {
         windowElement.style.height = windowElement.lastHeight;
         windowElement.style.top = windowElement.lastTop;
         windowElement.style.left = windowElement.lastLeft;
+        windowElement.style.zIndex = windowElement.lastZIndex;
         if (windowElement.maximized) { windowElement.classList.add('maximized') } else { windowElement.classList.remove('maximized')};
         if (windowElement.minimized) { windowElement.classList.add('minimized') } else { windowElement.classList.remove('minimized')};
         if (windowElement.shaded) { windowElement.classList.add('shaded') } else { windowElement.classList.remove('shaded')};
@@ -243,12 +262,18 @@ function restoreWindowState(windowElement) {
 function toggleMinimize(windowElement, force = undefined) {
    if (!windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === true)) {
         saveWindowState(windowElement);
-        resetWindow(windowElement);
+        resetWindow(windowElement, false);
         windowElement.classList.add('minimized');
+        windowElement.classList.remove('front');
+        document.body.removeChild(windowElement);
+        document.getElementById('tasks').appendChild(windowElement);
      } else if (windowElement.classList.contains('minimized') || (typeof(force) === 'boolean' && force === false)) {
         restoreWindowState(windowElement);
         clearWindowState(windowElement);
         windowElement.classList.remove('minimized');
+        document.getElementById('tasks').removeChild(document.getElementById(windowElement.id));
+        document.body.appendChild(windowElement);
+        bringToFront(windowElement);
     }
 }
 
@@ -263,21 +288,28 @@ function toggleMaximize(windowElement, force = undefined) {
     }
 }
 
-function resetWindow(windowElement) {
+function resetWindow(windowElement, bake = true) {
     windowElement.style.width = '';
     windowElement.style.height = '';
     windowElement.style.top = '';
     windowElement.style.left = '';
+    windowElement.style.zIndex = '';
+    if (windowElement.classList.contains('minimized')) {
+        document.getElementById('tasks').removeChild(document.getElementById(`window-${windowElement.id}`));
+        document.body.appendChild(windowElement);
+    }
     windowElement.classList.remove('maximized');
     windowElement.classList.remove('minimized');
     windowElement.classList.remove('shaded');
-    if (window.innerWidth > 768) {
-        windowElement.style.maxWidth = '1024px';
-        windowElement.style.maxHeight = '768px';
+    if (bake) {
+        if (window.innerWidth > 768) {
+            windowElement.style.maxWidth = '1024px';
+            windowElement.style.maxHeight = '768px';
+        }
+        bakeWindow(windowElement);
+        windowElement.style.maxHeight = '';
+        windowElement.style.maxWidth = '';
     }
-    bakeWindow(windowElement);
-    windowElement.style.maxHeight = '';
-    windowElement.style.maxWidth = '';
     // Bring to front
     bringToFront(windowElement);
 }
@@ -319,7 +351,7 @@ function getAddressBarHeight() {
     return totalScreenHeight - visibleViewportHeight; // Address bar height
 }
 
-function openPage(name, niceName) {
+function openPage(name, niceName, icon = '⚙️') {
     // If window with name already open, bring to front and then stop function
     const windowExists = windows.some(w => w.id === `window-${name}`);
     if (windowExists) {
@@ -327,7 +359,7 @@ function openPage(name, niceName) {
         return;
     } else {
         // If window does not exist, create new window
-        createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`);
+        createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`, icon);
         loadHTML(`${name}.html`, `${name}-container`);
     }
 }
@@ -387,7 +419,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 });
 
 // Initialize Resume Content
-openPage('welcome', 'Welcome!');
+openPage('welcome', 'Welcome!', '👋');
 //loadHTML('resume.html', 'resume-container');
 //loadHTML('intro.html', 'intro-container');
 bringToFront(windows[0]);

@@ -13,16 +13,19 @@
         <div class="start-button-icon">☰</div>
     </div>
 
+    <div class="tasks" id="tasks"></div>
+
     <!-- Menu -->
     <div class="menu" id="menu">
-        <div class="menu-item" onclick="openPage('welcome', 'Welcome');">Welcome</div>
-        <div class="menu-item" onclick="openPage('intro', 'Introduction');">Introduction</div>
-        <div class="menu-item" onclick="openPage('resume', 'Resume');">Resume</div>
+        <div class="menu-item" onclick="openPage('welcome', 'Welcome', '👋');">Welcome</div>
+        <div class="menu-item" onclick="openPage('intro', 'Introduction', '🧠');">Introduction</div>
+        <div class="menu-item" onclick="openPage('resume', 'Resume', '📜');">Resume</div>
         <div class="menu-separator"></div>
         <div class="menu-item" onclick="toggleMode();">Toggle Mode</div>
         <div class="menu-separator"></div>
         <div class="menu-item" onclick="cascadeWindows();">Cascade Windows</div>
         <div class="menu-item" onclick="tileWindows();">Tile Windows</div>
+        <div class="menu-item" onclick="minimizeWindows();">Minimize All</div>
     </div>
  
     <!-- Template for window -->
@@ -34,7 +37,10 @@
                     <div class="button minimize" aria-label="Minimize"></div>
                     <div class="button maximize" aria-label="Maximize"></div>
                 </div>
-                <span class="window-title">Window</span>
+                <div class="title">
+                    <span class="window-icon">⚙️</span>
+                    <span class="window-title">Window</span>
+                </div>
             </div>
             <div class="window-body"></div>
             <div class="window-status-bar">Status: Ready to work!</div>

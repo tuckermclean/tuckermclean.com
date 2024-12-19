@@ -141,6 +141,13 @@ body {
     color: var(--header-text);
 }
 
+.tasks {
+    position: fixed;
+    top: 6.5rem;
+    right: 1rem;
+    border: 0;
+}
+
 .start-button {
     /* Use animated GIF or WebP for better performance as background image */
     background-image: url('start-button.gif');
@@ -216,13 +223,18 @@ Window
     padding: 0.5rem 1rem;
 }
 
-.window-header .buttons {
+.window-header .buttons, .window-header .title {
     display: flex;
     gap: 0.5rem;
+    flex-direction: row;
+}
+
+.window-header .title {
+    justify-content: center;
+    width: 100%;
 }
 
 .window-header .window-title {
-    width: 100%;
     text-align: center;
     color: var(--header-text);
     font-size: 1rem;
@@ -378,22 +390,39 @@ Utility Classes
 }
 
 .window.minimized {
-    background: var(--header-bg-gradient);
-    background-color: var(--header-bg);
-    border: 1px solid var(--border);
+    background: none;
+    border: 0;
     border-radius: 5px;
-    position: fixed; /* Anchor it to the viewport */
+    position: static !important;
+    display: block;
     top: calc(100vh - 4.5rem) !important; /* Distance from the top of the viewport */
     bottom: 1rem !important; /* Distance from the bottom of the viewport */
     left: 1rem !important; /* Distance from the left of the viewport */
-    width: 8rem; /* Adjust width for compact display */
-    height: auto; /* Fit content without stretching */
-    overflow: hidden; /* Ensure no extra content shows */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    width: 5rem; /* Adjust width for compact display */
+    height: 5rem; /* Fit content without stretching */
+    box-shadow: none;
     color: var(--header-text);
     cursor: pointer;
     padding: 0.5rem 1rem;
     transform: none !important; /* Ensure no transforms interfere */
+    line-height: 5rem; /* Center content vertically */
+    text-align: center; /* Center content horizontally */
+    padding: 0; /* Remove padding */
+    margin: 0.5rem 0px; /* Add margin between windows */
+}
+
+.window.minimized .window-header {
+    padding: 0;
+    background: none;
+}
+
+.window.minimized .window-title {
+    display: none;
+}
+
+.window.minimized .window-icon {
+    font-size: 4.5rem;
+    line-height: 5rem;
 }
 
 /* Hide unnecessary sections when minimized */
@@ -401,26 +430,6 @@ Utility Classes
 .window.minimized .window-status-bar,
 .window.minimized .buttons {
     display: none;
-}
-
-/* Keep header visible and styled appropriately */
-.window.minimized .window-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0.5rem;
-    border: none;
-    background: none; /* Remove extra styling from header */
-    cursor: pointer;
-}
-
-/* Ensure the title remains visible and styled */
-.window.minimized .window-title {
-    display: block;
-    font-size: 0.85rem;
-    text-align: center;
-    color: var(--header-text);
-    font-weight: normal;
 }
 
 header {
