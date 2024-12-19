@@ -502,7 +502,7 @@ Print Styles
 @media print {
     body, p, #resume-container a {
         color: #000000 !important; /* Ensure text is black */
-        font-size: 10pt !important; /* Use a readable font size */
+        font-size: 9.4pt !important; /* Use a readable font size */
     }
 
     #resume-container a {
@@ -591,10 +591,21 @@ Resume Styles
 
 span.location {
     font-weight: normal;
+    white-space: nowrap;
+}
+
+span.location::before {
+    content: '📍';
 }
 
 p.date {
     margin: -1rem 0px 1.3rem;
+    white-space: nowrap;
+}
+
+p.date::before {
+    content: '📅';
+    margin-right: 0.15rem;
 }
 
 @media (min-width: 769px) {
