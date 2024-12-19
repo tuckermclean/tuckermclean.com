@@ -121,6 +121,10 @@ function tileWindows() {
 }
 
 function bringToFront(windowElement) {
+    // If window is minimized, un-minimize it
+    if (windowElement.classList.contains('minimized')) {
+        toggleMinimize(windowElement, false);
+    }
     zIndexCounter++; // Increment global counter
     windowElement.style.zIndex = zIndexCounter; // Assign new z-index to the element
     // Remove 'front' class from all windows
