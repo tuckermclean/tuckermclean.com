@@ -618,6 +618,14 @@ p.date::before {
     margin-right: 0.15rem;
 }
 
+.moai {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+}
+.moai::before {
+    content: '🗿';
+}
+
 @media (min-width: 769px) {
     h3, h4 {
         float: left;
