@@ -444,7 +444,6 @@ function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
         windowElement.querySelector('.window-title').textContent = niceName;
         windowElement.querySelector('.window-icon').textContent = icon;
         loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
-            console.log(windowElement);
             if (typeof(windowElement) !== 'undefined') {
                 windowElement.classList.remove('front');
                 bringToFront(windowElement);
@@ -468,7 +467,6 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
     } else {
         windowElement = createWindow(name, niceName, `<div id="${name}-container"></div>`, icon, false);
         loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
-            console.log(windowElement);
             if (typeof(windowElement) !== 'undefined') {
                 if (minimize) {
                     toggleMinimize(windowElement);
@@ -501,7 +499,6 @@ startButton.addEventListener('click', e => {
     if (document.getElementById('menu').classList.contains('active')) {
         document.getElementById('menu').classList.remove('active');
     }
-    console.log(e.clientX, e.clientY);
     // Set menu to open at the center of the start button
     toggleMenu(startButton.getBoundingClientRect().left + startButton.offsetWidth / 2, startButton.getBoundingClientRect().top, true);
 });
@@ -515,7 +512,6 @@ document.addEventListener('contextmenu', e => {
     if (document.getElementById('menu').classList.contains('active')) {
         document.getElementById('menu').classList.remove('active');
     }
-    console.log(e.clientX, e.clientY);
     toggleMenu(e.clientX, e.clientY);
 });
 
@@ -536,7 +532,6 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
 // Handle history back event
 window.addEventListener('popstate', e => {
-    console.log(e);
     openPageFromUrl();
 });
 
