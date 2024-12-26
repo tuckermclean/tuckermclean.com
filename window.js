@@ -174,7 +174,7 @@ function bringToFront(windowElement, changeHash = true) {
         if (windowElement.name !== window.location.hash.substring(2)) {
             history.pushState(null, null, '#/' + windowElement.name);
         } else if (window.location.hash === '') {
-            history.replaceState(null, null, '#/' + windowElement.name);
+            history.replaceState(null, null, '/' + windowElement.name);
         }
     }
 }
@@ -535,32 +535,32 @@ window.addEventListener('popstate', e => {
     openPageFromUrl();
 });
 
+function getCurrentPage() {
+    const url = new URL(window.location.href);
+    return (url.pathname + url.hash).split('/').slice(-1)[0]
+}
+
 // If the page name is in the URL anchor, open the page
 function openPageFromUrl() {
-    if (window.location.hash) {
-        const page = window.location.hash.substring(1);
-        switch (page) {
-            case '/welcome':
-            goTo('welcome', 'Welcome!', '👋');
-            break;
-            case '/intro':
-            goTo('intro', 'Introduction', '🧠');
-            break;
-            case '/resume':
-            goTo('resume', 'Resume', '📜');
-            break;
-            default:
-            goTo('welcome', 'Welcome!', '👋');
-            bringToFront(windows[0], false);
-            history.pushState(null, null, '');
-            break;
-        }
-    } else {
-        // Initialize Resume Content
+    const page = getCurrentPage();
+    switch (page) {
+        case 'welcome':
+        goTo('welcome', 'Welcome!', '👋');
+        break;
+        case 'intro':
+        goTo('intro', 'Introduction', '🧠');
+        break;
+        case 'resume':
+        goTo('resume', 'Resume', '📜');
+        break;
+        default:
         goTo('welcome', 'Welcome!', '👋');
         bringToFront(windows[0], false);
-        history.pushState(null, null, '');
+        //history.pushState(null, null, '');
+        break;
     }
 }
 
-openPageFromUrl();
+if (typeof(getTopWindow()) === 'undefined') {
+    openPageFromUrl();
+}
