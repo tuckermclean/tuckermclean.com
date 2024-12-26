@@ -29,12 +29,12 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     // Add event listeners
     windowElement.addEventListener('mousedown', (e) => {
         // If clicking on a link, don't bring window to front
-        //if (e.target.tagName === 'A') return;
+        if (e.target.tagName === 'A') return;
         bringToFront(windowElement)
     });
     windowElement.addEventListener('touchstart', (e) => {
         // If clicking on a link, don't bring window to front
-        //if (e.target.tagName === 'A') return;
+        if (e.target.tagName === 'A') return;
         bringToFront(windowElement)
     });
     windowElement.addEventListener('click', (e) => restoreWindow(e, windowElement));
@@ -47,7 +47,7 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     header.addEventListener('touchstart', (e) => startDrag(e, windowElement), { passive: false });
     grippy.addEventListener('mousedown', (e) => startResize(e, windowElement));
     grippy.addEventListener('touchstart', (e) => startResize(e, windowElement), { passive: false });
-
+    
     // Append to the DOM
     document.body.appendChild(windowElement);
     windows[id] = windowElement;
@@ -74,10 +74,10 @@ function promoteTopWindow() {
         if (!topWindow.classList.contains('minimized')) {
             bringToFront(topWindow);
         } else {
-            window.location.hash = '';
+            history.pushState(null, null, '');
         }
     } else {
-        window.location.hash = '';
+        history.pushState(null, null, '');
     }
 }
 
@@ -96,7 +96,7 @@ function bakeWindow(windowElement) {
     windowElement.style.top = `${windowElement.offsetTop + offset}px`;
     windowElement.style.left = `${windowElement.offsetLeft + offset}px`;
     windowElement.style.height = `${windowElement.offsetHeight}px`;
-
+    
     // Save window state
     saveWindowState(windowElement);
 }
@@ -122,19 +122,19 @@ function cascadeWindows() {
 function tileWindows() {
     const windowCount = windows.length;
     if (windowCount === 0) return;
-
+    
     // Get viewport dimensions
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-
+    
     // Calculate grid dimensions
     const columns = Math.ceil(Math.sqrt(windowCount));
     const rows = Math.ceil(windowCount / columns);
-
+    
     // Calculate size of each window
     const windowWidth = Math.floor(viewportWidth / columns);
     const windowHeight = Math.floor(viewportHeight / rows);
-
+    
     // Position each window in the grid
     windows.forEach((windowElement, index) => {
         // If window is minimized, un-minimize it
@@ -142,10 +142,10 @@ function tileWindows() {
             toggleMinimize(windowElement, false);
         }
         windowElement.classList.remove('maximized', 'shaded');
-
+        
         const row = Math.floor(index / columns);
         const column = index % columns;
-
+        
         windowElement.style.position = 'absolute';
         windowElement.style.width = `${windowWidth}px`;
         windowElement.style.height = `${windowHeight}px`;
@@ -156,6 +156,9 @@ function tileWindows() {
 }
 
 function bringToFront(windowElement, changeHash = true) {
+    if (typeof(windowElement) === 'undefined') return;
+    // If window is already visible and up front, stop function
+    if (windowElement.classList.contains('front')) return;
     // If window is minimized, un-minimize it
     if (windowElement.classList.contains('minimized')) {
         toggleMinimize(windowElement, false);
@@ -167,7 +170,12 @@ function bringToFront(windowElement, changeHash = true) {
     // Add 'front' class to the clicked window
     windowElement.classList.add('front');
     if (changeHash) {
-        window.location.hash = `/${windowElement.name}`;
+        // If new state does not match most recent history state, push new state
+        if (windowElement.name !== window.location.hash.substring(2)) {
+            history.pushState(null, null, '#/' + windowElement.name);
+        } else if (window.location.hash === '') {
+            history.replaceState(null, null, '#/' + windowElement.name);
+        }
     }
 }
 
@@ -241,7 +249,7 @@ function toggleShade(e, windowElement, force = undefined) {
         if (windowElement.classList.contains('minimized')) return; // Prevent shading when minimized
         e.preventDefault();
     }
-
+    
     topDistance = windowElement.getBoundingClientRect().top;
     if (!windowElement.classList.contains('shaded') || (typeof(force) === 'boolean' && force === true)) {
         saveWindowState(windowElement);
@@ -364,7 +372,7 @@ function resetWindow(windowElement, bake = true, bringToFront_ = true) {
 
 function restoreWindow(e, windowElement) {
     if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
-
+    
     if (windowElement.classList.contains('minimized')) {
         e.preventDefault();
         toggleMinimize(windowElement);
@@ -377,7 +385,7 @@ function toggleMode() {
 }
 
 // Load External HTML
-function loadHTML(url, targetElementId) {
+function loadHTML(url, targetElementId, callback = () => {}) {
     fetch(url)
     .then(response => {
         if (!response.ok) {
@@ -386,7 +394,18 @@ function loadHTML(url, targetElementId) {
         return response.text();
     })
     .then(html => {
-        document.getElementById(targetElementId).innerHTML = html;
+        targetElement = document.getElementById(targetElementId);
+        if (typeof(targetElement) !== 'undefined' && targetElement !== null) {
+            targetElement.innerHTML = html;
+            // Find ancestor window element
+            let ancestor = targetElement.closest('.window');
+            // Run callback function if provided
+            if (typeof(callback) === 'function') {
+                callback(ancestor);
+            }
+        } else {
+            callback(undefined);
+        }
     })
     .catch(error => {
         console.error('Error loading HTML:', error);
@@ -399,7 +418,19 @@ function getAddressBarHeight() {
     return totalScreenHeight - visibleViewportHeight; // Address bar height
 }
 
+function goTo(name, niceName, icon = '⚙️') {
+    // Get top window
+    const topWindow = getTopWindow();
+    // If top window is not undefined, navigate to the page
+    if (typeof(topWindow) !== 'undefined') {
+        navigateToPage(topWindow.id, name, niceName, icon);
+    } else {
+        openPage(name, niceName, icon);
+    }
+}
+
 function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
+    if (targetWindowId === `window-${name}`) return;
     const windowElement = windows.find(w => w.id === targetWindowId);
     const oldWindow = windows.find(w => w.id === `window-${name}`);
     if (typeof(oldWindow) !== 'undefined') {
@@ -408,11 +439,17 @@ function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
     if (typeof(windowElement) !== 'undefined') {
         windowElement.id = "window-" + name;
         windowElement.name = name;
-        windowElement.querySelector('.window-body').innerHTML = `<div id="${name}-container">Loading ${niceName}...</div>`;
+        windowElement.title = niceName;
+        windowElement.querySelector('.window-body').innerHTML = `<div id="${name}-container"></div>`;
         windowElement.querySelector('.window-title').textContent = niceName;
         windowElement.querySelector('.window-icon').textContent = icon;
-        loadHTML(`${name}.html`, `${name}-container`);
-        windowElement.click();
+        loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
+            console.log(windowElement);
+            if (typeof(windowElement) !== 'undefined') {
+                windowElement.classList.remove('front');
+                bringToFront(windowElement);
+            }
+        });
     } else {
         openPage(name, niceName, icon, undefined, false, false);
     }
@@ -429,15 +466,17 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
         bringToFront(windowElement, changeHash);
         return;
     } else {
-        // If window does not exist, create new window
-        windowElement = createWindow(name, niceName, `<div id="${name}-container">Loading ${niceName}...</div>`, icon, false);
-        loadHTML(`${name}.html`, `${name}-container`);
-    }
-    // If minimize is true, minimize the window
-    if (minimize) {
-        toggleMinimize(windowElement);
-    } else {
-        bringToFront(windowElement, changeHash);
+        windowElement = createWindow(name, niceName, `<div id="${name}-container"></div>`, icon, false);
+        loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
+            console.log(windowElement);
+            if (typeof(windowElement) !== 'undefined') {
+                if (minimize) {
+                    toggleMinimize(windowElement);
+                } else {
+                    bringToFront(windowElement, changeHash);
+                }
+            }
+        });
     }
 }
 
@@ -495,38 +534,38 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
+// Handle history back event
+window.addEventListener('popstate', e => {
+    console.log(e);
+    openPageFromUrl();
+});
+
 // If the page name is in the URL anchor, open the page
-if (window.location.hash) {
-    const page = window.location.hash.substring(1);
-    switch (page) {
-        case '/welcome':
-        openPage('welcome', 'Welcome!', '👋');
-        openPage('intro', 'Introduction', '🧠', undefined, true);
-        openPage('resume', 'Resume', '📜', undefined, true);
-        break;
-        case '/intro':
-        openPage('intro', 'Introduction', '🧠');
-        openPage('welcome', 'Welcome!', '👋', undefined, true);
-        openPage('resume', 'Resume', '📜', undefined, true);
-        break;
-        case '/resume':
-        openPage('resume', 'Resume', '📜');
-        openPage('welcome', 'Welcome!', '👋', undefined, true);
-        openPage('intro', 'Introduction', '🧠', undefined, true);
-        break;
-        default:
-        openPage('welcome', 'Welcome!', '👋', undefined, false, false);
-        openPage('intro', 'Introduction', '🧠', undefined, true);
-        openPage('resume', 'Resume', '📜', undefined, true);
+function openPageFromUrl() {
+    if (window.location.hash) {
+        const page = window.location.hash.substring(1);
+        switch (page) {
+            case '/welcome':
+            goTo('welcome', 'Welcome!', '👋');
+            break;
+            case '/intro':
+            goTo('intro', 'Introduction', '🧠');
+            break;
+            case '/resume':
+            goTo('resume', 'Resume', '📜');
+            break;
+            default:
+            goTo('welcome', 'Welcome!', '👋');
+            bringToFront(windows[0], false);
+            history.pushState(null, null, '');
+            break;
+        }
+    } else {
+        // Initialize Resume Content
+        goTo('welcome', 'Welcome!', '👋');
         bringToFront(windows[0], false);
-        window.location.hash = '';
-        break;
+        history.pushState(null, null, '');
     }
-} else {
-    // Initialize Resume Content
-    openPage('welcome', 'Welcome!', '👋', undefined, false, false);
-    openPage('intro', 'Introduction', '🧠', undefined, true);
-    openPage('resume', 'Resume', '📜', undefined, true);
-    bringToFront(windows[0], false);
-    window.location.hash = '';
 }
+
+openPageFromUrl();
