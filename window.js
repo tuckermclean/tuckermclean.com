@@ -29,12 +29,12 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     // Add event listeners
     windowElement.addEventListener('mousedown', (e) => {
         // If clicking on a link, don't bring window to front
-        if (e.target.tagName === 'A') return;
+        //if (e.target.tagName === 'A') return;
         bringToFront(windowElement)
     });
     windowElement.addEventListener('touchstart', (e) => {
         // If clicking on a link, don't bring window to front
-        if (e.target.tagName === 'A') return;
+        //if (e.target.tagName === 'A') return;
         bringToFront(windowElement)
     });
     windowElement.addEventListener('click', (e) => restoreWindow(e, windowElement));
@@ -397,6 +397,25 @@ function getAddressBarHeight() {
     const totalScreenHeight = window.screen.height; // Total screen height
     const visibleViewportHeight = window.innerHeight; // Visible viewport height
     return totalScreenHeight - visibleViewportHeight; // Address bar height
+}
+
+function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
+    const windowElement = windows.find(w => w.id === targetWindowId);
+    const oldWindow = windows.find(w => w.id === `window-${name}`);
+    if (typeof(oldWindow) !== 'undefined') {
+        closeWindow(oldWindow);
+    }
+    if (typeof(windowElement) !== 'undefined') {
+        windowElement.id = "window-" + name;
+        windowElement.name = name;
+        windowElement.querySelector('.window-body').innerHTML = `<div id="${name}-container">Loading ${niceName}...</div>`;
+        windowElement.querySelector('.window-title').textContent = niceName;
+        windowElement.querySelector('.window-icon').textContent = icon;
+        loadHTML(`${name}.html`, `${name}-container`);
+        windowElement.click();
+    } else {
+        openPage(name, niceName, icon, undefined, false, false);
+    }
 }
 
 function openPage(name, niceName, icon = '⚙️', event = undefined, minimize = false, changeHash = true) {
