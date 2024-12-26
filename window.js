@@ -546,6 +546,7 @@ function openPageFromUrl() {
     switch (page) {
         case 'welcome':
         goTo('welcome', 'Welcome!', '👋');
+        history.replaceState(null, null, '/');
         break;
         case 'intro':
         goTo('intro', 'Introduction', '🧠');
@@ -556,7 +557,7 @@ function openPageFromUrl() {
         default:
         goTo('welcome', 'Welcome!', '👋');
         bringToFront(windows[0], false);
-        //history.pushState(null, null, '');
+        history.replaceState(null, null, '/');
         break;
     }
 }
