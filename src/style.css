@@ -36,8 +36,8 @@ Variables
     --scroll-hover-light: #555555;
     
     /* Backgrounds */
-    --bg-image-dark: url('I-Know-Better-2.jpg');
-    --bg-image-light: url('I-Know-Better-1.jpg');
+    --bg-image-dark: url('/I-Know-Better-2.jpg');
+    --bg-image-light: url('/I-Know-Better-1.jpg');
     
     /* Defaults */
     --bg: var(--bg-dark);
@@ -150,7 +150,7 @@ body {
 
 .start-button {
     /* Use animated GIF or WebP for better performance as background image */
-    background-image: url('start-button.gif');
+    background-image: url('/start-button.gif');
     background-repeat: no-repeat;
     background-size: cover;
     border: none;
@@ -172,9 +172,9 @@ body {
     text-align: center;
     color: var(--header-text-dark);
 }
-@supports (background-image: url('start-button.webp')) {
+@supports (background-image: url('/start-button.webp')) {
     .start-button {
-        background-image: url('start-button.webp'); /* Modern WebP image */
+        background-image: url('/start-button.webp'); /* Modern WebP image */
     }
 }
 
