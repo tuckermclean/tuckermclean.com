@@ -1,3 +1,4 @@
+import "@fontsource/noto-sans-mono";
 import './style.css'
 import { openPage, toggleMode, cascadeWindows, tileWindows, minimizeWindows } from './window.js'
 
