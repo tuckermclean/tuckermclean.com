@@ -56,6 +56,9 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     return windowElement;
 }
 
+// Export functions and variables
+export { createWindow, zIndexCounter, windows, openPage, toggleMode, cascadeWindows, tileWindows, minimizeWindows };
+
 // Function to determine the topmost window
 function getTopWindow() {
     // Sort windows by z-index (descending) and return the first one
@@ -385,7 +388,7 @@ function toggleMode() {
 }
 
 // Load External HTML
-function loadHTML(url, targetElementId, callback = () => {}) {
+function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
     fetch(url)
     .then(response => {
         if (!response.ok) {
@@ -394,7 +397,7 @@ function loadHTML(url, targetElementId, callback = () => {}) {
         return response.text();
     })
     .then(html => {
-        targetElement = document.getElementById(targetElementId);
+        let targetElement = document.getElementById(targetElementId);
         if (typeof(targetElement) !== 'undefined' && targetElement !== null) {
             targetElement.innerHTML = html;
             // Find ancestor window element
@@ -404,7 +407,11 @@ function loadHTML(url, targetElementId, callback = () => {}) {
                 callback(ancestor);
             }
         } else {
-            callback(undefined);
+            if (retries > 0) {
+                loadHTML(url, targetElementId, callback, retries - 5);
+            } else {
+                callback(undefined);
+            }
         }
     })
     .catch(error => {
@@ -492,49 +499,6 @@ function toggleMenu(x, y, offset = false) {
     contextMenu.style.zIndex = zIndexCounter + 1;
 }
 
-const startButton = document.getElementById('start-button');
-
-// When clicking on the start button, open the menu
-startButton.addEventListener('click', e => {
-    if (document.getElementById('menu').classList.contains('active')) {
-        document.getElementById('menu').classList.remove('active');
-    }
-    // Set menu to open at the center of the start button
-    toggleMenu(startButton.getBoundingClientRect().left + startButton.offsetWidth / 2, startButton.getBoundingClientRect().top, true);
-});
-
-document.addEventListener('contextmenu', e => {
-    e.preventDefault();
-    // If context menu element is not body, exit
-    //if (e.target.tagName !== 'BODY')
-    //    return;
-    // If context menu is already open, kill it
-    if (document.getElementById('menu').classList.contains('active')) {
-        document.getElementById('menu').classList.remove('active');
-    }
-    toggleMenu(e.clientX, e.clientY);
-});
-
-// Make context menu go away when clicking outside of it
-document.addEventListener('click', e => {
-    const contextMenu = document.getElementById('menu');
-    if (e.target.closest('.menu')) return;
-    if (e.target.closest('.start-button')) return;
-    contextMenu.classList.remove('active');
-});
-
-// Make context menu go away when clicking on a menu item
-document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', () => {
-        document.getElementById('menu').classList.remove('active');
-    });
-});
-
-// Handle history back event
-window.addEventListener('popstate', e => {
-    openPageFromUrl();
-});
-
 function getCurrentPage() {
     const url = new URL(window.location.href);
     return (url.pathname + url.hash).split('/').slice(-1)[0]
@@ -562,6 +526,51 @@ function openPageFromUrl() {
     }
 }
 
-if (typeof(getTopWindow()) === 'undefined') {
-    openPageFromUrl();
-}
+(function() {
+    const startButton = document.getElementById('start-button');
+    
+    // When clicking on the start button, open the menu
+    startButton.addEventListener('click', e => {
+        if (document.getElementById('menu').classList.contains('active')) {
+            document.getElementById('menu').classList.remove('active');
+        }
+        // Set menu to open at the center of the start button
+        toggleMenu(startButton.getBoundingClientRect().left + startButton.offsetWidth / 2, startButton.getBoundingClientRect().top, true);
+    });
+    
+    document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        // If context menu element is not body, exit
+        //if (e.target.tagName !== 'BODY')
+        //    return;
+        // If context menu is already open, kill it
+        if (document.getElementById('menu').classList.contains('active')) {
+            document.getElementById('menu').classList.remove('active');
+        }
+        toggleMenu(e.clientX, e.clientY);
+    });
+    
+    // Make context menu go away when clicking outside of it
+    document.addEventListener('click', e => {
+        const contextMenu = document.getElementById('menu');
+        if (e.target.closest('.menu')) return;
+        if (e.target.closest('.start-button')) return;
+        contextMenu.classList.remove('active');
+    });
+    
+    // Make context menu go away when clicking on a menu item
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.getElementById('menu').classList.remove('active');
+        });
+    });
+    
+    // Handle history back event
+    window.addEventListener('popstate', e => {
+        openPageFromUrl();
+    });
+    
+    if (typeof(getTopWindow()) === 'undefined') {
+        openPageFromUrl();
+    }
+})();
