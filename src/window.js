@@ -400,6 +400,21 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
         let targetElement = document.getElementById(targetElementId);
         if (typeof(targetElement) !== 'undefined' && targetElement !== null) {
             targetElement.innerHTML = html;
+            // Find and execute scripts
+            const scripts = targetElement.querySelectorAll("script");
+            scripts.forEach(script => {
+                const newScript = document.createElement("script");
+                if (script.src) {
+                    // If the script has a `src` attribute, load it separately
+                    newScript.src = script.src;
+                } else {
+                    // Otherwise, execute the inline script content
+                    newScript.textContent = script.textContent;
+                }
+                document.body.appendChild(newScript); // Append to DOM to execute
+                //newScript.remove(); // Optional: Clean up after execution
+            });
+
             // Find ancestor window element
             let ancestor = targetElement.closest('.window');
             // Run callback function if provided
@@ -517,6 +532,9 @@ function openPageFromUrl() {
         break;
         case 'resume':
         goTo('resume', 'Resume', '📜');
+        break;
+        case 'chat':
+        goTo('chat', 'Chat', '💬');
         break;
         default:
         goTo('welcome', 'Welcome!', '👋');

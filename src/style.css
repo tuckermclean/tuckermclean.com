@@ -9,7 +9,7 @@ Variables
     --text-dark: #ebebeb;
     --cursor-light: #000000;
     --cursor-dark: #ffffff;
-    
+
     /* Header Colors */
     --header-bg-dark: #333333;
     --header-bg-light: #f0f0f0;
@@ -17,7 +17,13 @@ Variables
     --header-bg-gradient-light: linear-gradient(0deg, #cccccc, #ffffff);
     --header-text-dark: #ebebeb;
     --header-text-light: #000000;
-    
+
+    /* Button Colors */
+    --button-bg-gradient-hover-dark: linear-gradient(0deg, #222222, #666666);
+    --button-bg-gradient-active-dark: linear-gradient(0deg, #666666, #222222);
+    --button-bg-gradient-hover-light: linear-gradient(0deg, #dddddd, #ffffff);
+    --button-bg-gradient-active-light: linear-gradient(0deg, #ffffff, #dddddd);
+
     /* Window Elements */
     --directory-color: #4e9a06;
     --symlink-color: #3465a4;
@@ -28,17 +34,17 @@ Variables
     --minimize-bg-gradient: linear-gradient(0deg, #ffae00, #f7d885);
     --maximize-bg: #27c93f;
     --maximize-bg-gradient: linear-gradient(0deg, #18bd31, #a1ffaf);
-    
+
     /* Borders and Hover */
     --border-dark: #666666;
     --border-light: #888888;
     --scroll-hover-dark: #b0b0b0;
     --scroll-hover-light: #555555;
-    
+
     /* Backgrounds */
     --bg-image-dark: url('/I-Know-Better-2.jpg');
     --bg-image-light: url('/I-Know-Better-1.jpg');
-    
+
     /* Defaults */
     --bg: var(--bg-dark);
     --text: var(--text-dark);
@@ -49,6 +55,8 @@ Variables
     --header-bg-gradient: var(--header-bg-gradient-dark);
     --header-text: var(--header-text-dark);
     --scroll-hover: var(--scroll-hover-dark);
+    --button-bg-gradient-hover: var(--button-bg-gradient-hover-dark);
+    --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
 }
 
 .toggled {
@@ -61,6 +69,8 @@ Variables
     --header-bg-gradient: var(--header-bg-gradient-light);
     --header-text: var(--header-text-light);
     --scroll-hover: var(--scroll-hover-light);
+    --button-bg-gradient-hover: var(--button-bg-gradient-hover-light);
+    --button-bg-gradient-active: var(--button-bg-gradient-active-light);
 }
 
 @media (prefers-color-scheme: light) {
@@ -74,6 +84,8 @@ Variables
         --header-bg-gradient: var(--header-bg-gradient-light);
         --header-text: var(--header-text-light);
         --scroll-hover: var(--scroll-hover-light);
+        --button-bg-gradient-hover: var(--button-bg-gradient-hover-light);
+        --button-bg-gradient-active: var(--button-bg-gradient-active-light);
     }
 
     .toggled {
@@ -86,6 +98,8 @@ Variables
         --header-bg-gradient: var(--header-bg-gradient-dark);
         --header-text: var(--header-text-dark);
         --scroll-hover: var(--scroll-hover-dark);
+        --button-bg-gradient-hover: var(--button-bg-gradient-hover-dark);
+        --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
     }
 }
 
@@ -298,22 +312,22 @@ Window Buttons
 /* ==================================
 Scrollbars
 ================================== */
-.window-body::-webkit-scrollbar {
+div::-webkit-scrollbar {
     background-color: var(--header-bg);
     border-left: 1px solid var(--border);
     opacity: 0.5;
     width: 1.5rem;
 }
 
-.window-body::-webkit-scrollbar-thumb {
+div::-webkit-scrollbar-thumb {
     background-color: var(--border);
 }
 
-.window-body::-webkit-scrollbar-thumb:hover {
+div::-webkit-scrollbar-thumb:hover {
     background-color: var(--scroll-hover);
 }
 
-.window-body::-webkit-scrollbar-button {
+div::-webkit-scrollbar-button {
     display: none;
 }
 
