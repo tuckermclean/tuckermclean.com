@@ -455,6 +455,7 @@ Utility Classes
     cursor: inherit;
     border: 0;
     flex-direction: column;
+    height: 5rem;
 }
 
 .window.minimized .title {
@@ -476,8 +477,16 @@ Utility Classes
 }
 
 .window.minimized:hover .window-title {
-    background-color: var(--header-bg);
+    background-color: rgba(0, 0, 0, 0.5);
     border-radius: 0.25rem;
+    margin-top: -5rem;
+    color: var(--cursor-dark);
+    text-shadow: 0 0 0.125rem var(--cursor-light);
+    width: fit-content;
+    block-size: fit-content;
+    padding: 0.25rem 0.5rem;
+    margin: -2.5rem auto;
+
 }
 
 /* Hide unnecessary sections when minimized */

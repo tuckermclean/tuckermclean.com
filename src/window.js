@@ -241,6 +241,10 @@ function startResize(e, windowElement) {
 
 // Button Actions
 function closeWindow(windowElement) {
+    if (window.windowCleanup[windowElement.name]) {
+        window.windowCleanup[windowElement.name]();
+        delete window.windowCleanup[windowElement.name];
+    }
     windowElement.remove();
     windows = windows.filter(w => w !== windowElement);
     promoteTopWindow();
@@ -253,10 +257,10 @@ function toggleShade(e, windowElement, force = undefined) {
         e.preventDefault();
     }
     
-    topDistance = windowElement.getBoundingClientRect().top;
+    let topDistance = windowElement.getBoundingClientRect().top;
     if (!windowElement.classList.contains('shaded') || (typeof(force) === 'boolean' && force === true)) {
         saveWindowState(windowElement);
-        headerHeight = windowElement.querySelector('.window-header').getBoundingClientRect().height;
+        let headerHeight = windowElement.querySelector('.window-header').getBoundingClientRect().height;
         windowElement.style.top = `${topDistance + headerHeight / 2}px`;
         windowElement.classList.add('shaded');
     } else if (windowElement.classList.contains('shaded') || (typeof(force) === 'boolean' && force === false)) {

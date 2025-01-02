@@ -12,7 +12,6 @@
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "@fontsource/noto-sans-mono": "^5.1.0",
-    "uuid": "^11.0.3"
+    "@fontsource/noto-sans-mono": "^5.1.0"
   }
 }
