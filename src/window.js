@@ -531,19 +531,23 @@ function openPageFromUrl() {
     switch (page) {
         case 'welcome':
         goTo('welcome', 'Welcome!', '👋');
+        openPage('chat', 'Chat', '💬', undefined, true, false);
         history.replaceState(null, null, '/');
         break;
         case 'intro':
         goTo('intro', 'Introduction', '🧠');
+        openPage('chat', 'Chat', '💬', undefined, true, false);
         break;
         case 'resume':
         goTo('resume', 'Resume', '📜');
+        openPage('chat', 'Chat', '💬', undefined, true, false);
         break;
         case 'chat':
         goTo('chat', 'Chat', '💬');
         break;
         default:
         goTo('welcome', 'Welcome!', '👋');
+        openPage('chat', 'Chat', '💬', undefined, true, false);
         bringToFront(windows[0], false);
         history.replaceState(null, null, '/');
         break;

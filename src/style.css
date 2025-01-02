@@ -157,9 +157,10 @@ body {
 
 .tasks {
     position: fixed;
-    top: 6.5rem;
-    right: 1rem;
+    top: 0.325rem;
+    right: 7rem;
     border: 0;
+    display: flex;
 }
 
 .start-button {
@@ -447,7 +448,7 @@ Utility Classes
 
 .window.minimized .window-icon {
     font-size: 4.5rem;
-    line-height: 5rem;
+    width: 6.5rem;
 }
 
 /* Hide unnecessary sections when minimized */
