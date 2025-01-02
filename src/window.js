@@ -385,6 +385,11 @@ function restoreWindow(e, windowElement) {
 // Toggle Light/Dark Mode
 function toggleMode() {
     document.body.classList.toggle('toggled');
+    if (document.body.classList.contains('toggled')) {
+        localStorage.setItem('mode', 'light');
+    } else {
+        localStorage.setItem('mode', 'dark');
+    }
 }
 
 // Load External HTML
@@ -546,7 +551,13 @@ function openPageFromUrl() {
 
 (function() {
     const startButton = document.getElementById('start-button');
-    
+
+    // If light/dark mode is set, toggle it
+    if (localStorage.getItem('mode') === 'light') {
+        document.body.classList.add('toggled');
+    } else {
+        document.body.classList.remove('toggled');
+    }
     // When clicking on the start button, open the menu
     startButton.addEventListener('click', e => {
         if (document.getElementById('menu').classList.contains('active')) {

@@ -17,9 +17,26 @@
         padding: 0.75rem;
         border-bottom: 1px solid var(--border);
     }
+    /* If #chat-messages has zero children, display a message */
+    #chat-messages:empty::before {
+        content: "No messages yet. Be the first to say something!";
+        font-style: italic;
+    }
     #chat-options {
         display: flex;
         padding: 0.75rem;
+        justify-content: space-evenly;
+        justify-items: stretch;
+    }
+    /* Make the children of #chat-options equally spaced and consuming all space equally */
+    #chat-options * {
+        flex-grow: 1;
+        min-width: 1px;
+    }
+
+    /* Last child of #chat-options should consume all remaining space */
+    #chat-options > *:last-child {
+        margin-right: 0;
     }
 
     input, textarea, button {
@@ -50,6 +67,18 @@
         width: 100%;
         min-height: 15vh;
     }
+    #chat-submit textarea.waiting {
+        /* Add an external image of a spinner when waiting for a response */
+        background-image: url("/start-button.gif");
+        background-size: 5rem;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    @supports (background-image: url('/start-button.webp')) {
+        #chat-submit textarea.waiting::after {
+            background-image: url("/start-button.webp");
+        }
+    }
 
     button {
         padding: 0.325rem 1rem;
@@ -77,9 +106,9 @@
     <button onclick="sendMessage()">Send</button>
 </div>
 <div id="chat-options">
-    <input type="text" id="name" placeholder="Your name (required)">
-    <input type="email" id="email" placeholder="Your email (pick one, option 1)">
-    <input type="phone" id="phone" placeholder="Your phone number (pick one, option 2)">
+    <input type="text" id="name" placeholder="Your name">
+    <input type="email" id="email" placeholder="Your email">
+    <input type="phone" id="phone" placeholder="Your phone number">
 </div>
 
 <script>
@@ -105,19 +134,37 @@
     });
 
     // Read from the local storage, but if it's not there, generate one
-    const conversationUuid = localStorage.getItem("conversationUuid") || uuidv4();
-    const authHeader = localStorage.getItem("authHeader") || null;
+    let conversationUuid = localStorage.getItem("conversationUuid");
+    let authHeader = localStorage.getItem("authHeader");
+    let vapidPublicKey = localStorage.getItem("vapidPublicKey");
 
-    // Save the conversation UUID and auth header to local storage
-    if (!localStorage.getItem("conversationUuid") && conversationUuid) {
-        localStorage.setItem("conversationUuid", conversationUuid);
+    // If there is no conversation UUID, fetch a new one
+    if (!conversationUuid) {
+        fetch(`${apiBaseUrl}/new`, {
+            method: "GET",
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                localStorage.setItem("conversationUuid", data.conversation_uuid);
+                localStorage.setItem("authHeader", `Bearer ${data.bearer_token}`);
+                localStorage.setItem("vapidPublicKey", data.vapid_public_key);
+                conversationUuid = data.conversation_uuid;
+                authHeader = `Bearer ${data.bearer_token}`;
+                vapidPublicKey = data.vapid_public_key;
+                fetchMessages(); // Fetch messages after getting the conversation UUID
+            })
+            .catch((error) => {
+                console.error("Error fetching conversation UUID:", error);
+            });
+    } else {
+        // Change window status
+        document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${conversationUuid}`;
+        fetchMessages(); // Fetch messages if the conversation UUID is already available
     }
-    if (!localStorage.getItem("authHeader") && authHeader) {
-        localStorage.setItem("authHeader", authHeader);
-    }
-    const name = localStorage.getItem("name") || null;
-    const email = localStorage.getItem("email") || null;
-    const phone = localStorage.getItem("phone") || null;
+
+    const name = localStorage.getItem("name");
+    const email = localStorage.getItem("email");
+    const phone = localStorage.getItem("phone");
 
     if (name) {
         document.getElementById("name").value = name;
@@ -129,15 +176,21 @@
         document.getElementById("phone").value = phone;
     }
 
-    //const authHeader = "Basic dXNlcjpwYXNz"; // Replace with your basic auth string
     async function fetchMessages(since = null) {
         try {
+            if (!conversationUuid || !authHeader) {
+                console.error("No conversation UUID or auth header found.");
+                return;
+            }
             let url = `${apiBaseUrl}/${conversationUuid}`;
             if (since) {
                 url = `${url}?since=${since}`;
             }
             const response = await fetch(url, {
                 method: "GET",
+                headers: {
+                    "Authorization": authHeader,
+                },
             });
             const messages = await response.json();
             displayMessages(messages);
@@ -145,73 +198,104 @@
             console.error("Error fetching messages:", error);
         }
     }
-    
+
     async function fetchNewMessages() {
+        // If #messages textarea has class "waiting", do not fetch new messages
+        if (document.getElementById("message").classList.contains("waiting")) {
+            return;
+        }
         const messagesContainer = document.getElementById("chat-messages");
         const lastMessage = messagesContainer.lastChild;
         const lastMessageTimestamp = lastMessage ? lastMessage.textContent.split("]")[0].slice(1) : null;
         fetchMessages(lastMessageTimestamp);
     }
-    
+
     function displayMessages(messages) {
         const messagesContainer = document.getElementById("chat-messages");
-        //messagesContainer.innerHTML = ""; // Clear existing messages
-        
-        messages.forEach((msg) => {
-            const messageDiv = document.createElement("div");
-            const senderInfo = msg.name || msg.email || msg.phone || msg.authenticated_user_info || "Anonymous";
-            messageDiv.textContent = `[${msg.timestamp}] ${senderInfo}: ${msg.message}`;
-            if (msg.authenticated_user_info && msg.authenticated_user_info !== null) {
-                messageDiv.style.fontWeight = "bold";
-            }
-            messagesContainer.appendChild(messageDiv);
-        });
+
+        try {
+            messages.forEach((msg) => {
+                // If message with same content and timestamp is already displayed, skip it
+                if (messagesContainer.lastChild && messagesContainer.lastChild.textContent === `[${msg.timestamp}] ${msg.message}`) {
+                    return;
+                }
+                const messageDiv = document.createElement("div");
+                const senderInfo = msg.name || msg.email || msg.phone || msg.authenticated_user_info || "Anonymous";
+                messageDiv.textContent = `[${msg.timestamp}] ${senderInfo}: ${msg.message}`;
+                if (msg.authenticated_user_info && msg.authenticated_user_info !== null) {
+                    messageDiv.style.fontWeight = "bold";
+                }
+                messagesContainer.appendChild(messageDiv);
+            });
+        } catch (error) {
+            console.error("Error displaying messages:", error);
+        }
         
         // Scroll to the bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-    
+
     async function sendMessage() {
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
+        const phone = document.getElementById("phone").value;
         const message = document.getElementById("message").value;
-        
+
         if (!message) {
             alert("Message cannot be empty.");
             return;
         }
-        
+
         const payload = {
             message,
             ...(name && { name }),
             ...(email && { email }),
+            ...(phone && { phone }),
         };
-        
+
         try {
+            // While sending, add class to message textarea of "waiting"
+            document.getElementById("message").classList.add("waiting");
+
             const response = await fetch(`${apiBaseUrl}/${conversationUuid}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(authHeader && { Authorization: authHeader }),
+                    "Authorization": authHeader,
                 },
                 body: JSON.stringify(payload),
             });
-            
+
             const result = await response.json();
             if (response.ok) {
                 document.getElementById("message").value = ""; // Clear the input
+                document.getElementById("message").classList.remove("waiting");
                 fetchNewMessages(); // Refresh the chat
             } else {
                 alert(`Error: ${result.error || "Could not send message"}`);
+                document.getElementById("message").classList.remove("waiting");
             }
         } catch (error) {
             console.error("Error sending message:", error);
         }
     }
-    
-    // Load messages on page load
-    fetchMessages();
-    
+
+    function resetChat() {
+        localStorage.removeItem("conversationUuid");
+        localStorage.removeItem("authHeader");
+        localStorage.removeItem("vapidPublicKey");
+        localStorage.removeItem("name");
+        localStorage.removeItem("email");
+        localStorage.removeItem("phone");
+        conversationUuid = undefined;
+        authHeader = undefined;
+        vapidPublicKey = undefined;
+        location.reload();
+    }
+
+    // Set focus to the message textarea
+    document.getElementById("message").focus();
+
     // Refresh messages every 5 seconds
     setInterval(fetchNewMessages, 5000);
 </script>
