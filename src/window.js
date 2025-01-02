@@ -535,7 +535,7 @@ function openPageFromUrl() {
         history.replaceState(null, null, '/');
         break;
         case 'intro':
-        goTo('intro', 'Introduction', '🧠');
+        goTo('intro', 'Intro', '🧠');
         openPage('chat', 'Chat', '💬', undefined, true, false);
         break;
         case 'resume':
