@@ -521,7 +521,8 @@ function toggleMenu(x, y, offset = false) {
 
 function getCurrentPage() {
     const url = new URL(window.location.href);
-    return (url.pathname + url.hash).split('/').slice(-1)[0]
+    window.fullWindowHash = url.hash;
+    return (url.pathname + url.hash.split('/')[1]).split('/').slice(-1)[0]
 }
 
 // If the page name is in the URL anchor, open the page

@@ -113,6 +113,7 @@
 
 <script>
     const apiBaseUrl = "https://api.technomantics.com/v1/conversation";
+    let authenticatedUser = undefined;
     
     // Set up Enter key to send message
     document.getElementById("message").addEventListener("keydown", (event) => {
@@ -133,13 +134,39 @@
         localStorage.setItem("phone", event.target.value);
     });
 
-    // Read from the local storage, but if it's not there, generate one
-    let conversationUuid = localStorage.getItem("conversationUuid");
-    let authHeader = localStorage.getItem("authHeader");
-    let vapidPublicKey = localStorage.getItem("vapidPublicKey");
+    let conversationUuid, authHeader, vapidPublicKey, adminConversationUuid, adminAuthHeader;
 
-    // If there is no conversation UUID, fetch a new one
-    if (!conversationUuid) {
+    // Read from the local storage, but if it's not there, generate one
+    if (localStorage.adminConversationUuid) {
+        authenticatedUser = undefined;
+        conversationUuid = localStorage.adminConversationUuid;
+        authHeader = localStorage.adminAuthHeader;
+        adminConversationUuid = localStorage.adminConversationUuid;
+        adminAuthHeader = localStorage.adminAuthHeader;
+    } else {
+        authenticatedUser = undefined;
+        conversationUuid = localStorage.conversationUuid;
+        authHeader = localStorage.authHeader;
+        vapidPublicKey = localStorage.vapidPublicKey;
+    }
+
+    if (window.fullWindowHash !== window.location.hash) {
+        resetChat(false);
+        adminConversationUuid = window.fullWindowHash.split("/")[2];
+        localStorage.setItem("adminConversationUuid", adminConversationUuid);
+    }
+
+    if (adminConversationUuid) {
+        // Change options to be username and password
+        document.getElementById("name").placeholder = "Your username";
+        document.getElementById("email").remove();
+        document.getElementById("phone").remove();
+        document.getElementById("chat-options").insertAdjacentHTML("beforeend", `<input type="password" id="password" placeholder="Your password">`);
+        document.getElementById("chat-options").insertAdjacentHTML("beforeend", `<button id="loginout" onclick="login()">Login</button>`);
+        if (adminAuthHeader) {
+            login(false);
+        }
+    } else if (!conversationUuid && !authHeader) {
         fetch(`${apiBaseUrl}/new`, {
             method: "GET",
         })
@@ -151,6 +178,7 @@
                 conversationUuid = data.conversation_uuid;
                 authHeader = `Bearer ${data.bearer_token}`;
                 vapidPublicKey = data.vapid_public_key;
+                document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${conversationUuid}`;
                 fetchMessages(); // Fetch messages after getting the conversation UUID
             })
             .catch((error) => {
@@ -236,9 +264,15 @@
     }
 
     async function sendMessage() {
-        const name = document.getElementById("name").value;
-        const email = document.getElementById("email").value;
-        const phone = document.getElementById("phone").value;
+        let name, email, phone;
+
+        if (authenticatedUser) {
+            name = authenticatedUser;
+        } else {
+            name = document.getElementById("name").value;
+            email = document.getElementById("email").value;
+            phone = document.getElementById("phone").value;
+        }
         const message = document.getElementById("message").value;
 
         if (!message) {
@@ -280,17 +314,22 @@
         }
     }
 
-    function resetChat() {
+    function resetChat(reload = true) {
         localStorage.removeItem("conversationUuid");
         localStorage.removeItem("authHeader");
         localStorage.removeItem("vapidPublicKey");
         localStorage.removeItem("name");
         localStorage.removeItem("email");
         localStorage.removeItem("phone");
+        localStorage.removeItem("adminConversationUuid");
+        localStorage.removeItem("adminAuthHeader");
         conversationUuid = undefined;
         authHeader = undefined;
         vapidPublicKey = undefined;
-        location.reload();
+        authenticatedUser = undefined;
+        if (reload) {
+            location.reload();
+        }
     }
 
     // Set focus to the message textarea
@@ -298,4 +337,94 @@
 
     // Refresh messages every 5 seconds
     setInterval(fetchNewMessages, 5000);
+
+    async function login(alert = true) {
+        const username = document.getElementById("name")?.value;
+        const password = document.getElementById("password")?.value;
+        adminConversationUuid = adminConversationUuid || localStorage.adminConversationUuid || window.fullWindowHash.split("/")[2];
+        adminAuthHeader = adminAuthHeader || localStorage.adminAuthHeader;
+
+        if (!(username && password) && !adminAuthHeader) {
+            if (alert) {
+                alert("Username and password cannot be empty.");
+            } else {
+                console.error("Username and password cannot be empty.");
+            }
+            return;
+        }
+
+        if (!adminAuthHeader && adminConversationUuid) {
+            // Send login request as basic auth
+            fetch(`${apiBaseUrl}/admin`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Basic ${btoa(`${username}:${password}`)}`,
+                },
+            }).then(async (response) => {
+                if (response.ok) {
+                    response.json().then((data) => {
+                        localStorage.setItem("adminConversationUuid", adminConversationUuid);
+                        adminAuthHeader = `Bearer ${data.bearer_token}`;
+                        localStorage.setItem("adminAuthHeader", adminAuthHeader);
+                        localStorage.setItem("adminName", data.name);
+                        conversationUuid = adminConversationUuid;
+                        authHeader = adminAuthHeader;
+                        authenticatedUser = data.name;
+                        localStorage.setItem("name", data.name);
+                        localStorage.setItem("adminName", data.name);
+                        // Change window status
+                        document.querySelector("#window-chat .window-status-bar").textContent = `Logged in as ${data.name}`;
+                        // Change options to be username and password
+                        document.getElementById("name").remove();
+                        document.getElementById("password").remove();
+                        // Change the button to logout
+                        document.getElementById("loginout").textContent = "Logout";
+                        document.getElementById("loginout").onclick = resetChat;
+                        // Change window status
+                        document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${adminConversationUuid} (${authenticatedUser})`;
+                        fetchMessages(); // Fetch messages after getting the conversation UUID
+                    })
+                    .catch((error) => {
+                        console.error("Error logging in:", error);
+                    });
+                } else {
+                    alert("Login failed. Please try again.");
+                }
+            }).catch((error) => {
+                console.error("Error logging in:", error);
+            });
+        } else if (adminConversationUuid && adminAuthHeader) {
+            fetch(`${apiBaseUrl}/${adminConversationUuid}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": adminAuthHeader,
+                },
+            }).then(async (response) => {
+                if (response.ok) {
+                    authenticatedUser = localStorage.adminName || username || "Admin";
+                    // Change window status
+                    document.querySelector("#window-chat .window-status-bar").textContent = `Logged in as ${authenticatedUser}`;
+                    // Change options to be username and password
+                    document.getElementById("name").remove();
+                    document.getElementById("password").remove();
+                    // Change the button to logout
+                    document.getElementById("loginout").textContent = "Logout";
+                    document.getElementById("loginout").onclick = resetChat;
+                    conversationUuid = adminConversationUuid;
+                    // Change window status
+                    document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${adminConversationUuid} (${authenticatedUser})`;
+                    fetchMessages(); // Fetch messages after getting the conversation UUID
+                } else {
+                    alert("Login failed. Please try again.");
+                }
+            }).catch((error) => {
+                console.error("Error logging in:", error);
+            });
+        } else {
+            alert("No conversation UUID found.");
+        }
+    }
+
 </script>
