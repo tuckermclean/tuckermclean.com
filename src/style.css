@@ -158,35 +158,36 @@ body {
 .tasks {
     position: fixed;
     top: 0.325rem;
-    right: 7rem;
+    right: 0.325rem;
     border: 0;
     display: flex;
+    flex-direction: row-reverse;
 }
 
 .start-button {
     /* Use animated GIF or WebP for better performance as background image */
     background-image: url('/start-button.gif');
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: 6rem;
+    background-position: 42.5% 20%;
     border: none;
     border-radius: 50%;
     background-color: var(--header-bg);
     cursor: pointer;
     font-family: 'Noto Sans Mono', monospace;
-    height: 5rem;
-    position: fixed;
-    right: 1rem;
-    top: 1rem;
     transition: background-color 0.3s, color 0.3s;
+    margin: 0.5rem;
     width: 5rem;
+    height: 5rem;
 }
 .start-button .start-button-icon {
-    line-height: 5rem;
+    color: var(--header-text-dark);
     font-size: 2rem;
+    line-height: 5rem;
     width: 5rem;
     text-align: center;
-    color: var(--header-text-dark);
 }
+
 @supports (background-image: url('/start-button.webp')) {
     .start-button {
         background-image: url('/start-button.webp'); /* Modern WebP image */
@@ -256,6 +257,14 @@ Window
     font-weight: bold;
 }
 
+.window-header .window-icon {
+    text-shadow: 0 0.125rem 0.125rem var(--header-bg-dark);
+}
+
+.window-header .window-title {
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg-dark);
+}
+
 .window-body {
     background-color: var(--bg);
     flex-grow: 1;
@@ -280,8 +289,8 @@ Window Buttons
 ================================== */
 .window-header .button {
     border-radius: 50%;
-    box-shadow: 0 1px 2px var(--border), 0 -1px 2px var(--bg);
-    cursor: default;
+    box-shadow: 0 1px 2px var(--header-bg-dark), 0 -1px 1px var(--bg-dark);
+    cursor: pointer;
     height: 1rem;
     width: 1rem;
 }
@@ -430,25 +439,45 @@ Utility Classes
     cursor: pointer;
     padding: 0.5rem 1rem;
     transform: none !important; /* Ensure no transforms interfere */
-    line-height: 5rem; /* Center content vertically */
+    /* line-height: 5rem; /* Center content vertically */
     text-align: center; /* Center content horizontally */
     padding: 0; /* Remove padding */
-    margin: 0.5rem 0px; /* Add margin between windows */
+    margin: 0.5rem; /* Add margin between windows */
+}
+
+.window.minimized:hover {
+    overflow: visible;
 }
 
 .window.minimized .window-header {
     padding: 0;
     background: none;
     cursor: inherit;
+    border: 0;
+    flex-direction: column;
 }
 
-.window.minimized .window-title {
-    display: none;
+.window.minimized .title {
+    flex-direction: column;
 }
 
 .window.minimized .window-icon {
-    font-size: 4.5rem;
-    width: 6.5rem;
+    font-size: 3.5rem;
+    text-align: center;
+    text-shadow: 0 0.325rem 0.325rem var(--header-bg-dark);
+    line-height: 4.85rem;
+}
+
+.window.minimized:hover {
+    background-color: var(--header-bg);
+    background: var(--header-bg-gradient);
+    border: 1px solid var(--border);
+    margin: calc(0.5rem - 1px) 0.5rem;
+}
+
+.window.minimized:hover .window-title {
+    background-color: var(--header-bg);
+    border-radius: 0.25rem;
 }
 
 /* Hide unnecessary sections when minimized */
