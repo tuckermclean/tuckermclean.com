@@ -24,6 +24,12 @@ Variables
     --button-bg-gradient-hover-light: linear-gradient(0deg, #dddddd, #ffffff);
     --button-bg-gradient-active-light: linear-gradient(0deg, #ffffff, #dddddd);
 
+    /* Tooltip Colors */
+    --tooltip-bg-light: rgba(0, 0, 0, 0.5);
+    --tooltip-bg-dark: rgba(255, 255, 255, 0.5);
+    --tooltip-text-light: #ffffff;
+    --tooltip-text-dark: #000000;
+
     /* Window Elements */
     --directory-color: #4e9a06;
     --symlink-color: #3465a4;
@@ -57,6 +63,8 @@ Variables
     --scroll-hover: var(--scroll-hover-dark);
     --button-bg-gradient-hover: var(--button-bg-gradient-hover-dark);
     --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
+    --tooltip-bg: var(--tooltip-bg-dark);
+    --tooltip-text: var(--tooltip-text-dark);
 }
 
 .toggled {
@@ -71,6 +79,8 @@ Variables
     --scroll-hover: var(--scroll-hover-light);
     --button-bg-gradient-hover: var(--button-bg-gradient-hover-light);
     --button-bg-gradient-active: var(--button-bg-gradient-active-light);
+    --tooltip-bg: var(--tooltip-bg-light);
+    --tooltip-text: var(--tooltip-text-light);
 }
 
 @media (prefers-color-scheme: light) {
@@ -86,6 +96,8 @@ Variables
         --scroll-hover: var(--scroll-hover-light);
         --button-bg-gradient-hover: var(--button-bg-gradient-hover-light);
         --button-bg-gradient-active: var(--button-bg-gradient-active-light);
+        --tooltip-bg: var(--tooltip-bg-light);
+        --tooltip-text: var(--tooltip-text-light);
     }
 
     .toggled {
@@ -100,6 +112,8 @@ Variables
         --scroll-hover: var(--scroll-hover-dark);
         --button-bg-gradient-hover: var(--button-bg-gradient-hover-dark);
         --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
+        --tooltip-bg: var(--tooltip-bg-dark);
+        --tooltip-text: var(--tooltip-text-dark);
     }
 }
 
@@ -258,11 +272,11 @@ Window
 }
 
 .window-header .window-icon {
-    text-shadow: 0 0.125rem 0.125rem var(--header-bg-dark);
+    text-shadow: 0 0.125rem 0.125rem var(--header-bg);
 }
 
 .window-header .window-title {
-    text-shadow: 0 0.075rem 0.075rem var(--header-bg-dark);
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg);
 }
 
 .window-body {
@@ -477,16 +491,19 @@ Utility Classes
 }
 
 .window.minimized:hover .window-title {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--tooltip-bg);
     border-radius: 0.25rem;
     margin-top: -5rem;
-    color: var(--cursor-dark);
-    text-shadow: 0 0 0.125rem var(--cursor-light);
+    color: var(--tooltip-text);
     width: fit-content;
     block-size: fit-content;
     padding: 0.25rem 0.5rem;
-    margin: -2.5rem auto;
+    margin: -2.75rem auto;
+    text-shadow: none;
+}
 
+body.toggled .window.minimized:hover .window-title {
+    text-shadow: none;
 }
 
 /* Hide unnecessary sections when minimized */
