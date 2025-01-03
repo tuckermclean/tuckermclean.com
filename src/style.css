@@ -215,7 +215,7 @@ Window
     background-color: var(--header-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px var(--tooltip-bg-light);
     box-sizing: border-box;
     color: var(--text);
 }
@@ -272,7 +272,11 @@ Window
 }
 
 .window-header .window-icon {
-    text-shadow: 0 0.125rem 0.125rem var(--header-bg);
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg-dark);
+}
+
+body.toggled .window-header .window-icon {
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg-light);
 }
 
 .window-header .window-title {
@@ -303,10 +307,14 @@ Window Buttons
 ================================== */
 .window-header .button {
     border-radius: 50%;
-    box-shadow: 0 1px 2px var(--header-bg-dark), 0 -1px 1px var(--bg-dark);
+    box-shadow: 0 1px 2px var(--header-bg-dark), 0 -1px 1px var(--bg-light);
     cursor: pointer;
     height: 1rem;
     width: 1rem;
+}
+
+body.toggled .window-header .button {
+    box-shadow: 0 1px 2px var(--header-bg-light), 0 -1px 1px var(--bg-dark);
 }
 
 .close {
@@ -479,8 +487,12 @@ Utility Classes
 .window.minimized .window-icon {
     font-size: 3.5rem;
     text-align: center;
-    text-shadow: 0 0.325rem 0.325rem var(--header-bg-dark);
+    text-shadow: 0 0.325rem 0.325rem var(--header-bg-dark) !important;
     line-height: 4.85rem;
+}
+
+body.toggled .window.minimized .window-icon {
+    text-shadow: 0 0.325rem 0.325rem var(--header-bg-light) !important;
 }
 
 .window.minimized:hover {
