@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Auth Callback</title>
+  </head>
+  <body>
+    <script>
+
+        var token = fetch('https://auth.technomantics.com/oauth2/token', {
+            method:'POST',
+            headers: { 'Content-Type':'application/x-www-form-urlencoded' },
+            body: new URLSearchParams( {
+                grant_type:'authorization_code',
+                client_id:'593808m4lmdrsujt87q83f28hl',
+                code: new URLSearchParams(window.location.search).get("code"),
+                redirect_uri:'https://technomantics.com/callback.html'
+            }).toString()}).then(r=>r.json()).then((token) => {
+                localStorage.setItem('token', JSON.stringify(token));
+                fetch('https://auth.technomantics.com/oauth2/userInfo', {
+                    headers: { 'Authorization': 'Bearer '+token.access_token }
+                }).then(r=>r.json()).then((user) => {
+                    localStorage.setItem('user', JSON.stringify(user));
+                    localStorage.name = user.name;
+                    localStorage.email = user.email;
+                    history.pushState(null, null, '/#/chat');
+                    window.location.reload();
+                }).catch(console.error);
+            }).catch(console.error);
+
+    </script>
+  </body>

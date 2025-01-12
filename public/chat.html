@@ -17,6 +17,9 @@
         padding: 0.75rem;
         border-bottom: 1px solid var(--border);
     }
+    #chat-messages div.info {
+        font-style: italic;
+    }
     /* If #chat-messages has zero children, display a message */
     #chat-messages:empty::before {
         content: "No messages yet. Be the first to say something!";
@@ -79,6 +82,23 @@
             background-image: url("/start-button.webp");
         }
     }
+    #chat-users {
+        height: 100%;
+        float: right;
+        width: fit-content;
+        padding-left: 0.75rem;
+        border-left: 1px solid var(--text);
+        overflow-y: auto;
+        display: none;
+    }
+
+    #chat-users.visible {
+        display: block;
+    }
+
+    #chat-users div.user:hover {
+        background-color: var(--scroll-hover);
+    }
 
     button {
         padding: 0.325rem 1rem;
@@ -100,7 +120,9 @@
         background-color: var(--scroll-hover);
     }
 </style>
-<div id="chat-messages"></div>
+<div id="chat-messages">
+    <div id="chat-users"></div>
+</div>
 <div id="chat-submit">
     <textarea id="message" placeholder="Type your message"></textarea>
     <button id="message-send">Send</button>
@@ -112,9 +134,18 @@
 </div>
 
 <script>
+
+    let targetConnectionId = null;
+
     (function() {
-        const apiBaseUrl = "https://api.technomantics.com/v1/conversation";
-        let authenticatedUser = undefined;
+        const apiBaseUrl = "wss://7ldfco31hd.execute-api.us-west-2.amazonaws.com/prod";
+        const socket = new WebSocket(apiBaseUrl);
+        let isAdmin = false;
+
+        if (!socket) {
+            alert("Your browser does not support WebSockets. Please use a modern browser.");
+            return;
+        }
 
         // Set up Enter key to send message
         document.getElementById("message").addEventListener("keydown", (event) => {
@@ -130,12 +161,15 @@
         function updateInputs() {
             if (document.getElementById("name").value && document.getElementById("name").value !== "") {
                 localStorage.setItem("name", document.getElementById("name").value);
+                socket.send(JSON.stringify({ action: "set", key: "fullName", value: document.getElementById("name").value }));
             }
             if (document.getElementById("email").value && document.getElementById("email").value !== "") {
                 localStorage.setItem("email", document.getElementById("email").value);
+                socket.send(JSON.stringify({ action: "set", key: "email", value: document.getElementById("email").value }));
             }
             if (document.getElementById("phone").value && document.getElementById("phone").value !== "") {
                 localStorage.setItem("phone", document.getElementById("phone").value);
+                socket.send(JSON.stringify({ action: "set", key: "phone", value: document.getElementById("phone").value }));
             }
         }
         // If user types in name, email, or phone, save it to local storage
@@ -145,64 +179,6 @@
         document.getElementById("name").addEventListener("focus", updateInputs);
         document.getElementById("email").addEventListener("focus", updateInputs);
         document.getElementById("phone").addEventListener("focus", updateInputs);
-
-        let conversationUuid, authHeader, vapidPublicKey, adminConversationUuid, adminAuthHeader;
-
-        // Read from the local storage, but if it's not there, generate one
-        if (localStorage.adminConversationUuid) {
-            authenticatedUser = undefined;
-            conversationUuid = localStorage.adminConversationUuid;
-            authHeader = localStorage.adminAuthHeader;
-            adminConversationUuid = localStorage.adminConversationUuid;
-            adminAuthHeader = localStorage.adminAuthHeader;
-        } else {
-            authenticatedUser = undefined;
-            conversationUuid = localStorage.conversationUuid;
-            authHeader = localStorage.authHeader;
-            vapidPublicKey = localStorage.vapidPublicKey;
-        }
-
-        if (window.fullWindowHash !== window.location.hash) {
-            resetChat(false);
-            adminConversationUuid = window.fullWindowHash.split("/")[2];
-            if (adminConversationUuid) {
-                localStorage.setItem("adminConversationUuid", adminConversationUuid);
-            }
-        }
-
-        if (adminConversationUuid) {
-            // Change options to be username and password
-            document.getElementById("name").placeholder = "Your username";
-            document.getElementById("email").remove();
-            document.getElementById("phone").remove();
-            document.getElementById("chat-options").insertAdjacentHTML("beforeend", `<input type="password" id="password" placeholder="Your password">`);
-            document.getElementById("chat-options").insertAdjacentHTML("beforeend", `<button id="loginout" onclick="login()">Login</button>`);
-            if (adminAuthHeader) {
-                login(false);
-            }
-        } else if (!conversationUuid && !authHeader) {
-            fetch(`${apiBaseUrl}/new`, {
-                method: "GET",
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                localStorage.setItem("conversationUuid", data.conversation_uuid);
-                localStorage.setItem("authHeader", `Bearer ${data.bearer_token}`);
-                localStorage.setItem("vapidPublicKey", data.vapid_public_key);
-                conversationUuid = data.conversation_uuid;
-                authHeader = `Bearer ${data.bearer_token}`;
-                vapidPublicKey = data.vapid_public_key;
-                document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${conversationUuid}`;
-                fetchMessages(); // Fetch messages after getting the conversation UUID
-            })
-            .catch((error) => {
-                console.error("Error fetching conversation UUID:", error);
-            });
-        } else {
-            // Change window status
-            document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${conversationUuid}`;
-            fetchMessages(); // Fetch messages if the conversation UUID is already available
-        }
 
         const name = localStorage.getItem("name");
         const email = localStorage.getItem("email");
@@ -218,57 +194,143 @@
             document.getElementById("phone").value = phone;
         }
 
-        async function fetchMessages(since = null) {
+        socket.onopen = (event) => {
+            displayMessages("Connected to chat server.");
+            let accessToken;
             try {
-                if (!conversationUuid || !authHeader) {
-                    console.error("No conversation UUID or auth header found.");
-                    return;
+                accessToken = JSON.parse(localStorage.getItem("token")).access_token;
+                if (!accessToken) {
+                    updateInputs();
+                } else {
+                    socket.send(JSON.stringify({ action: "authenticate", accessToken }));
                 }
-                let url = `${apiBaseUrl}/${conversationUuid}`;
-                if (since) {
-                    url = `${url}?since=${since}`;
-                }
-                const response = await fetch(url, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": authHeader,
-                    },
-                });
-                const messages = await response.json();
-                displayMessages(messages);
             } catch (error) {
-                console.error("Error fetching messages:", error);
+                console.error("Not able to authenticate:", error);
+                updateInputs();
             }
-        }
+        };
 
-        async function fetchNewMessages() {
-            // If #messages textarea has class "waiting", do not fetch new messages
-            if (document.getElementById("message").classList.contains("waiting")) {
-                return;
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            if (msg.response) {
+                if (msg.response === "authenticate") {
+                    displayMessages("Authenticated with chat server.");
+                    updateInputs();
+                    socket.send(JSON.stringify({ action: "listConnections" }));
+                    isAdmin = true;
+                } else if (msg.response === "listConnections") {
+                    const users = msg.connections;
+                    const usersDiv = document.getElementById("chat-users");
+                    usersDiv.innerHTML = "";
+                    users.forEach((user) => {
+                        const userDiv = document.createElement("div");
+                        userDiv.classList.add("user");
+                        userDiv.textContent = user.fullName || user.name || user.email || user.phone || user.connectionId;
+                        userDiv.onclick = () => {
+                            targetConnectionId = user.connectionId;
+                            console.log("Target connection ID:", targetConnectionId);
+                        };
+                        usersDiv.appendChild(userDiv);
+                    });
+                    usersDiv.classList.add("visible");
+                } else if (msg.response === "sendMessage") {
+                    // Do nothing, as the message is already displayed
+                } else {
+                    console.log("Info:", msg);
+                }
+            } else if (msg.action) {
+                if (msg.action === "connect" || msg.action === "disconnect") {
+                    socket.send(JSON.stringify({ action: "listConnections" }));
+                    displayMessages(`User ${msg.connectionId} ${msg.action === "disconnect" ? "dis":""}connected.`);
+                } else if (msg.action === "ping") {
+                    socket.send(JSON.stringify({ action: "pong" }));
+                    console.log("Ping Pong");
+                } else {
+                    displayMessages("Unknown action");
+                    displayMessages([msg]);
+                }
+            } else if (msg.error) {
+                displayMessages("Error");
+                displayMessages([msg]);
+            } else if (msg.message) {
+                displayMessages([msg]);
+                // If is admin, get list of connections
+                if (isAdmin) {
+                    socket.send(JSON.stringify({ action: "listConnections" }));
+                }
+            } else {
+                displayMessages("Unknown message");
+                displayMessages([msg]);
             }
-            const messagesContainer = document.getElementById("chat-messages");
-            const lastMessage = messagesContainer.lastChild;
-            const lastMessageTimestamp = lastMessage ? lastMessage.textContent.split("]")[0].slice(1) : null;
-            fetchMessages(lastMessageTimestamp);
-        }
+        };
+
+        socket.onclose = (event) => {
+            displayMessages("Disconnected from chat server.");
+        };
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error);
+        };
 
         function displayMessages(messages) {
             const messagesContainer = document.getElementById("chat-messages");
 
             try {
-                messages.forEach((msg) => {
-                    // If message with same content and timestamp is already displayed, skip it
-                    if (messagesContainer.lastChild && messagesContainer.lastChild.textContent === `[${msg.timestamp}] ${msg.message}`) {
-                        return;
-                    }
+                if (typeof messages === "string") {
+                    messages = [JSON.parse(messages)];
+                }
+            } catch (error) {
+                // If the message is not JSON, just display it as a string
+            }
+
+            try {
+                if (typeof messages === "string") {
                     const messageDiv = document.createElement("div");
-                    const senderInfo = msg.name || msg.email || msg.phone || msg.authenticated_user_info || "Anonymous";
-                    messageDiv.textContent = `[${msg.timestamp}] ${senderInfo}: ${msg.message}`;
-                    if (msg.authenticated_user_info && msg.authenticated_user_info !== null) {
-                        messageDiv.style.fontWeight = "bold";
-                    }
+                    messageDiv.classList.add("info");
+                    messageDiv.textContent = `[${new Date().toISOString()}] ${messages}`;
                     messagesContainer.appendChild(messageDiv);
-                });
+                } else {
+                    messages.forEach((msg) => {
+                        msg.timestamp = msg.timestamp || new Date().toISOString();
+                        // If message with same content and timestamp is already displayed, skip it
+                        if (messagesContainer.lastChild && messagesContainer.lastChild.textContent === `[${msg.timestamp}] ${msg.message}`) {
+                            return;
+                        }
+                        const messageDiv = document.createElement("div");
+                        const senderInfo = msg.fullName || msg.name || msg.email || msg.phone || "Anonymous";
+                        const messageParts = [
+                            document.createElement("span"),
+                            document.createElement("span"),
+                            document.createElement("span"),
+                        ];
+
+                        messageParts[0].classList.add("timestamp");
+                        messageParts[1].classList.add("sender");
+                        messageParts[2].classList.add("message");
+
+                        messageParts[0].textContent = `[${msg.timestamp}] `;
+                        messageParts[1].textContent = `${senderInfo}: `;
+                        messageParts[2].textContent = msg.message;
+
+                        messageParts[1].onclick = () => {
+                            targetConnectionId = msg.from || null;
+                            console.log("Target connection ID:", targetConnectionId);
+                        };
+
+                        messageParts.forEach((part) => {
+                            messageDiv.appendChild(part);
+                        });
+
+                        if (msg.isAdmin) {
+                            messageDiv.style.fontWeight = "bold";
+                        } else {
+                            if (msg.from) {
+                                targetConnectionId = msg.from;
+                            }
+                        }
+                        messagesContainer.appendChild(messageDiv);
+                    });
+                }
             } catch (error) {
                 console.error("Error displaying messages:", error);
             }
@@ -278,15 +340,6 @@
         }
 
         async function sendMessage() {
-            let name, email, phone;
-
-            if (authenticatedUser) {
-                name = authenticatedUser;
-            } else {
-                name = document.getElementById("name").value;
-                email = document.getElementById("email").value;
-                phone = document.getElementById("phone").value;
-            }
             const message = document.getElementById("message").value;
 
             if (!message) {
@@ -295,34 +348,21 @@
             }
 
             const payload = {
+                action: "sendMessage",
                 message,
-                ...(name && { name }),
-                ...(email && { email }),
-                ...(phone && { phone }),
             };
+
+            if (targetConnectionId) {
+                payload.targetConnectionId = targetConnectionId;
+            }
 
             try {
                 // While sending, add class to message textarea of "waiting"
                 document.getElementById("message").classList.add("waiting");
-
-                const response = await fetch(`${apiBaseUrl}/${conversationUuid}`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": authHeader,
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    document.getElementById("message").value = ""; // Clear the input
-                    document.getElementById("message").classList.remove("waiting");
-                    fetchNewMessages(); // Refresh the chat
-                } else {
-                    alert(`Error: ${result.error || "Could not send message"}`);
-                    document.getElementById("message").classList.remove("waiting");
-                }
+                socket.send(JSON.stringify(payload));
+                document.getElementById("message").classList.remove("waiting");
+                displayMessages([{ message, name: "You", timestamp: new Date().toISOString() }]);
+                document.getElementById("message").value = "";
             } catch (error) {
                 console.error("Error sending message:", error);
             }
@@ -340,7 +380,6 @@
             conversationUuid = undefined;
             authHeader = undefined;
             vapidPublicKey = undefined;
-            authenticatedUser = undefined;
             if (reload) {
                 location.reload();
             }
@@ -348,98 +387,6 @@
 
         // Set focus to the message textarea
         document.getElementById("message").focus();
-
-        // Refresh messages every 5 seconds
-        window.intervals["chat"] = setInterval(fetchNewMessages, 5000);
-
-        async function login(alert = true) {
-            const username = document.getElementById("name")?.value;
-            const password = document.getElementById("password")?.value;
-            adminConversationUuid = adminConversationUuid || localStorage.adminConversationUuid || window.fullWindowHash.split("/")[2];
-            adminAuthHeader = adminAuthHeader || localStorage.adminAuthHeader;
-
-            if (!(username && password) && !adminAuthHeader) {
-                if (alert) {
-                    alert("Username and password cannot be empty.");
-                } else {
-                    console.error("Username and password cannot be empty.");
-                }
-                return;
-            }
-
-            if (!adminAuthHeader && adminConversationUuid) {
-                // Send login request as basic auth
-                fetch(`${apiBaseUrl}/admin`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Basic ${btoa(`${username}:${password}`)}`,
-                    },
-                }).then(async (response) => {
-                    if (response.ok) {
-                        response.json().then((data) => {
-                            localStorage.setItem("adminConversationUuid", adminConversationUuid);
-                            adminAuthHeader = `Bearer ${data.bearer_token}`;
-                            localStorage.setItem("adminAuthHeader", adminAuthHeader);
-                            localStorage.setItem("adminName", data.name);
-                            conversationUuid = adminConversationUuid;
-                            authHeader = adminAuthHeader;
-                            authenticatedUser = data.name;
-                            localStorage.setItem("name", data.name);
-                            localStorage.setItem("adminName", data.name);
-                            // Change window status
-                            document.querySelector("#window-chat .window-status-bar").textContent = `Logged in as ${data.name}`;
-                            // Change options to be username and password
-                            document.getElementById("name").remove();
-                            document.getElementById("password").remove();
-                            // Change the button to logout
-                            document.getElementById("loginout").textContent = "Logout";
-                            document.getElementById("loginout").onclick = resetChat;
-                            // Change window status
-                            document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${adminConversationUuid} (${authenticatedUser})`;
-                            fetchMessages(); // Fetch messages after getting the conversation UUID
-                        })
-                        .catch((error) => {
-                            console.error("Error logging in:", error);
-                        });
-                    } else {
-                        alert("Login failed. Please try again.");
-                    }
-                }).catch((error) => {
-                    console.error("Error logging in:", error);
-                });
-            } else if (adminConversationUuid && adminAuthHeader) {
-                fetch(`${apiBaseUrl}/${adminConversationUuid}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": adminAuthHeader,
-                    },
-                }).then(async (response) => {
-                    if (response.ok) {
-                        authenticatedUser = localStorage.adminName || username || "Admin";
-                        // Change window status
-                        document.querySelector("#window-chat .window-status-bar").textContent = `Logged in as ${authenticatedUser}`;
-                        // Change options to be username and password
-                        document.getElementById("name").remove();
-                        document.getElementById("password").remove();
-                        // Change the button to logout
-                        document.getElementById("loginout").textContent = "Logout";
-                        document.getElementById("loginout").onclick = resetChat;
-                        conversationUuid = adminConversationUuid;
-                        // Change window status
-                        document.querySelector("#window-chat .window-status-bar").textContent = `Conversation ID: ${adminConversationUuid} (${authenticatedUser})`;
-                        fetchMessages(); // Fetch messages after getting the conversation UUID
-                    } else {
-                        alert("Login failed. Please try again.");
-                    }
-                }).catch((error) => {
-                    console.error("Error logging in:", error);
-                });
-            } else {
-                alert("No conversation UUID found.");
-            }
-        }
     })();
     window.windowCleanup["chat"] = () => {
         clearInterval(window.intervals["chat"]);
