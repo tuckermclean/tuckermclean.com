@@ -165,7 +165,7 @@
     let targetConnectionId = null;
 
     (function() {
-        const apiBaseUrl = "wss://7ldfco31hd.execute-api.us-west-2.amazonaws.com/prod";
+        const apiBaseUrl = ENV_VARS.API_BASE_URL;
         const socket = new WebSocket(apiBaseUrl);
         let isAdmin = false;
 

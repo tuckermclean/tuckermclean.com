@@ -4,19 +4,20 @@
     <title>Auth Callback</title>
   </head>
   <body>
-    <script>
+    <script type="module">
+        import { ENV_VARS } from '/src/env.js';
 
-        var token = fetch('https://auth.technomantics.com/oauth2/token', {
+        var token = fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/token`, {
             method:'POST',
             headers: { 'Content-Type':'application/x-www-form-urlencoded' },
             body: new URLSearchParams( {
                 grant_type:'authorization_code',
-                client_id:'593808m4lmdrsujt87q83f28hl',
+                client_id: ENV_VARS.COGNITO_CLIENT_ID,
                 code: new URLSearchParams(window.location.search).get("code"),
-                redirect_uri:'https://technomantics.com/callback.html'
+                redirect_uri:`https://${ENV_VARS.DOMAIN_NAME}/callback.html`
             }).toString()}).then(r=>r.json()).then((token) => {
                 localStorage.setItem('token', JSON.stringify(token));
-                fetch('https://auth.technomantics.com/oauth2/userInfo', {
+                fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/userInfo`, {
                     headers: { 'Authorization': 'Bearer '+token.access_token }
                 }).then(r=>r.json()).then((user) => {
                     localStorage.setItem('user', JSON.stringify(user));
