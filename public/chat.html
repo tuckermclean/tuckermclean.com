@@ -17,9 +17,27 @@
         padding: 0.75rem;
         border-bottom: 1px solid var(--border);
     }
-    #chat-messages div.info {
+    .info {
         font-style: italic;
     }
+
+    .timestamp {
+        color: var(--border);
+    }
+
+    .from-admin .sender, .from-admin .message {
+        background-color: var(--header-bg);
+        font-weight: bold;
+
+    }
+
+    .user.admin::before, .from-admin .user::before{
+        /* Put a green light next to the admin's name (big green bullet) */
+        content: "•";
+        color: lightgreen;
+        margin-right: 0.25rem;
+    }
+
     /* If #chat-messages has zero children, display a message */
     #chat-messages:empty::before {
         content: "No messages yet. Be the first to say something!";
@@ -82,6 +100,15 @@
             background-image: url("/start-button.webp");
         }
     }
+    #chat-messages .waiting span {
+        /* Don't display the text, just say "sending..." */
+        display: none;
+    }
+    #chat-messages .waiting::after {
+        content: "Sending...";
+        font-style: italic;
+    }
+
     #chat-users {
         height: 100%;
         float: right;
@@ -96,7 +123,7 @@
         display: block;
     }
 
-    #chat-users div.user:hover {
+    .user:hover {
         background-color: var(--scroll-hover);
     }
 
@@ -230,18 +257,36 @@
                             targetConnectionId = user.connectionId;
                             console.log("Target connection ID:", targetConnectionId);
                         };
+                        // Check if the user is an admin
+                        if (user.isAdmin) {
+                            userDiv.classList.add("admin");
+                        }
                         usersDiv.appendChild(userDiv);
                     });
                     usersDiv.classList.add("visible");
                 } else if (msg.response === "sendMessage") {
-                    // Do nothing, as the message is already displayed
+                    // Select any element with a class of "waiting" and remove the class
+                    document.querySelectorAll(".waiting").forEach((element) => {
+                        element.classList.remove("waiting");
+                    });
                 } else {
                     console.log("Info:", msg);
                 }
             } else if (msg.action) {
                 if (msg.action === "connect" || msg.action === "disconnect") {
                     socket.send(JSON.stringify({ action: "listConnections" }));
-                    displayMessages(`User ${msg.connectionId} ${msg.action === "disconnect" ? "dis":""}connected.`);
+                    const connectMessage = document.createElement("div");
+                    connectMessage.appendChild(document.createTextNode('User '));
+                    const userSpan = document.createElement("span");
+                    userSpan.textContent = msg.connectionId;
+                    userSpan.classList.add("user");
+                    userSpan.onclick = () => {
+                        targetConnectionId = msg.connectionId;
+                        console.log("Target connection ID:", targetConnectionId);
+                    };
+                    connectMessage.appendChild(userSpan);
+                    connectMessage.appendChild(document.createTextNode(` ${msg.action === "disconnect" ? "dis" : ""}connected.`));
+                    document.getElementById("chat-messages").appendChild(connectMessage);
                 } else if (msg.action === "ping") {
                     socket.send(JSON.stringify({ action: "pong" }));
                     console.log("Ping Pong");
@@ -250,8 +295,23 @@
                     displayMessages([msg]);
                 }
             } else if (msg.error) {
-                displayMessages("Error");
-                displayMessages([msg]);
+                if (msg.error === "authenticate") {
+                    // If not authenticated, display a message to login.
+                    // Construct a link to login page
+                    const loginLink = document.createElement("a");
+                    loginLink.href = "/login.html";
+                    loginLink.textContent = "Login again";
+                    // Include the link in the message
+                    displayMessages("Login info has expired. ");
+                    // Append the link to the last message
+                    document.getElementById("chat-messages").lastChild.appendChild(loginLink);
+                } else {
+                    displayMessages(`Error: ${msg.message}`);
+                    // Select any element with a class of "waiting" and remove the class
+                    document.querySelectorAll(".waiting").forEach((element) => {
+                        element.classList.remove("waiting");
+                    });
+                }
             } else if (msg.message) {
                 displayMessages([msg]);
                 // If is admin, get list of connections
@@ -286,8 +346,15 @@
             try {
                 if (typeof messages === "string") {
                     const messageDiv = document.createElement("div");
-                    messageDiv.classList.add("info");
-                    messageDiv.textContent = `[${new Date().toISOString()}] ${messages}`;
+                    const timestamp = document.createElement("span");
+                    timestamp.classList.add("timestamp");
+                    timestamp.textContent = `[${new Date().toISOString()}] `;
+                    messageDiv.appendChild(timestamp);
+                    const message = document.createElement("span");
+                    message.textContent = messages;
+                    message.classList.add("info");
+                    message.classList.add("message");
+                    messageDiv.appendChild(message);
                     messagesContainer.appendChild(messageDiv);
                 } else {
                     messages.forEach((msg) => {
@@ -306,6 +373,7 @@
 
                         messageParts[0].classList.add("timestamp");
                         messageParts[1].classList.add("sender");
+                        messageParts[1].classList.add("user");
                         messageParts[2].classList.add("message");
 
                         messageParts[0].textContent = `[${msg.timestamp}] `;
@@ -313,7 +381,7 @@
                         messageParts[2].textContent = msg.message;
 
                         messageParts[1].onclick = () => {
-                            targetConnectionId = msg.from || null;
+                            targetConnectionId = msg.from || senderInfo || null;
                             console.log("Target connection ID:", targetConnectionId);
                         };
 
@@ -321,8 +389,8 @@
                             messageDiv.appendChild(part);
                         });
 
-                        if (msg.isAdmin) {
-                            messageDiv.style.fontWeight = "bold";
+                        if (msg.fromAdmin) {
+                            messageDiv.classList.add("from-admin");
                         } else {
                             if (msg.from) {
                                 targetConnectionId = msg.from;
@@ -360,8 +428,13 @@
                 // While sending, add class to message textarea of "waiting"
                 document.getElementById("message").classList.add("waiting");
                 socket.send(JSON.stringify(payload));
-                document.getElementById("message").classList.remove("waiting");
-                displayMessages([{ message, name: "You", timestamp: new Date().toISOString() }]);
+                if (isAdmin) {
+                    displayMessages([{fromAdmin: isAdmin, message, name: targetConnectionId, timestamp: new Date().toISOString() }]);
+                } else {
+                    displayMessages([{fromAdmin: isAdmin, message, name: "You", timestamp: new Date().toISOString() }]);
+                }
+                // Add class "waiting" to last message to indicate it is waiting for a response
+                document.getElementById("chat-messages").lastChild.classList.add("waiting");
                 document.getElementById("message").value = "";
             } catch (error) {
                 console.error("Error sending message:", error);
