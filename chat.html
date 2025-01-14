@@ -160,18 +160,17 @@
     <input type="phone" id="phone" placeholder="Your phone number">
 </div>
 
-<script>
+<script type="module" src="/src/chat.js">
+    import { envVars } from '/src/env.js';
+    envVars().then((ENV_VARS) => {
+        let targetConnectionId = null;
 
-    let targetConnectionId = null;
-
-    (function() {
         const apiBaseUrl = ENV_VARS.API_BASE_URL;
         const socket = new WebSocket(apiBaseUrl);
         let isAdmin = false;
 
         if (!socket) {
             alert("Your browser does not support WebSockets. Please use a modern browser.");
-            return;
         }
 
         // Set up Enter key to send message
@@ -460,9 +459,9 @@
 
         // Set focus to the message textarea
         document.getElementById("message").focus();
-    })();
     window.windowCleanup["chat"] = () => {
         clearInterval(window.intervals["chat"]);
         delete window.intervals["chat"];
     };
+});
 </script>

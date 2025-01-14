@@ -5,8 +5,8 @@
   </head>
   <body>
     <script type="module">
-        import { ENV_VARS } from '/src/env.js';
-
+      import { envVars } from '/src/env.js';
+      envVars().then((ENV_VARS) => {
         var token = fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/token`, {
             method:'POST',
             headers: { 'Content-Type':'application/x-www-form-urlencoded' },
@@ -25,8 +25,8 @@
                     localStorage.email = user.email;
                     history.pushState(null, null, '/#/chat');
                     window.location.reload();
-                }).catch(console.error);
-            }).catch(console.error);
-
+          });
+        });
+      }).catch(console.error);
     </script>
   </body>

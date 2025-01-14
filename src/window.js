@@ -420,6 +420,10 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                     // Otherwise, execute the inline script content
                     newScript.textContent = script.textContent;
                 }
+                // If the script is a module, set the type attribute
+                if (script.type && script.type === "module") {
+                    newScript.type = "module";
+                }
                 document.body.appendChild(newScript); // Append to DOM to execute
                 //newScript.remove(); // Optional: Clean up after execution
             });
