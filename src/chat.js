@@ -3,6 +3,7 @@ envVars().then((ENV_VARS) => {
     let targetConnectionId = null;
 
     const apiBaseUrl = ENV_VARS.API_BASE_URL;
+    displayMessages("Connecting...");
     const socket = new WebSocket(apiBaseUrl);
     let isAdmin = false;
 
