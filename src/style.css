@@ -741,3 +741,156 @@ p.date::before {
         clear: left;
     }
 }
+
+
+/* ==================================
+Chat Window Styles
+================================== */
+
+#window-chat .window-body {
+    margin: 0;
+    padding: 0;
+}
+
+#chat-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+.info {
+    font-style: italic;
+}
+
+.timestamp {
+    color: var(--border);
+}
+
+.from-admin .sender, .from-admin .message {
+    background-color: var(--header-bg);
+    font-weight: bold;
+
+}
+
+.user.admin::before, .from-admin .user::before{
+    /* Put a green light next to the admin's name (big green bullet) */
+    content: "•";
+    color: lightgreen;
+    margin-right: 0.25rem;
+}
+
+/* If #chat-messages has zero children, display a message */
+#chat-messages:empty::before {
+    content: "No messages yet. Be the first to say something!";
+    font-style: italic;
+}
+#chat-options {
+    display: flex;
+    padding: 0.75rem;
+    justify-content: space-evenly;
+    justify-items: stretch;
+}
+/* Make the children of #chat-options equally spaced and consuming all space equally */
+#chat-options * {
+    flex-grow: 1;
+    min-width: 1px;
+}
+
+/* Last child of #chat-options should consume all remaining space */
+#chat-options > *:last-child {
+    margin-right: 0;
+}
+
+input, textarea, button {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background-color: inherit;
+    border: none;
+    outline: none;
+}
+
+input, textarea {
+    margin-right: 0.75rem;
+    padding: 0.325rem;
+    border: 1px solid var(--border);
+    border-radius: 0.325rem;
+    color: var(--text);
+    background-color: var(--bg);
+}
+
+#chat-submit {
+    display: flex;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+#chat-submit textarea {
+    width: 100%;
+    min-height: 15vh;
+}
+#chat-submit textarea.waiting {
+    /* Add an external image of a spinner when waiting for a response */
+    background-image: url("/start-button.gif");
+    background-size: 5rem;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+@supports (background-image: url('/start-button.webp')) {
+    #chat-submit textarea.waiting {
+        background-image: url("/start-button.webp");
+    }
+}
+#chat-messages .waiting span {
+    /* Don't display the text, just say "sending..." */
+    display: none;
+}
+#chat-messages .waiting::after {
+    content: "Sending...";
+    font-style: italic;
+}
+
+#chat-users {
+    height: 100%;
+    float: right;
+    width: fit-content;
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--text);
+    overflow-y: auto;
+    display: none;
+}
+
+#chat-users.visible {
+    display: block;
+}
+
+.user:hover {
+    background-color: var(--scroll-hover);
+}
+
+button {
+    padding: 0.325rem 1rem;
+    background-color: var(--header-bg);
+    background: var(--header-bg-gradient);
+    color: var(--header-text);
+    border: 1px solid var(--border);
+    border-radius: 0.325rem;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--button-bg-gradient-hover);
+}
+button:active {
+    background: var(--button-bg-gradient-active);
+}
+#chat-container button:hover {
+    background-color: var(--scroll-hover);
+}
