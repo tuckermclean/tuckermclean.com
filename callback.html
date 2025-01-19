@@ -16,6 +16,8 @@
                 code: new URLSearchParams(window.location.search).get("code"),
                 redirect_uri:`https://${ENV_VARS.DOMAIN_NAME}/callback.html`
             }).toString()}).then(r=>r.json()).then((token) => {
+                // Add an expiration time to the token
+                token.expires_at = Date.now() + token.expires_in * 1000;
                 localStorage.setItem('token', JSON.stringify(token));
                 fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/userInfo`, {
                     headers: { 'Authorization': 'Bearer '+token.access_token }

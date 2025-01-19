@@ -50,15 +50,23 @@ envVars().then((ENV_VARS) => {
     }
     if (data.type) {
       switch (data.type) {
+        case "noAdmins":
         case "adminMessage":
         case "guestMessage":
+        case "newConnection":
+        case "endConnection":
             displayMessages(data);
             break;
         case "welcome":
             if (data.isAdmin) {
                 data.message = "Welcome, admin!";
+                getConnections().then(displayConnections);
             } else {
-                data.message = `Welcome, ${localStorage.getItem("name") || "user"}! Let us know how we can help.`;
+                if (localStorage.getItem("name")) {
+                    data.message = `Welcome, ${localStorage.getItem("name") || "user"}! Let us know how we can help.`;
+                } else {
+                    data.message = "Welcome! Enter your name down below! Let us know how we can help.";
+                }
             }
             displayMessages(data);
             connectionId = data.connectionId;
@@ -195,7 +203,15 @@ envVars().then((ENV_VARS) => {
 
         const text = document.createElement("span");
         text.classList.add("message");
-        text.textContent = message;
+        if (msg.type === "newConnection") {
+            text.textContent = `New connection: ${msg.connectionId}`;
+        } else if (msg.type === "endConnection") {
+            text.textContent = `Connection ended: ${msg.connectionId}`;
+        } else if (msg.type === "noAdmins") {
+            text.textContent = "Nobody is around to read your message at the moment. It will be stored for later delivery.";
+        } else {
+            text.textContent = message;
+        }
 
         div.appendChild(ts);
         div.appendChild(sender);
@@ -240,6 +256,20 @@ envVars().then((ENV_VARS) => {
     }
   }
 
+    // Display list of connections (admin only)
+    function displayConnections(connections) {
+        if (!connections) return;
+        const container = document.getElementById("chat-users");
+        container.innerHTML = "";
+
+        connections.forEach((conn) => {
+            const div = document.createElement("div");
+            div.classList.add("user");
+            div.textContent = conn.connectionId;
+            container.appendChild(div);
+            container.classList.add("visible");
+        });
+    }
   // Focus the message box
   msgEl.focus();
 });
