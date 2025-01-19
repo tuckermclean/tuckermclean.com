@@ -764,9 +764,11 @@ Chat Window Styles
     overflow-y: auto;
     padding: 0.75rem;
     border-bottom: 1px solid var(--border);
+    margin-right: calc(var(--users-div-width, 0px) + 20px); /* Leave space for the fixed div */
 }
 .info {
     font-style: italic;
+    opacity: 0.6;
 }
 
 .timestamp {
@@ -786,6 +788,16 @@ Chat Window Styles
     margin-right: 0.25rem;
 }
 
+.user.you::before {
+    /* Put a green light next to the admin's name (big green bullet) */
+    content: "•";
+    color: yellow;
+    margin-right: 0.25rem;
+}
+
+.user.target {
+    font-weight: bold;
+}
 /* If #chat-messages has zero children, display a message */
 #chat-messages:empty::before {
     content: "No messages yet. Be the first to say something!";
@@ -865,6 +877,9 @@ input, textarea {
     border-left: 1px solid var(--text);
     overflow-y: auto;
     display: none;
+    position: fixed;
+    right: 0;
+    max-height: var(--users-div-height, 100px);
 }
 
 #chat-users.visible {

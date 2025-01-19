@@ -7,7 +7,7 @@
     <script type="module">
       import { envVars } from '/src/env.js';
       envVars().then((ENV_VARS) => {
-        window.location.href=`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/authorize?identity_provider=Google&redirect_uri=https://${ENV_VARS.DOMAIN_NAME}/callback.html&response_type=CODE&client_id=${ENV_VARS.COGNITO_CLIENT_ID}&scope=email%20openid%20profile`;
+        window.location.href=`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/authorize?identity_provider=Google&redirect_uri=https://${ENV_VARS.DOMAIN_NAME}/callback.html&response_type=CODE&client_id=${ENV_VARS.COGNITO_CLIENT_ID}&scope=openid+profile+email`;
       }).catch(console.error);
     </script>
   </body>
