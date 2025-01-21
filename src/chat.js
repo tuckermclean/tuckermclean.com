@@ -1,24 +1,41 @@
 import { AccessTokenEvents } from "oidc-client-ts";
 import { envVars } from "/src/env.js";
 
-envVars().then((ENV_VARS) => { while(true) {
-    return new Promise((resolve, reject) => {
-  // 1. Distinguish endpoints
-  const wsUrl   = ENV_VARS.API_WS_BASE_URL;      // "wss://api-ws.example.com"
-  const httpUrl = ENV_VARS.API_BASE_URL;    // "https://api.example.com"
+class Chat {
+    constructor() {
+        this.accessToken = null;
+        this.connectionId = null;
+        this.targetConnectionId = null;
+        this.isAdmin = false;
+        this.nameEl = document.getElementById("name");
+        this.emailEl = document.getElementById("email");
+        this.phoneEl = document.getElementById("phone");
+        this.msgEl = document.getElementById("message");
+        this.sendBtn = document.getElementById("message-send");
+        this.socket = null;
+        this.abortController = new AbortController();
+        this.promise = new Promise((resolve, reject, that = this) => {
+            that.resolve = resolve;
+            that.reject = () => {
+                that.abortController.abort();
+                reject;
+            };
+        });
+        envVars().then((envVars, that=this) => {
+            that.ENV_VARS = envVars;
+            that.wsUrl = that.ENV_VARS.API_WS_BASE_URL;
+            that.httpUrl = that.ENV_VARS.API_BASE_URL;
+            that.wsUrlToken = that.wsUrl;
+            that.init();
+        });
+    }
 
-  let wsUrlToken = wsUrl;
-  let accessToken = null;
-  let connectionId = null;
-  let targetConnectionId = null;
-  let isAdmin = false;
-
-  // 2. Setup local storage for name/email/phone (if still wanted)
-  const nameEl  = document.getElementById("name");
-  const emailEl = document.getElementById("email");
-  const phoneEl = document.getElementById("phone");
-
-  [nameEl, emailEl, phoneEl].forEach((el) => {
+    async init() {
+        // Event handler for abort controller
+        this.abortController.signal.addEventListener("abort", () => {
+            this.socket.close();
+        });
+        [this.nameEl, this.emailEl, this.phoneEl].forEach((el) => {
     const storedVal = localStorage.getItem(el.id);
     if (storedVal) el.value = storedVal;
     el.addEventListener("input", () => {
@@ -28,15 +45,15 @@ envVars().then((ENV_VARS) => { while(true) {
 
   if (localStorage.getItem("token")) {
     try {
-        accessToken = JSON.parse(localStorage.getItem("token")).access_token;
-        wsUrlToken = `${wsUrl}?accessToken=${accessToken}`;
+        this.accessToken = JSON.parse(localStorage.getItem("token")).access_token;
+        this.wsUrlToken = `${this.wsUrl}?accessToken=${this.accessToken}`;
         // At interval, check the access token and refresh if needed
         setInterval(() => {
-            if (accessToken) {
+            if (this.accessToken) {
                 const token = JSON.parse(localStorage.getItem("token"));
                 if (token.expires_at < (Date.now() - 60000)) {
                     refreshAccessToken().then((newToken) => {
-                        accessToken = newToken;
+                        this.accessToken = newToken;
                         console.log(`Token refreshed. New token expire time: ${JSON.parse(localStorage.getItem("token")).expires_at}`);
                     }).catch((err) => {
                         console.error("Error refreshing token:", err);
@@ -53,21 +70,21 @@ envVars().then((ENV_VARS) => { while(true) {
   }
 
   // 3. Connect WebSocket (Receive-Only)
-  displayMessages("Connecting WebSocket...");
-  const socket = new WebSocket(wsUrlToken);
+  this.displayMessages("Connecting WebSocket...");
+  this.socket = new WebSocket(this.wsUrlToken);
 
-  socket.onopen = () => {
-    displayMessages("WebSocket connected (receive only).");
+  this.socket.onopen = () => {
+    this.displayMessages("WebSocket connected (receive only).");
   };
 
-  socket.onmessage = (event) => {
+  this.socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     // The server might push { message }, or { action: 'connect' }, etc.
     if (data.connectionId) {
-        if (targetConnectionId !== data.connectionId) {
-            targetConnectionId = data.connectionId;
-            if (isAdmin) {
-                getConnections().then(displayConnections);
+        if (this.targetConnectionId !== data.connectionId && data.connectionId !== this.connectionId) {
+            this.targetConnectionId = data.connectionId;
+            if (this.isAdmin) {
+                this.updateConnections();
             }
         }
     }
@@ -78,12 +95,13 @@ envVars().then((ENV_VARS) => { while(true) {
         case "guestMessage":
         case "newConnection":
         case "endConnection":
-            displayMessages(data);
+        case "visitorNotFound":
+            this.displayMessages(data);
             break;
         case "welcome":
             if (data.isAdmin) {
                 data.message = "Welcome, admin!";
-                getConnections().then(displayConnections);
+                this.updateConnections();
             } else {
                 if (localStorage.getItem("name")) {
                     data.message = `Welcome, ${localStorage.getItem("name") || "user"}! Let us know how we can help.`;
@@ -91,64 +109,67 @@ envVars().then((ENV_VARS) => { while(true) {
                     data.message = "Welcome! Enter your name down below! Let us know how we can help.";
                 }
             }
-            displayMessages(data);
-            connectionId = data.connectionId;
-            isAdmin = data.isAdmin;
+            this.displayMessages(data);
+            this.connectionId = data.connectionId;
+            this.isAdmin = data.isAdmin;
             break;
         case "ping":
-            socket.send(JSON.stringify({ ping: "pong" }));
+            this.socket.send(JSON.stringify({ ping: "pong" }));
             break;
         default:
             data.message = `Server action: ${data.type} ${data.message || ""}`;
-            displayMessages(data);
+            this.displayMessages(data);
       }
     } else if (data.message) {
-        console.log(data, data.message === "Forbidden", !connectionId);
-        if (data.message === "Forbidden" && !connectionId) {
-            connectionId = data.connectionId;
-            displayMessages(`Connection ID: ${connectionId}`);
+        console.log(data, data.message === "Forbidden", !this.connectionId);
+        if (data.message === "Forbidden" && !this.connectionId) {
+            this.connectionId = data.connectionId;
+            this.displayMessages(`Connection ID: ${connectionId}`);
         } else {
-            displayMessages([data]);
+            this.displayMessages([data]);
         }
     } else if (data.error) {
-        displayMessages(`Server error: ${data.message}`);
+        this.displayMessages(`Server error: ${data.message}`);
     } else {
       // Unknown
-      displayMessages("Unknown WebSocket data:");
-      displayMessages(data);
+      this.displayMessages("Unknown WebSocket data:");
+      this.displayMessages(data);
     }
   };
 
-  socket.onerror = (err) => {
+  this.socket.onerror = (err) => {
     console.error("WebSocket error:", err);
   };
 
-  socket.onclose = () => {
-    displayMessages("WebSocket disconnected.");
+  this.socket.onclose = () => {
+    this.displayMessages("WebSocket disconnected.");
     if (localStorage.getItem("token")) {
-        refreshAccessToken().then((newToken) => {
-            resolve(newToken);
+        this.refreshAccessToken().then((newToken) => {
+            this.accessToken = newToken;
+            console.log(`Token refreshed. New token expire time: ${JSON.parse(localStorage.getItem("token")).expires_at}`);
         }).catch((err) => {
             console.error("Error refreshing token:", err);
-            reject(err);
+            this.isAdmin = false;
+            this.displayMessages("Error refreshing token. Please log in again.");
+            this.reject(err);
         });
     }
   };
 
-  // 5. Send messages via HTTP
-  const msgEl = document.getElementById("message");
-  const sendBtn = document.getElementById("message-send");
-
-  sendBtn.addEventListener("click", sendMessage);
-  msgEl.addEventListener("keydown", (ev) => {
+  this.sendBtn.addEventListener("click", () => { this.sendMessage() });
+  this.msgEl.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter" && !ev.shiftKey && !ev.ctrlKey && !ev.altKey) {
       ev.preventDefault();
-      sendMessage();
+      this.sendMessage();
     }
   });
 
-  async function sendMessage() {
-    const message = msgEl.value.trim();
+  this.msgEl.focus();
+  }
+  // end init()
+
+  async sendMessage() {
+    const message = this.msgEl.value.trim();
     if (!message) {
       alert("Message cannot be empty.");
       return;
@@ -158,9 +179,9 @@ envVars().then((ENV_VARS) => { while(true) {
     let endpoint = "message"; // default for guest
     const headers = { "Content-Type": "application/json" };
 
-    if (accessToken) {
-        // If logged in, use the token
-        headers.Authorization = `Bearer ${accessToken}`;
+    if (this.isAdmin) {
+        // If authorized, use the token
+        headers.Authorization = `Bearer ${this.accessToken}`;
         endpoint = "adminMessage";
     }
 
@@ -171,13 +192,13 @@ envVars().then((ENV_VARS) => { while(true) {
         name: localStorage.getItem("name") || undefined,
         email: localStorage.getItem("email") || undefined,
         phone: localStorage.getItem("phone") || undefined,
-        connectionId,
-        targetConnectionId,
+        connectionId: this.connectionId,
+        targetConnectionId: this.targetConnectionId,
     };
 
     try {
-      msgEl.classList.add("waiting");
-      const resp = await fetch(httpUrl + endpoint, {
+      this.msgEl.classList.add("waiting");
+      const resp = await fetch(this.httpUrl + endpoint, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -191,20 +212,20 @@ envVars().then((ENV_VARS) => { while(true) {
       const newMsgObj = {
         message,
         timestamp: new Date().toISOString(),
-        name: accessToken ? "Admin (You)" : "You",
+        name: this.accessToken ? "Admin (You)" : "You",
       };
-      displayMessages([newMsgObj]);
-      msgEl.value = "";
+      this.displayMessages([newMsgObj]);
+      this.msgEl.value = "";
     } catch (err) {
       console.error("Error sending message:", err);
-      displayMessages(`Error sending message: ${err.message}`);
+      this.displayMessages(`Error sending message: ${err.message}`);
     } finally {
-      msgEl.classList.remove("waiting");
+      this.msgEl.classList.remove("waiting");
     }
   }
 
   // 6. Utility: Display messages
-  function displayMessages(messages) {
+displayMessages(messages) {
     if (!Array.isArray(messages)) messages = [messages];
     const container = document.getElementById("chat-messages");
 
@@ -245,6 +266,8 @@ envVars().then((ENV_VARS) => { while(true) {
             text.textContent = `Connection ended: ${msg.connectionId}`;
         } else if (msg.type === "noAdmins") {
             text.textContent = "Nobody is around to read your message at the moment. It will be stored for later delivery.";
+        } else if (msg.type === "visitorNotFound") {
+            text.textContent = "Visitor not found: "+msg.targetConnectionId;
         } else {
             text.textContent = message;
         }
@@ -253,8 +276,8 @@ envVars().then((ENV_VARS) => { while(true) {
         if (!["newConnection", "endConnection", "welcome", "noAdmins"].includes(msg.type)) {
             div.appendChild(sender);
         } else {
-            if (isAdmin) {
-                getConnections().then(displayConnections);
+            if (this.isAdmin) {
+                this.updateConnections();
             }            
         }
         div.appendChild(text);
@@ -266,49 +289,65 @@ envVars().then((ENV_VARS) => { while(true) {
   }
 
   // 7. Optionally reset local storage
-  function resetChat() {
+  resetChat() {
     ["name", "email", "phone", "token"].forEach((key) => localStorage.removeItem(key));
-    location.reload();
+    this.socket.close();
+    //location.reload();
   }
 
   // Get list of connections (admin only)
-  async function getConnections() {
+  async getConnections() {
     try {        
-        if (!accessToken) {
-            isAdmin = false;
+        if (!this.accessToken) {
+            this.isAdmin = false;
             return;
         }
 
         // Decide endpoint
         const headers = { "Content-Type": "application/json" };
 
-        if (accessToken) {
+        if (this.accessToken) {
             // If logged in, use the token
-            headers.Authorization = `Bearer ${accessToken}`;
-            const connections = await fetch(httpUrl + "listConnections", { headers });
-            isAdmin = true;
+            headers.Authorization = `Bearer ${this.accessToken}`;
+            const connections = await fetch(this.httpUrl + "listConnections", { headers });
+            this.isAdmin = true;
             return await connections.json();
         } else {
-            isAdmin = false;
+            this.isAdmin = false;
             return;
         }
     } catch (err) {
         console.error("Error getting connections:", err);
-        isAdmin = false;
+        this.isAdmin = false;
     }
   }
 
-  function updateUserDivSpacing() {
+  updateUserDivSpacing() {
     const usersDiv = document.querySelector('#chat-users');
     const messagesDiv = document.querySelector('#chat-messages');
     const computedWidth = usersDiv.offsetWidth; // Dynamically measure its width
     const computedHeight = messagesDiv.offsetHeight; // Dynamically measure its height
     document.documentElement.style.setProperty('--users-div-width', `${computedWidth}px`);
     document.documentElement.style.setProperty('--users-div-height', `${computedHeight}px`);
+    // If users div is visible:
+    if (usersDiv.classList.contains('visible')) {
+      messagesDiv.classList.add('users-visible');
+    } else {
+      messagesDiv.classList.remove('users-visible');
+    }
+  }
+
+
+  updateConnections() {
+    const that = this;
+    this.getConnections().then(
+        (connections) => {
+            that.displayConnections(connections, that);
+        });
   }
 
     // Display list of connections (admin only)
-    function displayConnections(connections) {
+    displayConnections(connections, that) {
         if (!connections || !Array.isArray(connections)) {
             console.error("Invalid connections list:", connections);
             return;
@@ -319,10 +358,10 @@ envVars().then((ENV_VARS) => { while(true) {
         connections.forEach((conn) => {
             console.log(conn);
             const div = document.createElement("div");
-            if (conn.connectionId === connectionId) {
+            if (conn.connectionId === that.connectionId) {
                 div.classList.add("you");
             }
-            if (conn.connectionId === targetConnectionId) {
+            if (conn.connectionId === that.targetConnectionId) {
                 div.classList.add("target");
             }
             if (conn.isAdmin) {
@@ -331,19 +370,19 @@ envVars().then((ENV_VARS) => { while(true) {
             div.classList.add("user");
             div.textContent = conn.connectionId;
             div.addEventListener("click", (event) => {
-                if (isAdmin) {
-                    targetConnectionId = event.target.textContent;
-                    displayMessages(`Now targeting connection: ${targetConnectionId}`);
-                    getConnections().then(displayConnections);
+                if (that.isAdmin) {
+                    that.targetConnectionId = event.target.textContent;
+                    that.displayMessages(`Now targeting connection: ${that.targetConnectionId}`);
+                    that.updateConnections();
                 }
             });
             container.appendChild(div);
             container.classList.add("visible");
-            updateUserDivSpacing();
+            that.updateUserDivSpacing();
         });
     }
 
-    async function refreshAccessToken() {
+    async refreshAccessToken() {
         const refreshToken = JSON.parse(localStorage.getItem("token")).refresh_token;
         if (!refreshToken) {
           throw new Error("No refresh token available. Please log in again.");
@@ -351,7 +390,7 @@ envVars().then((ENV_VARS) => { while(true) {
       
         const params = new URLSearchParams();
         params.append("grant_type", "refresh_token");
-        params.append("client_id", ENV_VARS.COGNITO_CLIENT_ID);
+        params.append("client_id", this.ENV_VARS.COGNITO_CLIENT_ID);
         params.append("refresh_token", refreshToken);
       
         const response = await fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/token`, {
@@ -371,6 +410,17 @@ envVars().then((ENV_VARS) => { while(true) {
         return token.access_token;
       }
   // Focus the message box
-  msgEl.focus();
-});
-}});
+}
+
+export { Chat };
+
+(async function mainLoop() {
+    while (true) {
+        try {
+            const chat = new Chat();
+            await chat.promise; // Wait for the promise to resolve before continuing
+        } catch (err) {
+            console.error("An error occurred in Chat:", err);
+        }
+    }
+})();
