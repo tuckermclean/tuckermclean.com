@@ -51,7 +51,7 @@ class Chat {
             if (this.accessToken) {
                 const token = JSON.parse(localStorage.getItem("token"));
                 if (token.expires_at < (Date.now() - 60000)) {
-                    refreshAccessToken().then((newToken) => {
+                    this.refreshAccessToken().then((newToken) => {
                         this.accessToken = newToken;
                         console.log(`Token refreshed. New token expire time: ${JSON.parse(localStorage.getItem("token")).expires_at}`);
                     }).catch((err) => {
