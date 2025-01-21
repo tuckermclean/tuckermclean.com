@@ -392,7 +392,7 @@ displayMessages(messages) {
         params.append("client_id", this.ENV_VARS.COGNITO_CLIENT_ID);
         params.append("refresh_token", refreshToken);
       
-        const response = await fetch(`https://auth.${ENV_VARS.DOMAIN_NAME}/oauth2/token`, {
+        const response = await fetch(`https://auth.${this.ENV_VARS.DOMAIN_NAME}/oauth2/token`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
