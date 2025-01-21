@@ -767,7 +767,7 @@ Chat Window Styles
 }
 
 #chat-messages.users-visible {
-    margin-right: calc(var(--users-div-width, 0px) + 20px); /* Leave space for the fixed div */
+    margin-right: var(--users-div-width, 0px); /* Leave space for the fixed div */
 }
 
 .info {
@@ -883,7 +883,8 @@ input, textarea {
     display: none;
     position: fixed;
     right: 0;
-    max-height: var(--users-div-height, 100px);
+    max-height: calc(var(--users-div-height, 100px) - 0.8rem);
+    border-bottom: 1px solid var(--border);
 }
 
 #chat-users.visible {
