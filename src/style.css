@@ -126,7 +126,7 @@ body {
     background-image: var(--bg-image);
     background-repeat: repeat;
     color: var(--text);
-    font-family: 'Noto Sans Mono', monospace;
+    font-family: 'Fira Code', monospace;
     height: 100%;
     justify-content: center;
     margin: 0;

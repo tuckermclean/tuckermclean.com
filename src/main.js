@@ -1,4 +1,4 @@
-import "@fontsource/noto-sans-mono";
+import "@fontsource/fira-code";
 import './style.css'
 import { openPage, toggleMode, cascadeWindows, tileWindows, minimizeWindows } from './window.js'
 
