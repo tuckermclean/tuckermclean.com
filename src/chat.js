@@ -1,4 +1,3 @@
-import { AccessTokenEvents } from "oidc-client-ts";
 import { envVars } from "/src/env.js";
 
 class Chat {
