@@ -68,12 +68,12 @@ class Chat {
     }
   }
 
-  // 3. Connect WebSocket (Receive-Only)
+  // 3. Connect WebSocket
   this.displayMessages("Connecting WebSocket...");
   this.socket = new WebSocket(this.wsUrlToken);
 
   this.socket.onopen = () => {
-    this.displayMessages("WebSocket connected (receive only).");
+    this.displayMessages("WebSocket connected.");
   };
 
   this.socket.onmessage = (event) => {
