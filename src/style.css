@@ -292,6 +292,19 @@ body.toggled .window-header .window-icon {
     padding: 1rem;
 }
 
+.window.image .window-body {
+    overflow-x: auto;
+    padding: 0;
+    background-color: white;
+}
+
+.window.image img {
+    width: auto;
+    height: 200%;
+    object-fit: contain;
+    object-position: center;
+}
+
 .window-status-bar {
     background-color: var(--header-bg);
     border-top: 1px solid var(--border);
@@ -582,6 +595,19 @@ a:hover {
     margin: 0 -0.25rem;
     padding: 0 0.25rem;
     text-decoration: none;
+}
+
+a img {
+    border: 1px solid var(--symlink-color);
+}
+
+a:hover img {
+    border: 0.5rem solid var(--symlink-color);
+    margin: calc(-0.5rem + 1px);
+}
+
+a.no-text:hover {
+    background: none;
 }
 
 .executable {

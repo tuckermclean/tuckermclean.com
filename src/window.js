@@ -3,7 +3,7 @@ let zIndexCounter = 100; // Starting point for z-index values
 let windows = Array(); // Store window elements
 
 // Create and manage windows programmatically
-function createWindow(name, title, content, icon = '⚙️', bringToFront_ = true) {
+function createWindow(name, title, content, icon = '⚙️', bringToFront_ = true, classes = []) {
     const id = windows.length;
     const template = document.getElementById('window-template');
     const windowClone = template.content.cloneNode(true);
@@ -13,7 +13,8 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     windowElement.id = `window-${name}`;
     windowElement.name = name;
     windowElement.title = title;
-    
+    windowElement.classList.add(...classes);
+
     const header = windowElement.querySelector('.window-header');
     const body = windowElement.querySelector('.window-body');
     const closeBtn = windowElement.querySelector('.close');
