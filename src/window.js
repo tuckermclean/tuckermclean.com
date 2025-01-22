@@ -243,7 +243,12 @@ function startResize(e, windowElement) {
 // Button Actions
 function closeWindow(windowElement) {
     if (window.windowCleanup[windowElement.name]) {
-        window.windowCleanup[windowElement.name]();
+        if (typeof(window.windowCleanup[windowElement.name]) === 'object') {
+            window.windowCleanup[windowElement.name].forEach((f) => { f() });
+        } else {
+            window.windowCleanup[windowElement.name]();
+            console.warn('windowCleanup should be an object with an array of functions. Update the code.');
+        }
         delete window.windowCleanup[windowElement.name];
     }
     windowElement.remove();
@@ -416,7 +421,7 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                 const newScript = document.createElement("script");
                 if (script.src) {
                     // If the script has a `src` attribute, load it separately
-                    newScript.src = script.src;
+                    newScript.src = `${script.src}?nocache=${new Date().getTime()}`;
                 } else {
                     // Otherwise, execute the inline script content
                     newScript.textContent = script.textContent;
@@ -425,12 +430,17 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                 if (script.type && script.type === "module") {
                     newScript.type = "module";
                 }
+                const ancestor = targetElement.closest('.window');
                 document.body.appendChild(newScript); // Append to DOM to execute
+                window.windowCleanup[ancestor.name] = window.windowCleanup[ancestor.name] || [];
+                window.windowCleanup[ancestor.name].push(() => {
+                    document.body.removeChild(newScript); // Clean up after execution
+                });
                 //newScript.remove(); // Optional: Clean up after execution
             });
 
             // Find ancestor window element
-            let ancestor = targetElement.closest('.window');
+            const ancestor = targetElement.closest('.window');
             // Run callback function if provided
             if (typeof(callback) === 'function') {
                 callback(ancestor);

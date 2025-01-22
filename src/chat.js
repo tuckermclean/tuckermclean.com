@@ -164,7 +164,10 @@ class Chat {
   });
 
   this.msgEl.focus();
-  }
+  window.windowCleanup.chat = window.windowCleanup.chat || [];
+  // Add the abort controller to the top of the cleanup stack
+  window.windowCleanup.chat.unshift(() => { this.abortController.abort() });
+}
   // end init()
 
   async sendMessage() {
@@ -408,18 +411,18 @@ displayMessages(messages) {
         localStorage.setItem('token', JSON.stringify({...token, refresh_token: refreshToken, expires_at: token.expires_in * 1000 + Date.now()}));
         return token.access_token;
       }
-  // Focus the message box
-}
 
-export { Chat };
-
-(async function mainLoop() {
-    while (true) {
+    // Static method to run a chat window
+    static run() {
+      (async () => {
         try {
-            const chat = new Chat();
-            await chat.promise; // Wait for the promise to resolve before continuing
+          const chat = new Chat();
+          await chat.promise;
         } catch (err) {
-            console.error("An error occurred in Chat:", err);
+          console.error("An error occurred in Chat:", err);
         }
+      })();
     }
-})();
+  }
+Chat.run();
+export { Chat };
