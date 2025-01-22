@@ -553,6 +553,9 @@ function openPageFromUrl() {
         case 'chat':
         goTo('chat', 'Chat', '💬');
         break;
+        case 'cloud-journey':
+        goTo('cloud-journey', 'My Cloud Journey', '☁️');
+        break;
         default:
         goTo('welcome', 'Welcome!', '👋');
         openPage('chat', 'Chat', '💬', undefined, true, false);
