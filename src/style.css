@@ -581,6 +581,10 @@ footer {
     font-size: 0.9rem;
 }
 
+.icon {
+    height: 1em;
+}
+
 .directory {
     color: var(--directory-color);
 }
@@ -629,11 +633,46 @@ a.no-text:hover {
     width: 1ch;
 }
 
+.keywords {
+    display: none;
+}
+
 /* ==================================
 Print Styles
 ================================== */
 
 @media print {
+    * {
+        float: none !important;
+        position: static !important;
+        font-variant-ligatures: none !important;
+        text-rendering: optimizeLegibility !important;
+        -webkit-font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0 !important;
+        font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0 !important;
+    }
+
+    .keywords {
+        display: inline !important;
+        color: #FFFFFF !important;
+        font-size: 0.1px !important;
+     }
+
+    /* Ensure natural flow order */
+    .window-body, .front, #resume-container {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: relative !important;
+    }
+
+    article {
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        page-break-inside: avoid !important;
+    }
+
     body, p, #resume-container a {
         color: #000000 !important; /* Ensure text is black */
         font-size: 9.4pt !important; /* Use a readable font size */
@@ -688,14 +727,6 @@ Print Styles
         font-size: 0.8rem !important;
         line-height: 0.9rem !important;
     }
-    /* h3, h4 {
-        float: left;
-    }
-
-    h2 + p.date, h3 + p.date, h4 + p.date {
-        float: right;
-        text-align: right;
-    } */
 
     h3 + p.date, h4 + p.date {
         margin: 1rem 0px !important;
@@ -708,6 +739,9 @@ Print Styles
     h4 {
         clear: left;
     }
+    @media print {
+        .page, .page-break { break-after: page; }
+    }    
 }
 
 /* ==================================
@@ -739,7 +773,7 @@ p.date {
     white-space: nowrap;
 }
 
-p.date::before {
+/* p.date::before {
     content: '📅';
     margin-right: 0.15rem;
 }
@@ -750,10 +784,10 @@ p.date::before {
 }
 .moai::before {
     content: '🗿';
-}
+} */
 
 @media (min-width: 769px) {
-    /* h3, h4 {
+    h3, h4 {
         float: left;
     }
 
@@ -761,7 +795,7 @@ p.date::before {
         float: right;
         text-align: right;
         clear: inline-end;
-    } */
+    }
 
     h3 + p.date, h4 + p.date {
         margin: 1.3rem 0px;
