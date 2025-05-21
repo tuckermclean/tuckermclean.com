@@ -35,6 +35,11 @@ jobs:
         npm install
         npm run build  # Replace with your build script (e.g., "npm run build")
 
+    # Step 3.5: List built files for debugging
+    - name: List built files for debugging
+      run: |
+        find dist/writings
+
     # Step 4: Configure AWS credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
