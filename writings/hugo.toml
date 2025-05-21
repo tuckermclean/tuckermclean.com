@@ -1,0 +1,22 @@
+baseURL = '/writings/'
+languageCode = 'en-us'
+title = 'Tucker McLean - Writings'
+theme = 'ananke'
+
+[params]
+  description = "Tucker McLean's writings and thoughts"
+  author = "Tucker McLean"
+
+[build]
+  writeStats = true
+
+[permalinks]
+  posts = '/posts/:slug/'
+
+[server]
+  [[server.headers]]
+    for = '/**'
+    [server.headers.values]
+      X-Frame-Options = 'SAMEORIGIN'
+      X-Content-Type-Options = 'nosniff'
+      X-XSS-Protection = '1; mode=block'

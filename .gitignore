@@ -1,26 +1,42 @@
+# Node/Vite
+node_modules/
+dist/
+
+# Hugo build output (if you ever build here)
+public/writings/
+writings/public/
+writings/.hugo_build.lock
+writings/hugo_stats.json
+writings/resources/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
 # Logs
-logs
 *.log
+
+# VSCode/IDE
+.vscode/
+.idea/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Ignore all .gitkeep files (used to keep empty dirs, but you don't want them)
+**/.gitkeep
 
 resume-*.html

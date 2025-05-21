@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "vite build && node writings/build.js",
+    "preview": "vite preview",
+    "build:hugo": "node writings/build.js"
   },
   "devDependencies": {
     "vite": "^6.0.5"
