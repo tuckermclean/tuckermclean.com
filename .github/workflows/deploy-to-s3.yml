@@ -20,11 +20,10 @@ jobs:
     - name: Init Hugo theme submodules
       run: git submodule update --init --recursive
 
-    # Step 1.5: Install Hugo
+    # Step 1.5: Install Hugo (always latest)
     - name: Install Hugo
       uses: peaceiris/actions-hugo@v2
       with:
-        hugo-version: '0.115.4'
         extended: true
 
     # Step 2: Set up Node.js
