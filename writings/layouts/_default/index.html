@@ -10,7 +10,7 @@
     <nav class="category-nav">
       <strong>Categories:</strong>
       {{ range $key, $value := .Site.Taxonomies.categories }}
-        <a href="{{ "categories/" | relLangURL }}{{ urlize $key }}">{{ $key }}</a>&nbsp;
+        <a href="{{ "categories/" | relLangURL }}{{ urlize $key }}/">{{ $key }}</a>&nbsp;
       {{ end }}
     </nav>
   {{ end }}
