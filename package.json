@@ -13,6 +13,7 @@
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "@fontsource/fira-code": "^5.1.1"
+    "@fontsource/fira-code": "^5.1.1",
+    "@fontsource/fira-sans": "^5.2.5"
   }
 }

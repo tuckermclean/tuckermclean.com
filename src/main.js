@@ -1,4 +1,5 @@
 import "@fontsource/fira-code";
+import "@fontsource/fira-sans";
 import './style.css'
 import { openPage, toggleMode, createWindow, cascadeWindows, tileWindows, minimizeWindows } from './window.js'
 

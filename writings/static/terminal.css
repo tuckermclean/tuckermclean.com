@@ -1,10 +1,10 @@
 /* custom.css */
 @font-face {
-  font-family: 'Fira Code';
+  font-family: 'Fira Sans';
   font-style: normal;
   font-weight: 400;
-  src: url('/assets/fira-code-latin-400-normal-BzypJxJk.woff2') format('woff2'),
-       url('/assets/fira-code-latin-400-normal-PFR0Tj-d.woff') format('woff');
+  src: url('/assets/fira-sans-latin-400-normal-CRr34ncs.woff') format('woff'),
+       url('/assets/fira-sans-latin-400-normal-DqUVgETp.woff2') format('woff2');
   font-display: swap;
 }
 
@@ -32,7 +32,7 @@ html {
 
 body {
   font-family:
-    "Fira Code",
+    "Fira Sans",
     "JetBrains Mono",
     Monaco,
     Consolas,
@@ -253,7 +253,7 @@ ol li {
 code,
 kbd {
   font-family:
-    "Fira Code",
+    "Fira Sans",
     "JetBrains Mono",
     Monaco,
     Consolas,
@@ -386,6 +386,7 @@ b, strong,
 th,
 button {
   font-weight: 600;
+  font-family: 'Fira Code', monospace;
 }
 
 div.container {
@@ -396,7 +397,7 @@ div.container {
   border-radius: 12px;
   background-color: #111;
   color: #f8f8f2;
-  font-family: 'Fira Code', monospace;
+  font-family: 'Fira Sans', monospace;
   padding: 1.5rem;
   margin: 2rem auto;
   max-width: 800px;
