@@ -1,12 +1,18 @@
 baseURL = '/writings/'
 languageCode = 'en-us'
 title = 'Tucker McLean - Writings'
-theme = 'ananke'
+theme = 'terminal'
 
 [params]
+  [params.logo]
+    logoText = 'Tucker McLean - Writings'
   description = "Tucker McLean's writings and thoughts"
   author = "Tucker McLean"
-  custom_css = ["css/custom.css"]
+  customCSS = ["css/custom.css"]
+  showMenuItems = 3
+  fullWidthTheme = false
+  centerTheme = true
+  showLastUpdated = true
 
 [build]
   writeStats = true
