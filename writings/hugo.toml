@@ -6,6 +6,7 @@ theme = 'ananke'
 [params]
   description = "Tucker McLean's writings and thoughts"
   author = "Tucker McLean"
+  custom_css = ["css/custom.css"]
 
 [build]
   writeStats = true

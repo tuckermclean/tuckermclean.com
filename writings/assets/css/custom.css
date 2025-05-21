@@ -1,0 +1,32 @@
+/* custom.css */
+
+/* Set custom fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+
+body {
+  font-family: 'Fira Code', monospace;
+}
+
+/* Custom header background */
+.site-header {
+  background-image: url('/writings/images/header.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Custom colors */
+:root {
+  --color-primary: #003366;
+  --color-text: #222222;
+  --color-bg: #f8f9fa;
+}
+
+body {
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+a {
+  color: var(--color-primary);
+}
+
