@@ -404,3 +404,14 @@ div.container {
   position: relative;
 
 }
+
+img.featured-image {
+  width: 100%;
+  height: auto;
+  max-height: 40rem; /* Adjust this value to your preferred cap */
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: block;
+}

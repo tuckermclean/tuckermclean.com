@@ -2,6 +2,7 @@
 title: "My Cloud Portfolio Journey"
 date: 2025-01-21
 draft: false
+categories: ['tech']
 ---
 
 Introduction
