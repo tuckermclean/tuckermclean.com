@@ -1,7 +1,7 @@
 ---
 title: "Why I Love God and His Messengers, Yet Believe the Bible is Flawed"
 date: 2025-05-25
-draft: true
+draft: false
 categories: ['faith']
 slug: "love-god-bible"
 ---
