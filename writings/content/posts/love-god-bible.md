@@ -1,6 +1,6 @@
 ---
 title: "Why I Love God and His Messengers, Yet Believe the Bible is Flawed"
-date: 2025-05-21
+date: 2025-05-25
 draft: true
 categories: ['faith']
 slug: "love-god-bible"
@@ -12,7 +12,7 @@ This is a particularly important topic for me personally, having grown up in [a 
 >
 > *Selected Messages, Book 1, p. 21*
 
-In this article, I intend to delve deeply into the topic of the Bible's divine inspiration and fully elucidate my position on Scripture.
+In this article, I intend to delve deeply into the topic of the Bible's divine inspiration and fully elucidate my position on Scripture. Growing up in the SDA tradition, I wrestled for years with questions about apparent contradictions in the Bible, a struggle that eventually led me to the clarity and peace I found in the Qur’an’s message of pure monotheism.
 
 Out of respect for all prophets, I will occasionally use the phrase "peace be upon him/them" throughout.
 
@@ -33,7 +33,7 @@ Is this a loaded question? I don't think so. I will try to demonstrate the follo
 
 #### On Scripture
 
-* **The Bible contains truth**, but it also contains the words of men—scribes, editors, kings, and unknown authors. These words are not all the Word of God, nor are they presented as such. However, many of these words are presented as the words of God, and I personally can't get behind it.
+* **The Bible contains truth**, but it also contains the words of men—scribes, editors, kings, and unknown authors. These words are not all the Word of God, nor are they presented as such. However, many of these words are presented as the words of God, and I personally can't get behind it. While I believe it retains remnants of divine guidance as originally revealed, Islamic theology holds that human intervention introduced distortions over time, as I will discuss.
 
 * **God never loses His Word**, but humans misquote, mistranslate, and reinterpret it. The Bible as we have it today is not the same as the Injeel given to Jesus, nor the Tawrat given to Moses, to use the Qur'anic terms.
 
@@ -45,17 +45,17 @@ Is this a loaded question? I don't think so. I will try to demonstrate the follo
 
 #### Paul's Letters
 
-* **Paul’s letters are not the Gospel**. Paul's letters are treated as inspired scripture by most Christians, yet Paul never met Jesus in person—apart from a reported vision ([Acts 9](https://www.biblegateway.com/passage/?search=Acts%209&version=NRSVUE))—and at times openly argued with those who did ([Galatians 2:11](https://www.biblegateway.com/passage/?search=Galatians%202%3A11-21&version=NRSVUE)).
+* **Paul’s letters are not the Gospel**. Paul's letters are treated as inspired scripture by most Christians, yet Paul never met Jesus in person—apart from a reported vision ([Acts 9](https://www.biblegateway.com/passage/?search=Acts%209&version=NRSVUE))—and at times openly argued with those who did ([Galatians 2:11](https://www.biblegateway.com/passage/?search=Galatians%202%3A11-21&version=NRSVUE)). While Christians view Paul’s writings as inspired, as affirmed in [2 Peter 3:15-16](https://www.biblegateway.com/passage/?search=2%20Peter%203%3A15-16&version=NRSVUE), their divergence from the direct teachings of Jesus (peace be upon him) and lack of personal interaction with him raise concerns in Islamic thought about their status as divine revelation.
 
 #### The Qur'an as God's Word
 
 * **God’s final Word is the Qur’an**, revealed to Muhammad (peace be upon him). It intends to confirm the truth in previous scriptures and correct the errors introduced over time.
 
-* **The Qur’an defends Jesus’ honor**—that he was born of a virgin, performed miracles, and is the Messiah, but was not crucified nor called people to worship him, according to the account found in the Qur’an.
+* **The Qur’an defends Jesus’ honor**—that he was born of a virgin, performed miracles, and is the Messiah, but was not crucified nor called people to worship him, according to the account found in the Qur’an. Islam honors Jesus as the Messiah, a mighty prophet born of a virgin, and a performer of miracles by Allah’s permission, as detailed in [Surah Ali 'Imran 3:45-49](https://quran.com/ali-imran/45-49).
 
 #### Jesus, the Prophets, and Monotheism
 
-* **I strive to follow Jesus' example closely** by rejecting idolatry and submitting to God alone, just as he (peace be upon him) did.
+* **I strive to follow Jesus' example closely** by rejecting idolatry and submitting to God alone, just as he (peace be upon him) did. As Muslims, we share with Christians a profound love for Jesus as a prophet of God, a commitment to moral living as taught by all messengers, and a belief in accountability before the Creator, even as we differ on specific doctrines like the Trinity, original sin, and various rituals.
 
 #### Reason & Understanding
 
@@ -70,13 +70,13 @@ Without further ado, let's get on with it. *Bismillah (In God's name)*
 Proof from the Bible That the Bible Is Not Perfect or Directly from God
 =======================================================================
 
-Upon close examination, the claim that the Bible is the perfect, preserved Word of God faces significant difficulties—and even the Bible’s own texts raise important questions about this claim. While many Christians assert that the Old and New Testaments together form God’s two divine witnesses, this claim has no scriptural basis and is difficult to support based on issues of consistency, preservation, and authorship.
+Upon close examination, the claim that the Bible is the perfect, preserved Word of God faces significant difficulties—and even the Bible’s own texts raise important questions about this claim. While many Christians assert that the Old and New Testaments together form God’s two divine witnesses, this claim has no scriptural basis and is difficult to support based on issues of consistency, preservation, and authorship. While I recognize that the Bible retains elements of divine truth as originally revealed to Moses and Jesus (peace be upon them), Islamic theology asserts that human intervention over centuries introduced distortions, both in text and interpretation, as cautioned in [Surah Al-Ma’idah 5:13-14](https://quran.com/al-maidah/13-14). 
 
-Let’s begin where Christian theology itself claims its foundation: the resurrection of Jesus. If God’s plan for salvation hinges upon this singular moment, we would expect its documentation to be clear and consistent. Instead, we find four irreconcilable accounts. In [Matthew 28:1–10](https://www.biblegateway.com/passage/?search=Matthew%2028%3A1-10&version=NRSVUE), two women encounter a visible angel who rolls away the stone. In [Mark 16:1–8](https://www.biblegateway.com/passage/?search=Mark%2016%3A1-8&version=NRSVUE), it’s three women who meet a young man already sitting inside the tomb. [Luke 24:1–12](https://www.biblegateway.com/passage/?search=Luke%2024%3A1-12&version=NRSVUE) claims there were two men in dazzling garments, and in [John 20:1–18](https://www.biblegateway.com/passage/?search=John%2020%3A1-18&version=NRSVUE), Mary Magdalene comes alone, finds the stone moved, and speaks to Jesus after mistaking him for a gardener. Many Christians have proposed ways to reconcile these differences, but for me, they highlight the complex human process behind the formation of these accounts. If God is not the author of confusion, as [1 Corinthians 14:33](https://www.biblegateway.com/passage/?search=1%20Corinthians%2014%3A33&version=NRSVUE) asserts, how do we explain these contradictions?
+Let’s begin where Christian theology itself claims its foundation: the resurrection of Jesus. If God’s plan for salvation hinges upon this singular moment, we would expect its documentation to be clear and consistent. Instead, we find four irreconcilable accounts. In [Matthew 28:1–10](https://www.biblegateway.com/passage/?search=Matthew%2028%3A1-10&version=NRSVUE), two women encounter a visible angel who rolls away the stone. In [Mark 16:1–8](https://www.biblegateway.com/passage/?search=Mark%2016%3A1-8&version=NRSVUE), it’s three women who meet a young man already sitting inside the tomb. [Luke 24:1–12](https://www.biblegateway.com/passage/?search=Luke%2024%3A1-12&version=NRSVUE) claims there were two men in dazzling garments, and in [John 20:1–18](https://www.biblegateway.com/passage/?search=John%2020%3A1-18&version=NRSVUE), Mary Magdalene comes alone, finds the stone moved, and speaks to Jesus after mistaking him for a gardener. Many Christians have proposed ways to reconcile these differences, but for me, they highlight the complex human process behind the formation of these accounts. If God is not the author of confusion, as [1 Corinthians 14:33](https://www.biblegateway.com/passage/?search=1%20Corinthians%2014%3A33&version=NRSVUE) asserts, how do we explain these contradictions? These variations suggest a human process of oral transmission and editing over time, which contrasts with the Qur’an’s direct revelation as preserved from the outset.
 
-Of course, Christian theologians have attempted to harmonize these accounts, but these efforts appear forced in the face of a plain, honest reading of the text.
+Of course, Christian theologians have attempted to harmonize these accounts, but these efforts appear forced in the face of a plain, honest reading of the text. While Christian apologetics often suggest these accounts represent complementary eyewitness perspectives, such explanations seem strained in the plain reading, facing the textual differences, raising questions about the claim of divine authorship free from human error. 
 
-The confusion deepens with the genealogies of Jesus. [Matthew 1:1–16](https://www.biblegateway.com/passage/?search=Matthew%201%3A1-16&version=NRSVUE) gives one lineage for Joseph, while [Luke 3:23–38](https://www.biblegateway.com/passage/?search=Luke%203%3A23-38&version=NRSVUE) gives a completely different one. They cannot both be true. This is not a small error; it directly undermines prophetic claims about Jesus' heritage.
+The confusion deepens with the genealogies of Jesus. [Matthew 1:1–16](https://www.biblegateway.com/passage/?search=Matthew%201%3A1-16&version=NRSVUE) gives one lineage for Joseph, while [Luke 3:23–38](https://www.biblegateway.com/passage/?search=Luke%203%3A23-38&version=NRSVUE) gives a completely different one. They cannot both be true. This is not a small error; it directly undermines prophetic claims about Jesus' heritage. This discrepancy, as Islamic scholars (e.g, Al-Ghazali, Ibn Hazm, Ibn Taymiyyah, and others) have noted, points to the broader issue of *tahrif*—distortion in both text and meaning—that the Qur’an seeks to correct ([Surah Al-Baqarah 2:75](https://quran.com/al-baqarah/75)). 
 
 Then there is the issue of lost texts. If the Bible is complete and preserved, why does it repeatedly reference other books that no longer exist? [Numbers 21:14](https://www.biblegateway.com/passage/?search=Numbers%2021%3A14&version=NRSVUE) mentions “The Book of the Wars of the Lord.” [Joshua 10:13](https://www.biblegateway.com/passage/?search=Joshua%2010%3A13&version=NRSVUE) cites “The Book of Jasher.” [1 Chronicles 29:29](https://www.biblegateway.com/passage/?search=1%20Chronicles%2029%3A29&version=NRSVUE) refers to records written by Samuel, Nathan, and Gad. [Colossians 4:16](https://www.biblegateway.com/passage/?search=Colossians%204%3A16&version=NRSVUE) speaks of a letter to the Laodiceans—gone. [1 Corinthians 5:9](https://www.biblegateway.com/passage/?search=1%20Corinthians%205%3A9&version=NRSVUE) references a previous letter Paul wrote. These missing documents are not trivial—they are acknowledged as once being part of the inspired testimony.
 
@@ -86,7 +86,7 @@ This is not surprising when we examine how the biblical authors understood their
 
 The contradictions don’t stop at narration—they extend to theology. [James 1:13](https://www.biblegateway.com/passage/?search=James%201%3A13&version=NRSVUE) says God tempts no one, yet [Genesis 22:1](https://www.biblegateway.com/passage/?search=Genesis%2022%3A1&version=NRSVUE) (especially [in the KJV](https://www.biblegateway.com/passage/?search=Genesis%2022%3A1&version=KJV)) says God tempted Abraham. [Psalm 119:160](https://www.biblegateway.com/passage/?search=Psalm%20119%3A160&version=NRSVUE) and [Isaiah 40:8](https://www.biblegateway.com/passage/?search=Isaiah%2040%3A8&version=NRSVUE) declare that God's Word stands forever. [Hebrews 8:13](https://www.biblegateway.com/passage/?search=Hebrews%208%3A13&version=NRSVUE) claims the first covenant was made obsolete. [John 1:18](https://www.biblegateway.com/passage/?search=John%201%3A18&version=NRSVUE) insists no one has ever seen God, yet [Exodus 33:11](https://www.biblegateway.com/passage/?search=Exodus%2033%3A11&version=NRSVUE) says Moses spoke with Him face to face. [Genesis 32:30](https://www.biblegateway.com/passage/?search=Genesis%2032%3A30&version=NRSVUE) records Jacob claiming he saw God. [Acts 9:7](https://www.biblegateway.com/passage/?search=Acts%209%3A7&version=NRSVUE) says Paul’s companions heard a voice; [Acts 22:9](https://www.biblegateway.com/passage/?search=Acts%2022%3A9&version=NRSVUE) says they did not.
 
-How is it that such apparent contradictions exist if the revelation is perfect and direct from God?
+How is it that such apparent contradictions exist if the revelation is claimed to be perfect and direct from God? To me, it's plain that these issues reflect a human process rather than divine precision.
 
 Like other faith traditions, the process of collecting and preserving the Bible involved human choices. However, the extent and nature of debate over the biblical canon stands in contrast to what we Muslims believe about the Qur’an’s preservation. [Revelation 22:18–19](https://www.biblegateway.com/passage/?search=Revelation%2022%3A18-19&version=NRSVUE), often cited as a warning not to add to Scripture, is ironically part of a book that wasn’t universally accepted when that warning was written.
 
@@ -94,7 +94,7 @@ Let’s examine the idea that the Old and New Testaments are “God’s two witn
 
 Now consider the law. [Matthew 5:17–19](https://www.biblegateway.com/passage/?search=Matthew%205%3A17-19&version=NRSVUE) quotes Jesus as affirming that the law remains fully intact, down to the last letter. Paul says otherwise. In [Romans 6:14](https://www.biblegateway.com/passage/?search=Romans%206%3A14&version=NRSVUE), [Galatians 2:16](https://www.biblegateway.com/passage/?search=Galatians%202%3A16&version=NRSVUE), and [Colossians 2:14](https://www.biblegateway.com/passage/?search=Colossians%202%3A14&version=NRSVUE), Paul insists the law is abolished, nailed to the cross. Paul even calls his message “my gospel” in [Romans 2:16](https://www.biblegateway.com/passage/?search=Romans%202%3A16&version=NRSVUE) and [2 Timothy 2:8](https://www.biblegateway.com/passage/?search=2%20Timothy%202%3A8&version=NRSVUE)—a message I find to be at odds with both the Torah and with Jesus’ own words.
 
-Jesus never once clearly claimed to be God. [Mark 10:18](https://www.biblegateway.com/passage/?search=Mark%2010%3A18&version=NRSVUE): “Why do you call me good? No one is good except God alone.” In [John 17:3](https://www.biblegateway.com/passage/?search=John%2017%3A3&version=NRSVUE), he says the Father is “the only true God.” In [Matthew 26:39](https://www.biblegateway.com/passage/?search=Matthew%2026%3A39&version=NRSVUE), he falls on his face and prays to God, clearly distinguishing himself from Him.
+Jesus never once clearly claimed to be God. [Mark 10:18](https://www.biblegateway.com/passage/?search=Mark%2010%3A18&version=NRSVUE): “Why do you call me good? No one is good except God alone.” In [John 17:3](https://www.biblegateway.com/passage/?search=John%2017%3A3&version=NRSVUE), he says the Father is “the only true God.” In [Matthew 26:39](https://www.biblegateway.com/passage/?search=Matthew%2026%3A39&version=NRSVUE), he falls on his face and prays to God, clearly distinguishing himself from Him. According to the Qur’an in [Surah An-Nisa 4:157-158](https://quran.com/an-nisa/157-158), Allah protected Jesus from crucifixion by raising him alive, thus preserving his honor as a prophet.
 
 Even prophecy itself fails the test. [Ezekiel 26](https://www.biblegateway.com/passage/?search=Ezekiel%2026&version=NRSVUE) predicts that Nebuchadnezzar will destroy Tyre completely—he didn’t. Alexander the Great did, much later. [Jonah 3:4](https://www.biblegateway.com/passage/?search=Jonah%203%3A4&version=NRSVUE) announces the destruction of Nineveh in forty days. It never happened.
 
@@ -228,7 +228,7 @@ The Bible, examined on its own terms, bears undeniable marks of human hands: con
 
 Yet despite these flaws, the God of Abraham, Moses, and Jesus remains unchanged. His truth is not lost—it is preserved in the **Qur’an**, the only scripture that claims divine authorship, guarantees its own preservation, and challenges the reader to find a single contradiction within it. No scribe tampered with it. No emperor compiled it (however, ['Uthman](https://en.wikipedia.org/wiki/Uthmanic_codex) did enforce the original recension of the Qur'an as collected by [Zayd ibn Thabit](https://en.wikipedia.org/wiki/Zayd_ibn_Thabit)). It is whole, recited, memorized, and unchanged since the day it was revealed.
 
-If God is perfect, His final Word must be perfect—free from confusion, contradiction, and corruption. The Bible points beyond itself. The Qur’an **is** that final, preserved Word: unambiguous, unbreakable, and uncompromising in its call to the One true God.
+If God is perfect, His final Word must be perfect—free from confusion, contradiction, and corruption. The Bible points beyond itself. The Qur’an **is** that final, preserved Word: a source of guidance that I have found to be free from confusion and a call to the One True God that resonates deeply in my heart. 
 
 In my view, and the view of 2 billion Muslims, that is the truth, without doubt, for those willing to listen.
 
