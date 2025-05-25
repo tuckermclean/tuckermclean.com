@@ -1,3 +1,5 @@
+import { envVars } from './env.js';
+
 // Dynamically manage multiple windows using a template
 let zIndexCounter = 100; // Starting point for z-index values
 let windows = Array(); // Store window elements
@@ -437,6 +439,40 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                     document.body.removeChild(newScript); // Clean up after execution
                 });
                 //newScript.remove(); // Optional: Clean up after execution
+            });
+
+            envVars(false).then((ENV_VARS) => {
+                // Find and replace name and initials
+                const name = targetElement.querySelectorAll('.name');
+                const initials = targetElement.querySelectorAll('.initials');
+                const email_link = targetElement.querySelectorAll('a.email');
+                const domain_link = targetElement.querySelectorAll('a.domain');
+
+                if (typeof(name) !== 'undefined') {
+                    name.forEach(n => {
+                        n.textContent = ENV_VARS.NAME;
+                    });
+                }
+
+                if (typeof(initials) !== 'undefined') {
+                    initials.forEach(i => {
+                        i.textContent = ENV_VARS.INITIALS;
+                    });
+                }
+
+                if (typeof(email_link) !== 'undefined') {
+                    email_link.forEach(e => {
+                        e.href = `mailto:${ENV_VARS.EMAIL}`;
+                        e.textContent = ENV_VARS.EMAIL;
+                    });
+                }
+
+                if (typeof(domain_link) !== 'undefined') {
+                    domain_link.forEach(d => {
+                        d.href = ENV_VARS.BASE_URL;
+                        d.textContent = ENV_VARS.DOMAIN_NAME;
+                    });
+                }
             });
 
             // Find ancestor window element
