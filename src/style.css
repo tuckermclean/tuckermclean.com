@@ -656,6 +656,10 @@ Print Styles
         font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0 !important;
     }
 
+    body {
+        overflow: auto !important;
+    }
+
     .keywords {
         display: inline !important;
         color: #FFFFFF !important;
@@ -744,9 +748,24 @@ Print Styles
     h4 {
         clear: left;
     }
-    @media print {
-        .page, .page-break { break-after: page; }
-    }    
+    
+    .page, .page-break {
+        break-after: page;
+    }
+    
+    div.print-sidebar {
+        width: 50vw !important;
+        position: absolute !important;
+        bottom: 2.5rem !important;
+        right: 0 !important;
+    }
+
+    div.print-sidebar section h2,
+    div.print-sidebar section h3,
+    div.print-sidebar section p,
+    div.print-sidebar section li {
+        text-align: center !important;
+    }
 }
 
 /* ==================================
