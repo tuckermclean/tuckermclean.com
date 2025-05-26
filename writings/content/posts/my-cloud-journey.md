@@ -3,6 +3,7 @@ title: "My Cloud Portfolio Journey"
 date: 2025-01-21
 draft: false
 categories: ['tech']
+license: CC‑BY‑SA‑4.0
 ---
 
 Introduction

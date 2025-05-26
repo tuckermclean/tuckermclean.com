@@ -5,8 +5,9 @@ draft: false
 categories: ['faith']
 slug: "the-reminder"
 feature_image: "images/the-reminder.jpg"
+license: CC‑BY‑SA‑4.0 
 summary: |-
-  If you gave your heart its due, you would join in the chorus of all that is and praise your Maker as often as you can. It really is that important. It’s just gratitude, pure and simple. That sort of gratitude makes you feel good. 
+  If you gave your heart its due, you would join in the chorus of all that is and praise your Maker as often as you can. It really is that important. It’s just gratitude, pure and simple. That sort of gratitude makes you feel good.
 ---
 
 _Bismillahi Rahmanir Raheem—_

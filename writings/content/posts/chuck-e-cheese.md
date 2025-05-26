@@ -4,6 +4,7 @@ date: 2025-03-26
 draft: false
 categories: ['culture']
 slug: "chuck-e-cheese"
+license: CC‑BY‑SA‑4.0
 ---
 
 **Abstract:**

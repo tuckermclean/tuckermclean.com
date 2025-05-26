@@ -4,7 +4,7 @@
 const logo = document.querySelector('.logo');
 
 // Select the link in the copyright footer
-const copyrightLink = document.querySelector('.copyright a');
+const copyrightLink = document.querySelector('.copyright a.author');
 
 // Select the page title from the head
 const pageTitle = document.querySelector('head title');

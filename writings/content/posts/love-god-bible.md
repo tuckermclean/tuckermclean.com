@@ -4,6 +4,7 @@ date: 2025-05-25
 draft: false
 categories: ['faith']
 slug: "love-god-bible"
+license: CC‑BY‑SA‑4.0
 ---
 
 This is a particularly important topic for me personally, having grown up in [a tradition that places special emphasis on the inerrancy of the Bible](https://en.wikipedia.org/wiki/Seventh-day_Adventist_Church). Although Seventh-day Adventism acknowledges the possibility of copyist errors in the biblical text, it still holds the Bible as the ultimate authority on God’s plan of salvation:

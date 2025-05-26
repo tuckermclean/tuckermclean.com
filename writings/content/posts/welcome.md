@@ -3,6 +3,7 @@ title: "Welcome to My Writings"
 date: 2024-03-19
 draft: false
 categories: ['meta']
+license: CC‑BY‑SA‑4.0
 ---
 
 Welcome to my writings section! This is where I'll share my thoughts, experiences, and insights about technology, development, and other topics that interest me.
