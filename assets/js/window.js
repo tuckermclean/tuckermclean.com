@@ -495,6 +495,49 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                         a.rel = 'noopener noreferrer';
                     }
                 });
+
+                // Clickable images — open in own zoomable window
+                targetElement.querySelectorAll('img').forEach(img => {
+                    img.addEventListener('click', () => {
+                        const slug = img.src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[^a-z0-9]/gi, '-');
+                        const winName = 'img-' + slug;
+                        const existing = windows.find(w => w.id === `window-${winName}`);
+                        if (existing) { bringToFront(existing); return; }
+                        const imgAlt = (img.alt || slug).replace(/"/g, '&quot;');
+                        const win = createWindow(winName, img.alt || slug, `<img src="${img.src}" alt="${imgAlt}" style="max-width:100%;height:auto;display:block;">`, '🖼️', false, ['image']);
+                        bringToFront(win, false);
+                        const imgEl = win.querySelector('.window-body img');
+                        if (!imgEl) return;
+                        let scale = 1;
+                        function applyZoom(factor) {
+                            const next = scale * factor;
+                            if (next > 10 && factor > 1) return;
+                            if (next < 0.25 && factor < 1) return;
+                            scale = Math.min(Math.max(next, 0.25), 10);
+                            imgEl.style.width = (imgEl.naturalWidth * scale) + 'px';
+                            imgEl.style.height = 'auto';
+                            imgEl.style.maxWidth = 'none';
+                        }
+                        // Wheel zoom
+                        win.querySelector('.window-body').addEventListener('wheel', e => {
+                            e.preventDefault();
+                            applyZoom(e.deltaY < 0 ? 1.15 : 0.87);
+                        }, { passive: false });
+                        // Pinch zoom
+                        let lastDist = 0;
+                        win.querySelector('.window-body').addEventListener('touchstart', e => {
+                            if (e.touches.length === 2)
+                                lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        });
+                        win.querySelector('.window-body').addEventListener('touchmove', e => {
+                            if (e.touches.length !== 2) return;
+                            e.preventDefault();
+                            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                            applyZoom(dist / lastDist);
+                            lastDist = dist;
+                        }, { passive: false });
+                    });
+                });
                 targetElement.addEventListener('mouseover', e => {
                     const a = e.target.closest('a[href]');
                     if (a && statusBar) statusBar.textContent = a.href;
