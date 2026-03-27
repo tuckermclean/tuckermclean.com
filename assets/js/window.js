@@ -614,32 +614,18 @@ function getCurrentPage() {
 // If the page name is in the URL anchor, open the page
 function openPageFromUrl() {
     const page = getCurrentPage();
-    switch (page) {
-        case 'welcome':
+    if (!page) {
+        goTo('welcome', 'Welcome!', '👋');
+        bringToFront(windows[0], false);
+        history.replaceState(null, null, '/');
+    } else if (page === 'welcome') {
         goTo('welcome', 'Welcome!', '👋');
         history.replaceState(null, null, '/');
-        break;
-        case 'intro':
-        goTo('intro', 'Intro', '🧠');
-        break;
-        case 'resume':
-        goTo('resume', 'Resume', '📜');
-        break;
-        case 'chat':
-        goTo('chat', 'Chat', '💬');
-        break;
-        case 'posts/my-cloud-journey':
-        goTo('posts/my-cloud-journey', 'My Cloud Journey', '☁️');
-        break;
-        default:
-        if (page && page.startsWith('posts/')) {
-            goTo(page, page.split('/').pop().replace(/-/g, ' '), '✍️');
-        } else {
-            goTo('welcome', 'Welcome!', '👋');
-            bringToFront(windows[0], false);
-            history.replaceState(null, null, '/');
-        }
-        break;
+    } else {
+        const slug = page.split('/').pop().replace(/-/g, ' ');
+        const title = slug.charAt(0).toUpperCase() + slug.slice(1);
+        const icon = page.startsWith('posts/') ? '✍️' : '⚙️';
+        goTo(page, title, icon);
     }
 }
 
