@@ -1279,6 +1279,164 @@ button:active {
     background-color: var(--scroll-hover);
 }
 
+/* ==================================
+Content Styles
+================================== */
+
+.post-content p,
+.post-content li,
+.writing-excerpt,
+section p {
+    line-height: 1.7;
+}
+
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.post-content h2 {
+    font-size: 1.35rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.35rem;
+}
+
+.post-content h3 {
+    font-size: 1.1rem;
+}
+
+.post-content h4 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+}
+
+.post-content p {
+    margin: 0.85rem 0;
+}
+
+.post-content p:first-child {
+    margin-top: 0;
+}
+
+.post-content code,
+.window-body code {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875em;
+    background-color: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.2rem;
+    padding: 0.1em 0.35em;
+    white-space: nowrap;
+}
+
+.post-content pre,
+.window-body pre {
+    background-color: var(--header-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 0.35rem;
+    margin: 1.25rem 0;
+    overflow-x: auto;
+    padding: 1rem 1.25rem;
+    line-height: 1.5;
+}
+
+.post-content pre code,
+.window-body pre code {
+    background: none;
+    border: none;
+    border-radius: 0;
+    font-size: 0.875rem;
+    padding: 0;
+    white-space: pre;
+}
+
+.post-content blockquote {
+    border-left: 3px solid var(--symlink-color);
+    background-color: var(--header-bg);
+    margin: 1.25rem 0;
+    padding: 0.75rem 1rem 0.75rem 1.25rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.post-content blockquote p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.post-content blockquote p + p {
+    margin-top: 0.5rem;
+}
+
+.post header p {
+    margin: 0.25rem 0 1rem;
+}
+
+.post header time {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--border);
+    letter-spacing: 0.05em;
+}
+
+.writing-meta time {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+}
+
+header h2 {
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--border);
+    margin: 0.15rem 0 0;
+}
+
+.post-content hr,
+.window-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+.post-content ul,
+.post-content ol {
+    margin: 0.75rem 0;
+    line-height: 1.65;
+}
+
+.post-content ul {
+    list-style: none;
+    padding-left: 1.25rem;
+}
+
+.post-content ul li::before {
+    content: '–';
+    color: var(--border);
+    display: inline-block;
+    width: 1.25rem;
+    margin-left: -1.25rem;
+}
+
+.post-content ol {
+    padding-left: 1.5rem;
+}
+
+.post-content li {
+    margin-bottom: 0.3rem;
+}
+
+.post-content li:last-child {
+    margin-bottom: 0;
+}
+
 @media print {
     body {
         background-image: none;
