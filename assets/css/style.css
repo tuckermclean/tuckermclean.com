@@ -828,12 +828,35 @@ Print Styles
 /* ==================================
 Resume Styles
 ================================== */
-#resume-container p, #resume-container ul, #resume-container li, #resume-container h3, #resume-container h4 {
-    text-align: left;
+
+.resume-content h2 {
+    text-align: center;
 }
 
-#resume-container, #resume-container * {
-    text-align: center;
+.resume-content h3 {
+    margin-bottom: 0;
+}
+
+.resume-content p:not(.date) {
+    clear: both;
+}
+
+@media (max-width: 768px) {
+    .resume-content p.date {
+        margin-top: 0;
+    }
+}
+
+dl.skills-grid {
+    display: grid;
+    grid-template-columns: 115px 1fr;
+    gap: 3px 10px;
+}
+dl.skills-grid dt {
+    font-weight: 600;
+}
+dl.skills-grid dd {
+    margin: 0;
 }
 
 .center {
@@ -1280,5 +1303,33 @@ button:active {
     }
     ul {
         break-before: avoid;
+    }
+    .job-header {
+        break-after: avoid;
+    }
+    .job-header + ul {
+        break-before: avoid;
+    }
+    .resume-content h3:has(+ p.date),
+    .resume-content h4:has(+ p.date) {
+        float: left !important;
+    }
+    .resume-content h3 + p.date,
+    .resume-content h4 + p.date {
+        float: right !important;
+        text-align: right;
+        margin: 0;
+    }
+    .resume-content h3,
+    .resume-content h4,
+    .resume-content p.date {
+        break-after: avoid;
+    }
+    .resume-content ul {
+        break-before: avoid;
+        break-inside: avoid;
+    }
+    .resume-content li {
+        break-inside: avoid;
     }
 }

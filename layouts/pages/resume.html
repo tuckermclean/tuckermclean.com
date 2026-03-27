@@ -1,14 +1,15 @@
 <header>
-  <h1><span class="name">{{ .Site.Params.author }}</span><span class="blink"></span></h1>
+  <h1 class="center"><span class="name">{{ .Site.Params.author }}</span><span class="blink"></span></h1>
   <p class="center">
     <span class="nowrap">{{ .Site.Params.location }}</span> |
     <a href="tel:{{ .Site.Params.phone }}">{{ .Site.Params.phoneDisplay }}</a> |
     <a class="email" href="mailto:{{ .Site.Params.email }}">{{ .Site.Params.email }}</a> |
-    <a class="domain" href="https://{{ .Site.Params.domain }}/">{{ .Site.Params.domain }}</a>
+    <a class="domain" href="https://{{ .Site.Params.domain }}/">{{ .Site.Params.domain }}</a> |
+    <a href="https://github.com/{{ .Site.Params.github }}">github.com/{{ .Site.Params.github }}</a> |
     <a href="https://www.linkedin.com/in/{{ .Site.Params.linkedin }}/">{{ partial "linkedin.html" . }}</a>
   </p>
   <h3 style="float: none;" class="center">{{ .Site.Params.role }}</h3>
 </header>
-<section>
+<section class="resume-content">
   {{ .Content }}
 </section>

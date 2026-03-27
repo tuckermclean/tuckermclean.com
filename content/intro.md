@@ -3,7 +3,7 @@ title: "Intro"
 slug: "intro"
 type: "pages"
 layout: "greeting"
-subtitle: "I have over 3 decades of experience exploring, building, and optimizing technology.🖥️💾⚙️"
+subtitle: "I have over 3 decades of experience exploring, building, and optimizing technology."
 navLinks:
   - page: "resume"
     title: "Resume"
@@ -16,39 +16,26 @@ navLinks:
     label: "Writings"
 ---
 
-I'm not one to toot my own horn, but I come by it honestly. There's one thing you should know about me: I care deeply about what I do, how I do it, and the people I work with. I see systems--whether technical or organizational--as living flows. Every component matters. Every interaction must land on time, on target, and on budget. Wherever I've worked, I've made sure of that.
+I started in 1990 with a keyboard and BASIC. Thirty-five plus years later, I'm still solving the same problem: how do you make complex systems reliable, automatable, and understandable to the people who depend on them?
 
-It all started in 1990 with my first computer. I typed BASIC programs, crafted games, and pushed the limits of those early machines. That spark of curiosity grew into a career. I've designed systems, automated processes, and solved problems with resourcefulness. I am relentlessly focused on making things work better.
+My career has run the full stack — physical infrastructure, networking, Linux, software development, cloud architecture, and supply chain security. I scope architecture, make judgment calls on what ships, and I build things that work.
 
-My career began supporting dial-up internet customers over the phone. I stood out with my personal touch--balancing the customer's experience with the moment's technical realities. Since then, I've evolved into a quiet force in IT: someone who builds and solves, who speaks only when there's something worth saying. When I do, the room listens.
+**At Intel (2021–2024),** I was the technical backbone of a NIC firmware and driver validation lab. When a facility move left us without infrastructure, I built a complete lab network from scratch: 100G fiber, Cisco and Extreme switches, DHCP, DNS, firewall, and a custom PXE provisioning system in Python that cut issue reproduction time by 50%. I repurposed existing hardware and delivered thousands in savings. I also earned enough trust across the org to grow from contractor validation tech into a cross-functional compliance and release engineering role that most people don't reach.
 
-At **Intel**, I wore many hats and saw solutions where others saw chaos. When our team faced a lab move that left us without network infrastructure, I built a complete environment from scratch. I repurposed servers, ran 100G fiber, and configured Cisco and Extreme switches. I set up a dynamic PXE boot environment, automated OS deployments with Python, and built firewall rules for our lab bastion server. The result?
+As acting **SWLC liaison**, I owned the full software supply chain compliance pipeline — Coverity, Klocwork, and Black Duck Binary Analysis — for multi-hundred-component Cisco NIC firmware and driver releases. I ran the builds, managed the audit trail, coordinated security advisory disclosure across product lines, and built PowerBI dashboards used across the business unit. That role requires someone who understands the legal, the technical, and the process well enough to keep all three honest simultaneously.
 
-- I **saved time**, **cut costs**, and **freed up** engineers for meaningful work.
-- I delivered **thousands of dollars in savings** by using equipment we already had.
-- I built a foundation that **empowered the team** to focus on what mattered: **customer satisfaction** and **results**.
+**Before Intel**, I was a developer on the Powercode team at Bertram Communications — an ISP management SaaS running operations for 300+ internet service providers across North America. I was the sole engineer on DHCP Option 82 relay support and RADIUS authentication integration. Before that, Linux sysadmin at a regional ISP, which is where I learned that production systems don't forgive sloppy thinking.
 
-But my work didn't stop at building systems. I became the go-to for untangling technical challenges, earning trust across teams for my ability to troubleshoot, automate, and document complex processes:
+**On my own time**, I build things that have no business existing and work perfectly anyway.
 
-- I worked on special projects; i.e., I analyzed Wireshark traces to resolve issues at a global retailer's network lab.
-- I mastered Intel's SCM process to manage bespoke firmware and driver releases.
-- I drove software legal compliance workflows and streamlined delivery pipelines as the acting SWLC liaison.
+*The Monolith* is a deterministic, Docker-based build system that cross-compiles a complete bootable Linux system for everything from i486 to modern x86 — Gentoo crossdev toolchain, musl libc, every binary statically linked, SquashFS root, kernel 6.12 LTS, pinned packages with checksum verification. It boots on hardware spanning 30 years of x86 architecture. Nobody asked for it. That's the point.
 
-I have a holistic mindset for systems and tools, with decades of experience using **Linux distros** like RHEL, Debian, Ubuntu, CentOS, Arch, Amazon Linux, and Mariner. I also know modern tools like **WSL** and open-source automation with **Python** and **Ansible**. But beyond tools, my strength is in seeing the big picture. I understand how components, people, and processes interact.
+*Personliness* is a full-stack personality assessment platform I designed and built from scratch — Django, React, PostgreSQL, Celery, Redis, Docker, deployed on self-hosted Kubernetes. It scores historical figures across 36 original psychometric traits using a rubric I authored, including anti-halo rules, era normalization, and source-critical confidence calibration, then matches users to figures via trait-by-trait similarity analysis. LLM-integrated across OpenAI, Anthropic, and Ollama backends. Defensible scores at $0.20/figure. It's [live](https://personliness.dcxxiv.com/).
 
-In the last few months, I've expanded my expertise into the **cloud** with AWS. This has added an exciting new dimension to my technical toolkit. Here's what I've been working on:
+I also run a multi-node K3s Kubernetes cluster with GitOps via FluxCD, Traefik, Longhorn, Authentik SSO, WireGuard mesh networking, and full observability. This is a production-grade environment where I break things deliberately and fix them for real.
 
-- I've built **serverless architectures** with AWS Lambda, integrating API Gateway to create scalable, event-driven solutions.
-- I'm managing **Infrastructure-as-Code (IaC)** with Terraform, streamlining resource deployments across environments.
-- I've developed secure multi-account setups with **AWS Organizations**, ensuring compliance and efficient resource sharing.
-- To enhance automation, I've incorporated **DynamoDB** for backend storage and leveraged **S3** with **CloudFront** for fast and reliable web hosting.
-- I'm implementing **CI/CD pipelines** to accelerate development cycles while maintaining high-quality standards.
+My toolkit: Linux across every major distro (including Gentoo and BSD), AWS, Terraform, Ansible, Docker, Kubernetes, Python, Go, Rust, Bash, JavaScript/React, PHP, Grafana, and whatever the problem requires. AWS Certified Cloud Practitioner, CompTIA A+.
 
-Now, I'm combining decades of experience with the scalability and power of AWS. Whether it's designing resilient systems, troubleshooting the unexpected, or bridging the gap between technology and business needs, I thrive where the technical meets the practical. I connect systems, people, and ideas, ensuring everything flows smoothly, reliably, and efficiently.
+I don't collect tools for their own sake. I understand how components, people, and processes interact — from silicon to compliance audit trail to shipped product. If you need someone who can operate at every layer of the stack and still communicate clearly with the people who don't, let's talk.
 
-If you're looking for someone who sees the forest *and* the trees, let's talk. I bring curiosity, expertise, and a track record of getting things done. I've got niche skills, serious Google-fu, and a whole lot of heart for what I do. After over three decades in tech, I'm just as excited today as I was in 1990.
-
-Sincerely,
-
-{{< initials >}}❤️
-
+**Tucker McLean** · Portland, OR metro · [me@tuckermclean.com](mailto:me@tuckermclean.com) · [tuckermclean.com](https://tuckermclean.com)

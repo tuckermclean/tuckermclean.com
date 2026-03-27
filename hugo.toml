@@ -14,7 +14,11 @@ disableKinds = ['taxonomy', 'term', 'section']
   location = "Beaverton, Oregon"
   domain = "tuckermclean.com"
   linkedin = "tucker-mclean"
-  role = "Linux Systems Engineer & Software Generalist"
+  github = "tuckermclean"
+  role = "Infrastructure Architect & Platform Engineer"
+
+[markup.goldmark.renderer]
+  unsafe = true
 
 [permalinks]
   posts = '/posts/:contentbasename'
