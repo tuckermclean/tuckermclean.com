@@ -17,7 +17,7 @@ Success, for me, isn't a destination or a single accomplishment—it's a **state
 
 So, this essay seeks to explain my expression of what is success, to me.
 
-### Peace within myself
+## Peace within myself
 
 > **“Indeed, in the remembrance of Allah do hearts find rest.”**
 > *Surah Ar-Ra'd (13:28)*
@@ -28,7 +28,7 @@ Inner tranquility arises from constant remembrance of God, grounding the sould a
 
 I remember recently, I sat in the chair with only the intention to be aware. I would begin to feel drowsy and I would say *Astaghfirullah al-Adheem* (I seek forgiveness from God, the Supreme) or *A'udhubillahi min ash-Shaytan ir-Rajeem* (I seek refuge in God from the accursed Satan). I found a state of being so quiet and so peaceful—this is the unadorned essence of life itself. I want this all the time.
 
-### Freedom to leave, with a life that welcomes me back
+## Freedom to leave, with a life that welcomes me back
 
 > **“And whoever fears Allah—He will make for him a way out and provide for him from where he does not expect.”**
 > *Surah At-Talaq (65:2-3)*
@@ -39,7 +39,7 @@ The verse above provides assurance: maintaining consciousness of God grants flex
 
 I wish to claim this promise, but it will require some setup first. How can I set up my life to allow for this freedom without chaos? What relationships or systems need strengthening to support this?
 
-### Staying when it matters
+## Staying when it matters
 
 > **“O you who have believed, seek help through patience and prayer. Indeed, Allah is with the patient.”**
 > *Surah Al-Baqarah (2:153)*
@@ -53,7 +53,7 @@ Success means not always choosing novelty over responsibility, or intensity over
 
 I think I struggle with consistency when it is boring. It's the little things that make life worthwhile, really. I should treat myself a little more. Little rewards for little jobs well-done. Not mindless snacking, but structured rewards to reinforce patterns of goodness.
 
-### Being "The Guy" without needing the crown
+## Being "The Guy" without needing the crown
 
 > **“Indeed, the best one you can hire is the strong and the trustworthy.”**
 > *Surah Al-Qasas (28:26)*
@@ -67,7 +67,7 @@ In my jobs, I have almost inevitably become that guy, because of my values: comp
 
 It's important to nurture my skills for service rather than recognition. Quiet humility is when you do a good deed for someone else and then never mention it again.
 
-### Resilience over possessions
+## Resilience over possessions
 
 > **“Every soul will taste death. And you will only be given your \[full] compensation on the Day of Resurrection.”**
 > *Surah Al-Imran (3:185)*
@@ -78,7 +78,7 @@ The verse highlights the transient nature of worldly possessions, and I understa
 
 If everything fell away, I would have nothing to cling to except God. This is a very important relationship to cultivate. But, it's also important to "tie your camel;" don't set yourself up for failure when you could have done something to help yourself before chaos comes.
 
-### Multiple fires burning
+## Multiple fires burning
 
 > **“And do not forget your share of the world. And do good as Allah has done good to you.”**
 > *Surah Al-Qasas (28:77)*
@@ -89,7 +89,7 @@ I will be able to thrive when I have different creative and meaningful pursuits 
 
 It seems to be that I am too narrow in my focus sometimes. When I have a thing in my sights, everything else seems to fall away. I have many little pursuits that I have let atrophy: art, music, design, speaking—all worthwhile.
 
-### The "tightrope walk of the soul"
+## The "tightrope walk of the soul"
 
 > **“Thus, We have made you a just community that you will be witnesses over the people.”**
 > *Surah Al-Baqarah (2:143)*
@@ -100,7 +100,7 @@ I'm not interested in material success at the expense of my soul. I want the ord
 
 It might be worth reframing or rebalancing to walk this tightrope with more grace.
 
-### *Fana'* in the flow of life
+## *Fana'* in the flow of life
 
 > **“Everyone upon the earth will perish, and there will remain the Face of your Lord, Owner of Majesty and Honor.”**
 > *Surah Ar-Rahman (55:26-27)*
@@ -111,7 +111,7 @@ I want to disappear into the Divine Presence *while still living the dream*: wor
 
 It's important to continue carrying on the daily grind and to remember God and the eternal truths *inside* the work, not just outside of it.
 
-### A life aligned
+## A life aligned
 
 > **“And whoever obeys Allah and His Messenger and fears Allah and is conscious of Him – it is those who are the successful ones.”**
 > *Surah An-Nur (24:52)*
@@ -122,7 +122,7 @@ Work isn't just to get paid—it's a true act of worship, and a mission to expre
 
 Where am I living my life out of alignment? One area I have noticed recently and have realigned somewhat is to stop watching so many stupid YouTube videos. Another realignment would be better sleep hygiene.
 
-### Closing prayer
+## Closing prayer
 
 *O Allah, You are the only source of true success. Make me content in Your remembrance, resilient in hardship, and humble in service.*
 

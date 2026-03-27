@@ -7,8 +7,7 @@ feature_image: "aws_graph.png"
 license: CC‑BY‑SA‑4.0
 ---
 
-Introduction
-------------
+## Introduction
 
 Welcome to my cloud portfolio journey!
 
@@ -16,8 +15,7 @@ I'm excited to share how I built this website and cloud project as a showcase of
 
 My portfolio at [TuckerMcLean.com](https://tuckermclean.com/) was intended as both a learning experience and a showcase of my skills and values as an IT professional. I hoped to produce something worthy to display as a plaque of my skills beside my AWS certification(s). But first, I had some work to do.
 
-Preparation
------------
+## Preparation
 
 I studied the AWS SkillBuilder materials for a couple of weeks. Then I took the test and got my AWS Certified Cloud Practitioner. I then had a solid brainstorming session and centered on a couple of goals:
 
@@ -26,8 +24,7 @@ I studied the AWS SkillBuilder materials for a couple of weeks. Then I took the 
 *   Showcase expertise in cloud architecture, full-stack development, and frontend UI design.
     
 
-Frontend Development
---------------------
+## Frontend Development
 
 I started setting the foundation. First, I wanted something pretty to look at as I was doing backend development. So, I roughed out the frontend first. I am rather fond of [classic graphical user interfaces](https://en.wikipedia.org/wiki/History_of_the_graphical_user_interface). I thought, how nifty would it be if my resume site could look a bit like [OpenStep?](http://toastytech.com/guis/openstep.html) So, I decided to make a simulated desktop environment. I would handcraft one with HTML, CSS, vanilla JavaScript, and the DOM. Maybe it's a little obsessive, but oh well.
 
@@ -42,8 +39,7 @@ My priorities for the design were:
 
 So, I got busy implementing the features of a window: maximize, minimize, drag, resize, shade, cascade, and tiling window management. I implemented light and dark mode support with a toggle that saves to the local storage. You can return to the page later and see your chosen state. I tweaked the windows and minimized icons to a point where I can say, I can't justify spending any more time on this. The final design achieves a functional, retro-modern interface, balancing usability with aesthetic polish. I also set it up as a [Vite](https://vite.dev/) project to allow for programmatically building the project. Importing JavaScript modules, linting, and building minified versions of the code are now possible. I'm happy it all works for now without needing any major rework.
 
-Backend Development
--------------------
+## Backend Development
 
 I began work on the cloud infrastructure. First, I set up an S3 bucket and a CloudFront distribution. Seeing the Terraform configuration deploy successfully was satisfying. After the certificates finished cooking, of course.
 
@@ -61,8 +57,7 @@ I built a Cognito user pool which uses Google as an identity provider. This, so 
 
 The messages Lambda gets a message, either from a guest, or an authorized admin, and adds it to the queue. A consumer Lambda picks it up and reads it. The consumer looks up the target WebSocket connection in DynamoDB to see if it's still up. It delivers the message to that WebSocket connection and the user sees it appear on their screen. If the connection is down, or there is an error, it notifies the user. If the admin is around, it delivers the message from the guest. Or, if no admin is available, it queues the message until the admin logs in.
 
-CI/CD and Automation
---------------------
+## CI/CD and Automation
 
 With a working backend configuration, I began to automate frontend and backend deployment. At this point, the Terraform state and the state lock file were committed to the Git repo. This was problematic for many reasons, security being an obvious one. Also, keeping state locally means you cannot deploy from multiple locations at once. In order to set up a CI/CD pipeline to automate deployment, I had to centralize the Terraform state.
 

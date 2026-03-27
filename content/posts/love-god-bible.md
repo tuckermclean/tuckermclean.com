@@ -17,48 +17,47 @@ In this article, I intend to delve deeply into the topic of the Bible's divine i
 
 Out of respect for all prophets, I will occasionally use the phrase "peace be upon him/them" throughout.
 
-How could I possibly love God, and yet think the Bible is flawed?
-=================================================================
+### How could I possibly love God, and yet think the Bible is flawed?
 
 Is this a loaded question? I don't think so. I will try to demonstrate the following points with evidences from the Bible itself:
 
-### Why I Love God and All His Messengers, Yet Believe the Bible is Flawed
+## Why I Love God and All His Messengers, Yet Believe the Bible is Flawed
 
-#### Unity of God
+### Unity of God
 
 * **God is One and Eternal**, the Creator of all things. This is a core belief I share with Abraham, Moses, Jesus, and Muhammad (peace be upon them all).
 
-#### Relationship to Messengers
+### Relationship to Messengers
 
 * **I honor every prophet sent by God**—from Adam to Noah, from Abraham to Moses, from Jesus to Muhammad (may God's peace be upon them). They all called to worship the One True God and no other.
 
-#### On Scripture
+### On Scripture
 
 * **The Bible contains truth**, but it also contains the words of men—scribes, editors, kings, and unknown authors. These words are not all the Word of God, nor are they presented as such. However, many of these words are presented as the words of God, and I personally can't get behind it. While I believe it retains remnants of divine guidance as originally revealed, Islamic theology holds that human intervention introduced distortions over time, as I will discuss.
 
 * **God never loses His Word**, but humans misquote, mistranslate, and reinterpret it. The Bible as we have it today is not the same as the Injeel given to Jesus, nor the Tawrat given to Moses, to use the Qur'anic terms.
 
-#### The Nature of Jesus
+### The Nature of Jesus
 
 * **Jesus himself prayed to God** and submitted to Him, calling Him *my God* ([John 20:17](https://www.biblegateway.com/passage/?search=John%2020%3A17&version=NRSVUE)). He never claimed to be God in his own words.
 
 * **The doctrine of the Trinity**, the deity of Christ, and original sin are not the explicit teachings of Moses or Jesus in the Bible; rather, these developed as doctrine in later councils and Christian thought, influenced by Greek philosophy.
 
-#### Paul's Letters
+### Paul's Letters
 
 * **Paul’s letters are not the Gospel**. Paul's letters are treated as inspired scripture by most Christians, yet Paul never met Jesus in person—apart from a reported vision ([Acts 9](https://www.biblegateway.com/passage/?search=Acts%209&version=NRSVUE))—and at times openly argued with those who did ([Galatians 2:11](https://www.biblegateway.com/passage/?search=Galatians%202%3A11-21&version=NRSVUE)). While Christians view Paul’s writings as inspired, as affirmed in [2 Peter 3:15-16](https://www.biblegateway.com/passage/?search=2%20Peter%203%3A15-16&version=NRSVUE), their divergence from the direct teachings of Jesus (peace be upon him) and lack of personal interaction with him raise concerns in Islamic thought about their status as divine revelation.
 
-#### The Qur'an as God's Word
+### The Qur'an as God's Word
 
 * **God’s final Word is the Qur’an**, revealed to Muhammad (peace be upon him). It intends to confirm the truth in previous scriptures and correct the errors introduced over time.
 
 * **The Qur’an defends Jesus’ honor**—that he was born of a virgin, performed miracles, and is the Messiah, but was not crucified nor called people to worship him, according to the account found in the Qur’an. Islam honors Jesus as the Messiah, a mighty prophet born of a virgin, and a performer of miracles by Allah’s permission, as detailed in [Surah Ali 'Imran 3:45-49](https://quran.com/ali-imran/45-49).
 
-#### Jesus, the Prophets, and Monotheism
+### Jesus, the Prophets, and Monotheism
 
 * **I strive to follow Jesus' example closely** by rejecting idolatry and submitting to God alone, just as he (peace be upon him) did. As Muslims, we share with Christians a profound love for Jesus as a prophet of God, a commitment to moral living as taught by all messengers, and a belief in accountability before the Creator, even as we differ on specific doctrines like the Trinity, original sin, and various rituals.
 
-#### Reason & Understanding
+### Reason & Understanding
 
 * **Loving God means using reason** as God commands ([Isaiah 1:18](https://www.biblegateway.com/passage/?search=Isaiah%201%3A18&version=NRSVUE), [Qur’an 8:22](https://quran.com/en/al-anfal/22)). Faith is not blind—it is rooted in truth and sincerity.
 
@@ -68,11 +67,9 @@ Is this a loaded question? I don't think so. I will try to demonstrate the follo
 
 Without further ado, let's get on with it. *Bismillah (In God's name)*
 
-Proof from the Bible That the Bible Is Not Perfect or Directly from God
-=======================================================================
+## Proof from the Bible That the Bible Is Not Perfect or Directly from God
 
 Upon close examination, the claim that the Bible is the perfect, preserved Word of God faces significant difficulties—and even the Bible’s own texts raise important questions about this claim. While many Christians assert that the Old and New Testaments together form God’s two divine witnesses, this claim has no scriptural basis and is difficult to support based on issues of consistency, preservation, and authorship. While I recognize that the Bible retains elements of divine truth as originally revealed to Moses and Jesus (peace be upon them), Islamic theology asserts that human intervention over centuries introduced distortions, both in text and interpretation, as cautioned in [Surah Al-Ma’idah 5:13-14](https://quran.com/al-maidah/13-14). 
-
 Let’s begin where Christian theology itself claims its foundation: the resurrection of Jesus. If God’s plan for salvation hinges upon this singular moment, we would expect its documentation to be clear and consistent. Instead, we find four irreconcilable accounts. In [Matthew 28:1–10](https://www.biblegateway.com/passage/?search=Matthew%2028%3A1-10&version=NRSVUE), two women encounter a visible angel who rolls away the stone. In [Mark 16:1–8](https://www.biblegateway.com/passage/?search=Mark%2016%3A1-8&version=NRSVUE), it’s three women who meet a young man already sitting inside the tomb. [Luke 24:1–12](https://www.biblegateway.com/passage/?search=Luke%2024%3A1-12&version=NRSVUE) claims there were two men in dazzling garments, and in [John 20:1–18](https://www.biblegateway.com/passage/?search=John%2020%3A1-18&version=NRSVUE), Mary Magdalene comes alone, finds the stone moved, and speaks to Jesus after mistaking him for a gardener. Many Christians have proposed ways to reconcile these differences, but for me, they highlight the complex human process behind the formation of these accounts. If God is not the author of confusion, as [1 Corinthians 14:33](https://www.biblegateway.com/passage/?search=1%20Corinthians%2014%3A33&version=NRSVUE) asserts, how do we explain these contradictions? These variations suggest a human process of oral transmission and editing over time, which contrasts with the Qur’an’s direct revelation as preserved from the outset.
 
 Of course, Christian theologians have attempted to harmonize these accounts, but these efforts appear forced in the face of a plain, honest reading of the text. While Christian apologetics often suggest these accounts represent complementary eyewitness perspectives, such explanations seem strained in the plain reading, facing the textual differences, raising questions about the claim of divine authorship free from human error. 
@@ -111,8 +108,7 @@ If God is truly perfect, His Word should reflect that perfection—unaltered, un
 
 The Bible itself stands as evidence that it cannot be what so many claim it is. It is not God's final Word. It is not a perfect witness. And it is not above scrutiny.
 
-Evidence for the Claim that the Qur'an is the Preserved Word of God
-===================================================================
+## Evidence for the Claim that the Qur'an is the Preserved Word of God
 
 The Qur'an, in summary:
 
@@ -190,7 +186,7 @@ At a time when the Muslims were a persecuted minority in Mecca, this promise see
 
 [Abu Lahab](https://en.wikipedia.org/wiki/Abu_Lahab), a fierce opponent of Islam, lived for several years after this Surah was revealed. He could have disproven the Qur’an simply by pretending to accept Islam—but he never did. His continued opposition became a self-fulfilling prophecy.
 
-### Final Reflection
+## Final Reflection
 
 The Qur’an presents a radically different model from the Bible:
 
@@ -202,8 +198,7 @@ The Qur’an presents a radically different model from the Bible:
 
 If one were to apply the same tests to the Qur’an that expose the flaws of the Bible, the Qur’an passes each one unshaken. This is what you would expect of a Book from the Creator Himself.
 
-Note on the Royal “We” Used in the Bible and the Qur'an
-=======================================================
+## Note on the Royal “We” Used in the Bible and the Qur'an
 
 **The “We” in Genesis Isn’t Polytheism—It’s Majesty**
 
@@ -222,14 +217,13 @@ And importantly, the **Qur’an** also uses “We” when Allah (the Arabic word
 
 Even major Christian scholars admit this verse is not a doctrinal proof for the Trinity. It’s a shadow at best, and an overreach at worst.
 
-Conclusion: One Perfect Word
-============================
+## Conclusion: One Perfect Word
 
 The Bible, examined on its own terms, bears undeniable marks of human hands: contradictions in its most sacred narratives, lost texts, theological confusion, and open admissions of personal opinion. Its canon was assembled through councils and conflict, not divine command. Even its language—like “Let us make man”—is often misunderstood and misused to justify doctrines the prophets (peace be upon them all) never taught.
 
 Yet despite these flaws, the God of Abraham, Moses, and Jesus remains unchanged. His truth is not lost—it is preserved in the **Qur’an**, the only scripture that claims divine authorship, guarantees its own preservation, and challenges the reader to find a single contradiction within it. No scribe tampered with it. No emperor compiled it (however, ['Uthman](https://en.wikipedia.org/wiki/Uthmanic_codex) did enforce the original recension of the Qur'an as collected by [Zayd ibn Thabit](https://en.wikipedia.org/wiki/Zayd_ibn_Thabit)). It is whole, recited, memorized, and unchanged since the day it was revealed.
 
-If God is perfect, His final Word must be perfect—free from confusion, contradiction, and corruption. The Bible points beyond itself. The Qur’an **is** that final, preserved Word: a source of guidance that I have found to be free from confusion and a call to the One True God that resonates deeply in my heart. 
+If God is perfect, His final Wo============================rd must be perfect—free from confusion, contradiction, and corruption. The Bible points beyond itself. The Qur’an **is** that final, preserved Word: a source of guidance that I have found to be free from confusion and a call to the One True God that resonates deeply in my heart. 
 
 In my view, and the view of 2 billion Muslims, that is the truth, without doubt, for those willing to listen.
 
