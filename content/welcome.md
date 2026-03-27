@@ -3,6 +3,7 @@ title: "Welcome"
 slug: "welcome"
 type: "pages"
 layout: "greeting"
+icon: "👋"
 subtitle: "I've spent over 3 decades building, optimizing, and maintaining systems that just work."
 navLinks:
   - page: "intro"

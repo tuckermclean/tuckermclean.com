@@ -3,6 +3,7 @@ title: "Resume"
 slug: "resume"
 type: "pages"
 layout: "resume"
+icon: "📜"
 ---
 
 ## Summary

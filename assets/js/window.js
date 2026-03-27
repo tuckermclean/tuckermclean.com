@@ -417,11 +417,13 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
         let targetElement = document.getElementById(targetElementId);
         if (typeof(targetElement) !== 'undefined' && targetElement !== null) {
             targetElement.innerHTML = html;
-            // Update window title from post article heading if present
-            const postTitle = targetElement.querySelector('article.post h1');
-            if (postTitle) {
-                const win = targetElement.closest('.window');
-                if (win) win.querySelector('.window-title').textContent = postTitle.textContent;
+            // Update window icon and title from page frontmatter spans
+            const win = targetElement.closest('.window');
+            if (win) {
+                const pageIcon = targetElement.querySelector('.page-icon');
+                if (pageIcon) win.querySelector('.window-icon').textContent = pageIcon.textContent;
+                const pageTitle = targetElement.querySelector('.page-title');
+                if (pageTitle) win.querySelector('.window-title').textContent = pageTitle.textContent;
             }
             // Find and execute scripts
             const scripts = targetElement.querySelectorAll("script");

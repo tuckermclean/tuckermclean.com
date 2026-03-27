@@ -3,6 +3,7 @@ title: "Intro"
 slug: "intro"
 type: "pages"
 layout: "greeting"
+icon: "🧠"
 subtitle: "I have over 3 decades of experience exploring, building, and optimizing technology."
 navLinks:
   - page: "resume"
