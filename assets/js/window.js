@@ -14,7 +14,7 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     const windowElement = windowClone.querySelector('.window');
     windowElement.id = `window-${name}`;
     windowElement.name = name;
-    windowElement.title = title;
+    windowElement.setAttribute('aria-label', title);
     windowElement.classList.add(...classes);
 
     const header = windowElement.querySelector('.window-header');
@@ -483,6 +483,24 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
 
             // Find ancestor window element
             const ancestor = targetElement.closest('.window');
+
+            // Wire up link tooltips and status bar (old-school browser behaviour)
+            if (ancestor) {
+                const statusBar = ancestor.querySelector('.window-status-bar');
+                const defaultStatus = 'Status: Ready to work!';
+                targetElement.querySelectorAll('a[href]').forEach(a => {
+                    if (!a.title) a.title = a.href;
+                });
+                targetElement.addEventListener('mouseover', e => {
+                    const a = e.target.closest('a[href]');
+                    if (a && statusBar) statusBar.textContent = a.href;
+                });
+                targetElement.addEventListener('mouseout', e => {
+                    const a = e.target.closest('a[href]');
+                    if (a && statusBar) statusBar.textContent = defaultStatus;
+                });
+            }
+
             // Run callback function if provided
             if (typeof(callback) === 'function') {
                 callback(ancestor);
