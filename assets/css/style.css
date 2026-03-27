@@ -560,7 +560,7 @@ Utility Classes
 }
 
 body.toggled .window.minimized .window-icon {
-    text-shadow: 0 0.325rem 0.325rem var(--header-bg-light) !important;
+    text-shadow: 0 0.325rem 0.325rem rgba(0, 0, 0, 0.25) !important;
 }
 
 .window.minimized:hover {
@@ -925,6 +925,138 @@ Nav Links Menubar
     border-radius: 0.2rem;
     margin: 0;
     padding: 0.15rem 0.5rem;
+}
+
+/* ==================================
+Writings Menubar
+================================== */
+
+.writings-menubar {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -1rem -1rem 1rem;
+    padding: 0.15rem 0.25rem;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+}
+
+.writings-menu-item {
+    position: relative;
+}
+
+.writings-menu-item > span {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    color: var(--header-text);
+    font-size: 0.9rem;
+    cursor: default;
+    border-radius: 0.2rem;
+    white-space: nowrap;
+    user-select: none;
+    text-transform: capitalize;
+}
+
+.writings-menu-item:hover > span,
+.writings-menu-item.open > span {
+    background: var(--header-bg-gradient);
+}
+
+.writings-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 16rem;
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 0 0.25rem 0.25rem 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0.2rem 0;
+    z-index: 100;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.writings-menu-item.open .writings-dropdown {
+    display: block;
+}
+
+.writings-dropdown li a {
+    display: block;
+    padding: 0.3rem 0.75rem;
+    color: var(--header-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: none;
+    margin: 0;
+    border-radius: 0;
+}
+
+.writings-dropdown li a:hover {
+    background: var(--header-bg-gradient);
+    color: var(--header-text);
+    border-radius: 0;
+    margin: 0;
+    padding: 0.3rem 0.75rem;
+}
+
+/* ==================================
+Writings List
+================================== */
+
+.writings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.writing-entry {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.writing-entry:last-child {
+    border-bottom: none;
+}
+
+.writing-entry h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+}
+
+.writing-entry h2 a {
+    text-decoration: none;
+}
+
+.writing-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.category {
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.75rem;
+    text-transform: lowercase;
+}
+
+.writing-excerpt {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.85;
+    line-height: 1.6;
 }
 
 /* ==================================

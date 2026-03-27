@@ -1,14 +1,86 @@
+{{ $posts := (where .Site.RegularPages "Type" "posts").ByDate.Reverse }}
+{{ $categories := slice }}
+{{ range $posts }}
+  {{ range .Params.categories }}
+    {{ $categories = $categories | append . }}
+  {{ end }}
+{{ end }}
+{{ $categories = $categories | uniq | sort }}
+
+<script>
+(function() {
+    document.addEventListener('DOMContentLoaded', function init() {
+        document.removeEventListener('DOMContentLoaded', init);
+        setup();
+    });
+    // Also run immediately in case DOM is already ready
+    if (document.readyState !== 'loading') setup();
+
+    function setup() {
+        const bar = document.querySelector('.writings-menubar');
+        if (!bar) return;
+        const items = bar.querySelectorAll('.writings-menu-item');
+        let menuOpen = false;
+
+        items.forEach(item => {
+            item.addEventListener('click', e => {
+                e.stopPropagation();
+                const wasOpen = item.classList.contains('open');
+                items.forEach(i => i.classList.remove('open'));
+                if (!wasOpen) { item.classList.add('open'); menuOpen = true; }
+                else { menuOpen = false; }
+            });
+            item.addEventListener('mouseenter', () => {
+                if (menuOpen) {
+                    items.forEach(i => i.classList.remove('open'));
+                    item.classList.add('open');
+                }
+            });
+        });
+
+        document.addEventListener('click', () => {
+            items.forEach(i => i.classList.remove('open'));
+            menuOpen = false;
+        });
+    }
+})();
+</script>
+
+<nav class="writings-menubar">
+  {{ range $categories }}
+  {{ $cat := . }}
+  {{ $catPosts := where $posts ".Params.categories" "intersect" (slice $cat) }}
+  <div class="writings-menu-item">
+    <span>{{ $cat }}</span>
+    <ul class="writings-dropdown">
+      {{ range first 5 $catPosts }}
+      <li><a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
+             onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
+        {{ .Title }}
+      </a></li>
+      {{ end }}
+    </ul>
+  </div>
+  {{ end }}
+</nav>
+
 <header>
   <h1>Writings ✍️</h1>
 </header>
-<section>
-  {{ range (where .Site.RegularPages "Type" "posts").ByDate.Reverse }}
-  <p>
-    <a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
-       onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
+<section class="writings-list">
+  {{ range $posts }}
+  <article class="writing-entry">
+    <h2><a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
+         onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
       {{ .Title }}
-    </a>
-    <span style="opacity: 0.6;">— {{ .Date.Format "Jan 2006" }}</span>
-  </p>
+    </a></h2>
+    <div class="writing-meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
+      {{ range .Params.categories }}
+      <span class="category">{{ . }}</span>
+      {{ end }}
+    </div>
+    <p class="writing-excerpt">{{ .Summary }}</p>
+  </article>
   {{ end }}
 </section>
