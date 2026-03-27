@@ -490,6 +490,10 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                 const defaultStatus = 'Status: Ready to work!';
                 targetElement.querySelectorAll('a[href]').forEach(a => {
                     if (!a.title) a.title = a.href;
+                    if (a.hostname && a.hostname !== window.location.hostname) {
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                    }
                 });
                 targetElement.addEventListener('mouseover', e => {
                     const a = e.target.closest('a[href]');
