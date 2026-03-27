@@ -658,6 +658,7 @@ function openPageFromUrl() {
     });
     
     document.addEventListener('contextmenu', e => {
+        if (e.target.closest('.window-body')) return;
         e.preventDefault();
         // If context menu element is not body, exit
         //if (e.target.tagName !== 'BODY')
