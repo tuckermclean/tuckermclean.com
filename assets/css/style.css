@@ -1060,3 +1060,30 @@ button:active {
 #chat-container button:hover {
     background-color: var(--scroll-hover);
 }
+
+@media print {
+    body {
+        background-image: none;
+        background-color: transparent;
+    }
+    #tasks, .menu {
+        display: none;
+    }
+    h3:has(+ p.date), h4:has(+ p.date), h3:has(+ h4) {
+        break-after: avoid;
+    }
+    h3 + h4 {
+        break-before: avoid;
+    }
+    p.date {
+        break-before: avoid;
+        break-after: avoid;
+    }
+    p.summary {
+        break-before: avoid;
+        break-after: avoid;
+    }
+    ul {
+        break-before: avoid;
+    }
+}
