@@ -14,38 +14,25 @@ jobs:
     steps:
     # Step 1: Checkout the repository
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # Step 1.1: Init Hugo theme submodules
-    - name: Init Hugo theme submodules
-      run: git submodule update --init --recursive
-
-    # Step 1.5: Install Hugo (always latest)
+    # Step 2: Install Hugo (extended, latest)
     - name: Install Hugo
-      uses: peaceiris/actions-hugo@v2
+      uses: peaceiris/actions-hugo@v3
       with:
         extended: true
 
-    # Step 2: Set up Node.js
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'  # Adjust the Node.js version as needed
-
-    # Step 3: Install dependencies and build
-    - name: Install Dependencies and Build
-      run: |
-        npm install
-        npm run build  # Replace with your build script (e.g., "npm run build")
+    # Step 3: Build
+    - name: Build
+      run: hugo --minify
 
     # Step 3.5: List built files for debugging
     - name: List built files for debugging
-      run: |
-        find dist/writings
+      run: find dist
 
     # Step 4: Configure AWS credentials
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

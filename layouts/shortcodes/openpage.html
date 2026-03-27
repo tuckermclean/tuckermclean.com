@@ -1,0 +1,1 @@
+{{ $page := .Get 0 }}{{ $title := .Get 1 }}{{ $icon := .Get 2 | default "⚙️" }}{{ $class := .Get 3 | default "" }}<a href="{{ printf "#/%s" $page | safeURL }}" class="{{ $class }}" onclick="event.preventDefault(); openPage('{{ $page | safeJS }}', '{{ $title | safeJS }}', '{{ $icon | safeJS }}');">{{ .Inner }}</a>

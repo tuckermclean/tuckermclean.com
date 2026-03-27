@@ -1,0 +1,17 @@
+<header>
+  <h1>Hi, I'm <span class="name">{{ .Site.Params.author }}</span>.<span class="blink"></span></h1>
+  <h2>{{ .Params.subtitle }}</h2>
+</header>
+{{ with .Params.navLinks }}
+<section class="nav-links">
+  {{ range . }}
+  <span><a href="#/{{ .page }}" class="{{ .class | default "" }}"
+    onclick="event.preventDefault(); openPage('{{ .page }}', '{{ .title }}', '{{ .icon | default "⚙️" }}');">
+    {{ .label }}
+  </a></span>
+  {{ end }}
+</section>
+{{ end }}
+<section>
+  {{ .Content }}
+</section>

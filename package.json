@@ -2,19 +2,12 @@
   "name": "tuckermclean.com",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && node writings/build.js",
-    "preview": "vite preview",
-    "build:hugo": "node writings/build.js"
-  },
-  "devDependencies": {
-    "vite": "^6.0.5"
+    "dev": "hugo server --buildDrafts --disableFastRender",
+    "build": "hugo --minify",
+    "preview": "hugo server"
   },
   "dependencies": {
-    "@fontsource/fira-code": "^5.1.1",
-    "@fontsource/fira-sans": "^5.2.5"
-  },
-  "license": "MIT"
+    "playwright": "^1.58.2"
+  }
 }

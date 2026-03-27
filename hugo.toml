@@ -1,0 +1,28 @@
+baseURL = 'https://tuckermclean.com/'
+languageCode = 'en-us'
+title = 'Tucker McLean | Devoted IT Professional | AWS Enthusiast | Linux & Networking Expert'
+uglyURLs = true
+publishDir = 'dist'
+disableKinds = ['taxonomy', 'term', 'section']
+
+[params]
+  author = "Tucker McLean"
+  initials = "TM"
+  email = "me@tuckermclean.com"
+  phone = "+18124304200"
+  phoneDisplay = "812-430-4200"
+  location = "Beaverton, Oregon"
+  domain = "tuckermclean.com"
+  linkedin = "tucker-mclean"
+  role = "Linux Systems Engineer & Software Generalist"
+
+[permalinks]
+  posts = '/posts/:contentbasename'
+
+[server]
+  [[server.headers]]
+    for = '/**'
+    [server.headers.values]
+      X-Frame-Options = 'SAMEORIGIN'
+      X-Content-Type-Options = 'nosniff'
+      X-XSS-Protection = '1; mode=block'

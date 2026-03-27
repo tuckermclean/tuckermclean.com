@@ -1,0 +1,14 @@
+<header>
+  <h1>Writings ✍️</h1>
+</header>
+<section>
+  {{ range (where .Site.RegularPages "Type" "posts").ByDate.Reverse }}
+  <p>
+    <a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
+       onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
+      {{ .Title }}
+    </a>
+    <span style="opacity: 0.6;">— {{ .Date.Format "Jan 2006" }}</span>
+  </p>
+  {{ end }}
+</section>
