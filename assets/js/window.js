@@ -670,6 +670,16 @@ function openPageFromUrl() {
         });
     });
     
+    // Cascade windows after viewport resize or orientation change
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(cascadeWindows, 300);
+    });
+    window.addEventListener('orientationchange', () => {
+        setTimeout(cascadeWindows, 100);
+    });
+
     // Handle history back event
     window.addEventListener('popstate', e => {
         openPageFromUrl();
