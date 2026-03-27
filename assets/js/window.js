@@ -738,4 +738,47 @@ function openPageFromUrl() {
     if (typeof(getTopWindow()) === 'undefined') {
         openPageFromUrl();
     }
+
+    // Rubber-band selection box
+    const selBox = document.createElement('div');
+    selBox.id = 'desktop-select';
+    document.body.appendChild(selBox);
+    let selActive = false, selX, selY;
+
+    document.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        if (e.target.closest('.window, .tasks, .menu, .start-button')) return;
+        selActive = true;
+        selX = e.clientX;
+        selY = e.clientY;
+        selBox.style.cssText = `left:${selX}px;top:${selY}px;width:0;height:0;display:block;`;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!selActive) return;
+        const x = Math.min(e.clientX, selX), y = Math.min(e.clientY, selY);
+        const w = Math.abs(e.clientX - selX), h = Math.abs(e.clientY - selY);
+        selBox.style.left = x + 'px';
+        selBox.style.top = y + 'px';
+        selBox.style.width = w + 'px';
+        selBox.style.height = h + 'px';
+        const r = selBox.getBoundingClientRect();
+        windows.forEach(win => {
+            const wr = win.getBoundingClientRect();
+            win.classList.toggle('desktop-selected',
+                r.right > wr.left && r.left < wr.right &&
+                r.bottom > wr.top && r.top < wr.bottom);
+        });
+    });
+
+    function endSelect() {
+        if (!selActive) return;
+        selActive = false;
+        selBox.style.display = 'none';
+        windows.forEach(win => win.classList.remove('desktop-selected'));
+    }
+    document.addEventListener('mouseup', endSelect);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') endSelect(); });
+    window.addEventListener('blur', endSelect);
 })();

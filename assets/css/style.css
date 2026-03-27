@@ -1437,6 +1437,20 @@ header h2 {
     margin-bottom: 0;
 }
 
+#desktop-select {
+    display: none;
+    position: fixed;
+    pointer-events: none;
+    border: 1px solid var(--symlink-color);
+    background: color-mix(in srgb, var(--symlink-color) 20%, transparent);
+    z-index: 9999;
+}
+
+.window.desktop-selected {
+    outline: 1px solid var(--symlink-color);
+    outline-offset: 1px;
+}
+
 @media print {
     body {
         background-image: none;
