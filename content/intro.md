@@ -4,6 +4,16 @@ slug: "intro"
 type: "pages"
 layout: "greeting"
 subtitle: "I have over 3 decades of experience exploring, building, and optimizing technology.🖥️💾⚙️"
+navLinks:
+  - page: "resume"
+    title: "Resume"
+    icon: "📜"
+    class: "directory"
+    label: "Resume"
+  - page: "writings"
+    title: "Writings"
+    icon: "✍️"
+    label: "Writings"
 ---
 
 I'm not one to toot my own horn, but I come by it honestly. There's one thing you should know about me: I care deeply about what I do, how I do it, and the people I work with. I see systems--whether technical or organizational--as living flows. Every component matters. Every interaction must land on time, on target, and on budget. Wherever I've worked, I've made sure of that.
@@ -42,6 +52,3 @@ Sincerely,
 
 {{< initials >}}❤️
 
-{{< openpage "resume" "Resume" "📜" "directory" >}}Resume{{< /openpage >}}
-
-{{< openpage "posts/my-cloud-journey" "My Cloud Journey" "☁️" >}}My Cloud Journey{{< /openpage >}}

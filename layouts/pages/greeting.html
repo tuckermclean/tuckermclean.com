@@ -1,7 +1,3 @@
-<header>
-  <h1>Hi, I'm <span class="name">{{ .Site.Params.author }}</span>.<span class="blink"></span></h1>
-  <h2>{{ .Params.subtitle }}</h2>
-</header>
 {{ with .Params.navLinks }}
 <section class="nav-links">
   {{ range . }}
@@ -12,6 +8,10 @@
   {{ end }}
 </section>
 {{ end }}
+<header>
+  <h1>Hi, I'm <span class="name">{{ .Site.Params.author }}</span>.<span class="blink"></span></h1>
+  <h2>{{ .Params.subtitle }}</h2>
+</header>
 <section>
   {{ .Content }}
 </section>

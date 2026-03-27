@@ -890,6 +890,44 @@ p.date {
 
 
 /* ==================================
+Nav Links Menubar
+================================== */
+
+.nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -1rem -1rem 1rem;
+    padding: 0.15rem 0.25rem;
+    background: var(--header-bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-links span {
+    display: contents;
+}
+
+.nav-links a {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    color: var(--header-text);
+    text-decoration: none;
+    white-space: nowrap;
+    background: none;
+    border-radius: 0;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.nav-links a:hover {
+    background: var(--header-bg-gradient);
+    color: var(--header-text);
+    border-radius: 0.2rem;
+    margin: 0;
+    padding: 0.15rem 0.5rem;
+}
+
+/* ==================================
 Chat Window Styles
 ================================== */
 
