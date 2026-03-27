@@ -307,6 +307,7 @@ Window
 .window-header .title {
     justify-content: center;
     width: 100%;
+    min-width: 0;
 }
 
 .window-header .window-title {
@@ -314,6 +315,9 @@ Window
     color: var(--header-text);
     font-size: 1rem;
     font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .window-header .window-icon {
@@ -540,6 +544,12 @@ Utility Classes
 
 .window.minimized .title {
     flex-direction: column;
+}
+
+.window.minimized .window-title {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
 }
 
 .window.minimized .window-icon {

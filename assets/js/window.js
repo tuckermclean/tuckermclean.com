@@ -417,6 +417,12 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
         let targetElement = document.getElementById(targetElementId);
         if (typeof(targetElement) !== 'undefined' && targetElement !== null) {
             targetElement.innerHTML = html;
+            // Update window title from post article heading if present
+            const postTitle = targetElement.querySelector('article.post h1');
+            if (postTitle) {
+                const win = targetElement.closest('.window');
+                if (win) win.querySelector('.window-title').textContent = postTitle.textContent;
+            }
             // Find and execute scripts
             const scripts = targetElement.querySelectorAll("script");
             scripts.forEach(script => {
