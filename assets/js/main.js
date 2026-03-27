@@ -17,8 +17,8 @@ window.tileWindows = tileWindows
 window.minimizeWindows = minimizeWindows
 window.createWindow = createWindow
 
-window.intervals = {}
-window.windowCleanup = {}
+window.intervals = {};
+window.windowCleanup = {};
 
 // Idle status bar messages
 (function() {

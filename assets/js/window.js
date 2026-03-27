@@ -83,7 +83,7 @@ function promoteTopWindow() {
             history.pushState(null, null, '');
         }
     } else {
-        history.pushState(null, null, '');
+        history.replaceState(null, null, '/');
     }
 }
 
