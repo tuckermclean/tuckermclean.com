@@ -1,5 +1,10 @@
 <span class="page-icon" hidden>{{ .Params.icon | default "✍️" }}</span>
 <span class="page-title" hidden>{{ .Title }}</span>
+<nav class="writings-menubar">
+  <div class="writings-menu-item">
+    <span onclick="goTo('writings', 'Writings', '✍️');">Writings</span>
+  </div>
+</nav>
 <article class="post">
   <header>
     <h1>{{ .Title | markdownify }}</h1>

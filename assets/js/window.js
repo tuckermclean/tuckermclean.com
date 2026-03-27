@@ -60,7 +60,7 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
 }
 
 // Export functions and variables
-export { createWindow, zIndexCounter, windows, openPage, toggleMode, cascadeWindows, tileWindows, minimizeWindows };
+export { createWindow, zIndexCounter, windows, openPage, goTo, toggleMode, cascadeWindows, tileWindows, minimizeWindows };
 
 // Function to determine the topmost window
 function getTopWindow() {

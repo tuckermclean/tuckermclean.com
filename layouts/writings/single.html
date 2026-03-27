@@ -57,7 +57,7 @@
     <ul class="writings-dropdown">
       {{ range first 5 $catPosts }}
       <li><a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
-             onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
+             onclick="event.preventDefault(); goTo('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
         {{ .Title }}
       </a></li>
       {{ end }}
@@ -73,7 +73,7 @@
   {{ range $posts }}
   <article class="writing-entry">
     <h2><a href="{{ printf "#/posts/%s" .File.ContentBaseName | safeURL }}"
-         onclick="event.preventDefault(); openPage('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
+         onclick="event.preventDefault(); goTo('posts/{{ .File.ContentBaseName | safeJS }}', '{{ .Title | safeJS }}', '✍️');">
       {{ .Title }}
     </a></h2>
     <div class="writing-meta">

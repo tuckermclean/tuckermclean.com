@@ -1,4 +1,4 @@
-import { openPage, toggleMode, createWindow, cascadeWindows, tileWindows, minimizeWindows } from './window.js'
+import { openPage, goTo, toggleMode, createWindow, cascadeWindows, tileWindows, minimizeWindows } from './window.js'
 import { envVars } from './env.js'
 
 envVars(false).then((ENV_VARS) => {
@@ -11,6 +11,7 @@ envVars(false).then((ENV_VARS) => {
 document.documentElement.classList.remove('not-loaded')
 
 window.openPage = openPage
+window.goTo = goTo
 window.toggleMode = toggleMode
 window.cascadeWindows = cascadeWindows
 window.tileWindows = tileWindows
