@@ -1,118 +1,65 @@
 # tuckermclean.com
 
-This repository contains the source code for tuckermclean.com, a personal website that combines a modern web application with a Hugo-based blog section.
+A personal portfolio site that looks like a desktop OS — because why present yourself with a normal website when you can build a windowed environment in the browser instead.
 
-## Project Structure
+Live at **[tuckermclean.com](https://tuckermclean.com)**
 
-```
-tuckermclean.com/
-├── src/                        # Source code directory
-├── public/                     # Static assets
-├── writings/                   # Hugo-based blog/writings section
-│   ├── assets/                # Hugo assets
-│   ├── layouts/               # Hugo layouts
-│   ├── static/                # Static files for Hugo
-│   ├── resources/             # Hugo resources
-│   ├── themes/                # Hugo themes (git submodule)
-│   ├── content/               # Blog content
-│   ├── build.js              # Custom build script
-│   └── hugo.toml             # Hugo configuration
-├── dist/                      # Build output directory
-└── [various config files]     # Configuration files
-```
+---
 
-## Prerequisites
+## What it is
 
-- Node.js (v18 or later)
-- Hugo (Extended version)
-- AWS Account (for deployment)
+A fully functional window manager running in the browser. Multiple draggable, resizable windows. Minimize, maximize, shade (roll-up). Z-order management. A taskbar, a start menu, a context menu, a rubber-band selection box. Dark/light mode. A status bar with idle Easter eggs. A chat interface backed by a real auth system.
 
-## Development Setup
+Content is managed through Hugo and rendered as HTML fragments that get loaded into windows on demand — so the site is a single-page app where each "page" is a window, not a route.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/tuckermclean/tuckermclean.com.git
-   cd tuckermclean.com
-   ```
+No frameworks. No bundler. Vanilla JS ES modules, Hugo's built-in esbuild pipeline for minification, and CSS custom properties for theming.
 
-2. Initialize Hugo theme submodules:
-   ```bash
-   git submodule update --init --recursive
-   ```
+## Stack
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+| Layer | Tech |
+|---|---|
+| Content & build | [Hugo](https://gohugo.io) (extended, uglyURLs) |
+| JS | Vanilla ES modules — window manager, SPA routing, env interpolation |
+| CSS | Hand-rolled with CSS custom properties, dark/light via class toggle |
+| Fonts | Fira Code (UI chrome) + Fira Sans (body) |
+| Deployment | GitHub Actions → `hugo --minify` → AWS S3 |
 
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-## Building the Project
-
-The project uses a combination of Vite and Hugo for building:
+## Development
 
 ```bash
-npm run build
+# Clone
+git clone https://github.com/tuckermclean/tuckermclean.com.git
+cd tuckermclean.com
+
+# Start dev server (drafts included)
+hugo server --buildDrafts --disableFastRender
+# or
+npm run dev
 ```
 
-This command:
-1. Builds the main site using Vite
-2. Builds the writings section using Hugo
-3. Outputs everything to the `dist` directory
+## Build & Deploy
 
-## Deployment
+```bash
+# Build to dist/
+hugo --minify
+# or
+npm run build
 
-The site is automatically deployed to AWS S3 using GitHub Actions when changes are pushed to the `master` branch. The deployment process requires the following secrets to be configured in the GitHub repository:
+# Deploy (CI does this automatically on push to master)
+aws s3 sync ./dist s3://your-bucket-name
+```
 
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-- `S3_BUCKET_NAME`
+Deployment is automated via GitHub Actions on push to `master`. Required secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`.
 
-### Manual Deployment
+## Writing a post
 
-If you need to deploy manually, you can:
-
-1. Build the project:
-   ```bash
-   npm run build
-   ```
-
-2. Deploy to S3:
-   ```bash
-   aws s3 sync ./dist s3://your-bucket-name
-   ```
-
-## Project Components
-
-### Main Website
-- Built with Vite
-- Modern web application structure
-- Includes authentication system
-- Chat interface
-
-### Blog/Writings Section
-- Powered by Hugo
-- Content managed through Markdown files
-- Custom themes and layouts
-- Integrated with the main site
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Posts live in `content/posts/` as Markdown with standard Hugo frontmatter. They render into the Writings window and support categories, feature images, and full Markdown including code blocks and blockquotes.
 
 ## License
 
-All blog content © 2025 Tucker McLean — licensed under [CC BY‑SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
-All code © 2025 Tucker McLean — licensed under the [MIT License](/LICENSE)
+Blog content © Tucker McLean — [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+Code © Tucker McLean — [MIT](./LICENSE)
 
-## Contact
+---
 
 Direct all love notes and hate mail to Tucker McLean; me@tuckermclean.com
