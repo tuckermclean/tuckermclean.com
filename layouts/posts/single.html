@@ -2,6 +2,9 @@
   <header>
     <h1>{{ .Title | markdownify }}</h1>
     <p><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time></p>
+    {{ with .Params.feature_image }}
+    <img src="/{{ . }}" alt="{{ $.Title }}" class="feature-image">
+    {{ end }}
   </header>
   <div class="post-content">
     {{- .Content -}}

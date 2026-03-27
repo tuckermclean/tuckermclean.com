@@ -3,13 +3,13 @@ title: "My Cloud Portfolio Journey"
 date: 2025-01-21
 draft: false
 categories: ['tech']
+feature_image: "aws_graph.png"
 license: CC‑BY‑SA‑4.0
 ---
 
 Introduction
 ------------
 
-[![AWS Graph](https://www.tuckermclean.com/aws_graph.png)](https://www.tuckermclean.com/aws_graph.png)
 Welcome to my cloud portfolio journey!
 
 I'm excited to share how I built this website and cloud project as a showcase of my skills and values.
