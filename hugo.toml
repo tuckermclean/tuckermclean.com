@@ -1,6 +1,6 @@
 baseURL = 'https://tuckermclean.com/'
 languageCode = 'en-us'
-title = 'Tucker McLean | Devoted IT Professional | AWS Enthusiast | Linux & Networking Expert'
+title = 'Tucker McLean — Infrastructure Architect & Platform Engineer'
 uglyURLs = true
 publishDir = 'dist'
 disableKinds = ['taxonomy', 'term', 'section']

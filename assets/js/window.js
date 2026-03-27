@@ -554,7 +554,7 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
             }
         } else {
             if (retries > 0) {
-                loadHTML(url, targetElementId, callback, retries - 5);
+                setTimeout(() => loadHTML(url, targetElementId, callback, retries - 1), 100);
             } else {
                 callback(undefined);
             }

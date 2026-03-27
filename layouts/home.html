@@ -3,6 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="{{ .Site.BaseURL }}">
+    <meta name="description" content="{{ .Site.Params.role }} based in {{ .Site.Params.location }}. 20+ years of Linux, AWS, Kubernetes, Python, and infrastructure architecture.">
+    <meta name="author" content="{{ .Site.Params.author }}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="{{ .Site.Title }}">
+    <meta property="og:description" content="{{ .Site.Params.role }} based in {{ .Site.Params.location }}. Infrastructure architect with 20+ years on Linux, AWS, and Kubernetes.">
+    <meta property="og:url" content="{{ .Site.BaseURL }}">
+    <meta property="og:image" content="{{ .Site.BaseURL }}images/header.jpg">
+    <meta property="og:image:alt" content="{{ .Site.Params.author }} — {{ .Site.Params.role }}">
+    <meta property="og:site_name" content="{{ .Site.Params.author }}">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ .Site.Title }}">
+    <meta name="twitter:description" content="{{ .Site.Params.role }} based in {{ .Site.Params.location }}. Infrastructure architect with 20+ years on Linux, AWS, and Kubernetes.">
+    <meta name="twitter:image" content="{{ .Site.BaseURL }}images/header.jpg">
+    <meta name="twitter:image:alt" content="{{ .Site.Params.author }} — {{ .Site.Params.role }}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "{{ .Site.Params.author }}",
+      "url": "{{ .Site.BaseURL }}",
+      "email": "{{ .Site.Params.email }}",
+      "jobTitle": "{{ .Site.Params.role }}",
+      "address": { "@type": "PostalAddress", "addressLocality": "Beaverton", "addressRegion": "OR", "addressCountry": "US" },
+      "sameAs": [
+        "https://github.com/{{ .Site.Params.github }}",
+        "https://www.linkedin.com/in/{{ .Site.Params.linkedin }}/"
+      ]
+    }
+    </script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%23333'/><text y='72' x='50' text-anchor='middle' font-size='54' font-family='monospace' fill='%23ebebeb'>TM</text></svg>">
+    <link rel="preload" href="/fonts/fira-code-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/fira-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/fira-sans-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
     <title>{{ .Site.Title }}</title>
     <style>
         html.not-loaded * {
