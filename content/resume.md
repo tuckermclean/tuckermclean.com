@@ -10,26 +10,6 @@ icon: "📜"
 
 Linux infrastructure and automation engineer with 20+ years of hands-on systems experience and a track record of shipping at Intel. Currently automating IT lab compute provisioning at Intel using Ansible, AWX, and FOG. Prior Intel work includes building a PXE/iPXE provisioning platform that cut environment reproduction time by 50%, owning software legal compliance and release engineering for Cisco-bound network driver releases, and 100G network validation. Comfortable from kernel and bootloader up through Kubernetes, CI/CD, and full-stack web applications. Based in Portland, OR.
 
-## Projects & Independent Work
-
-### Personliness — Personality Assessment Platform
-
-{{< projectlinks github="https://github.com/tuckermclean/personliness" live="https://personliness.dcxxiv.com" >}}
-
-Designed and built a full-stack application that scores historical figures across 36 personality traits using an original psychometric rubric, then matches users to figures via trait-by-trait similarity analysis. Authored the scoring methodology including anti-halo rules, era normalization, source-critical confidence calibration, and multi-pass LLM refinement — producing defensible scores at $0.20/figure. 35+ figures scored. Stack: Django, React, PostgreSQL, Celery, Redis, Nginx, Docker. LLM integration with OpenAI, Anthropic, and Ollama backends. Deployed on self-hosted Kubernetes.
-
-### The Monolith — Cross-Architecture Linux Live ISO Builder
-
-{{< projectlinks github="https://github.com/tuckermclean/linux-live-iso-factory" >}}
-
-Built a deterministic, Docker-based build system that cross-compiles a complete bootable Linux system targeting i486 through modern x86. Gentoo crossdev toolchain with musl libc; every binary statically linked to eliminate runtime dependencies and minimize seek latency on optical media. SquashFS root with overlayfs, hybrid BIOS boot, kernel 6.12 LTS, pinned package versions with checksum verification via portage. Full GNU userland with networking, SSH, text editors, and games. Boots on hardware spanning 30+ years of x86 architecture.
-
-### Hybrid Cloud Kubernetes Platform
-
-{{< projectlinks github="https://github.com/tuckermclean/k3s-lab" >}}
-
-Architected and operate a multi-node K3s cluster spanning bare metal and cloud VMs. GitOps via FluxCD, Traefik ingress, Longhorn distributed storage, Authentik SSO, full observability stack. Runs production workloads including media ingestion pipelines, web applications, and automation services.
-
 ## Professional Experience
 
 ### Data Center / Systems Administrator
@@ -48,7 +28,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 {{< date >}}Sep 2025 – Jan 2026{{< /date >}}
 
 - Tracked movement of equipment kits in **SAP** across Intel semiconductor fabrication facilities.
-- Built **Power Automate** workflows and **SharePoint/Excel** automation that replaced manual tracking processes for fab equipment logistics — the work that led directly to my current IT automation role at Intel.
+- Built **Power Automate** workflows and **SharePoint/Excel** automation that replaced manual tracking processes for fab equipment logistics.
 
 ### Senior Software Engineering Reviewer (Contract)
 
@@ -69,7 +49,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 - Owned **software legal compliance (SWLC)** process for network interface drivers and firmware releases to top-tier accounts including Cisco.
 - Ran static analysis (**Coverity**, previously **Klocwork**) and binary composition analysis (**Black Duck Binary Analysis**) on all built components — releases shipped only when analysis was green.
 - Built multi-hundred-component **release projects for Cisco** — assembling drivers, firmware, and tools into validated release packages, personally performing the builds and managing the full compliance audit trail.
-- Built **PowerBI dashboards** for tracking technical and security advisories across product lines. Point of contact for security advisory coordination and disclosure.
+- Coordinated with PSIRT to track technical and security advisories across product lines. Point of contact for security advisory coordination and disclosure.
 
 ### Network Product Validation Technician
 
@@ -106,6 +86,26 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 - **Lakeshore Technical College** — IT Support (2019)
 - **Central Oregon Internet** — Linux Sysadmin & Technical Support (2002–2003)
 - Continuous self-directed work in open-source systems, Linux administration, networking, and automation throughout this period.
+
+## Selected Projects
+
+### The Monolith — Cross-Architecture Linux Live ISO Builder
+
+{{< projectlinks github="https://github.com/tuckermclean/linux-live-iso-factory" live="https://themonolith.s3.amazonaws.com/index.html" >}}
+
+Built a deterministic, Docker-based build system that cross-compiles a complete bootable Linux system targeting i486 through modern x86. Gentoo crossdev toolchain with musl libc. Full attestation stack including Syft, Grype, and SLSA Provenance. Every binary statically linked to eliminate runtime dependencies and minimize seek latency on optical media. SquashFS root with overlayfs, hybrid UEFI and BIOS boot, kernel 6.12 LTS, pinned package versions with checksum verification. Full GNU userland with networking, SSH, text editors, and games. Boots on hardware spanning 30+ years of x86 architecture. 
+
+### Personliness — Personality Assessment Platform
+
+{{< projectlinks github="https://github.com/tuckermclean/personliness" live="https://personliness.dcxxiv.com" >}}
+
+Designed and built a full-stack application that scores historical figures across 36 personality traits using an original [psychometric rubric](https://github.com/tuckermclean/personliness/blob/main/RUBRIC.md), then matches users to figures via trait-by-trait similarity analysis. Authored the scoring methodology including anti-halo rules, era normalization, source-critical confidence calibration, and multi-pass LLM refinement — producing defensible scores at $0.20/figure. 140+ figures scored. Stack: Django, React, PostgreSQL, Celery, Redis, Nginx, Docker. LLM integration with OpenAI, Anthropic, and Ollama backends. Deployed on self-hosted Kubernetes.
+
+### Hybrid Cloud Kubernetes Platform
+
+{{< projectlinks github="https://github.com/tuckermclean/k3s-lab" >}}
+
+Architected and operate a multi-node K3s cluster spanning bare metal and cloud VMs. GitOps via FluxCD, Traefik ingress, Longhorn distributed storage, Authentik SSO, full observability stack. Runs production workloads including media ingestion pipelines, web applications, and automation services.
 
 ## Technical Skills
 

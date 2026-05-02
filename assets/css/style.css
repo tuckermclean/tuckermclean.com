@@ -596,11 +596,6 @@ body.toggled .window.minimized:hover .window-title {
     display: none;
 }
 
-header {
-    margin-bottom: 2rem;
-    text-align: left;
-}
-
 header h1 {
     font-size: 2rem;
     margin: 0 0 0.75rem;
@@ -622,7 +617,7 @@ section:last-child {
 section h2 {
     border-bottom: 1px solid var(--text);
     font-size: 1.5rem;
-    padding-top: 0;
+    padding-top: 0.6rem;
     margin-top: 0;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
@@ -741,7 +736,7 @@ Print Styles
 
     body, p, #resume-container a {
         color: #000000 !important; /* Ensure text is black */
-        font-size: 9.4pt !important; /* Use a readable font size */
+        font-size: 9pt !important; /* Use a readable font size */
     }
 
     #resume-container a {
@@ -795,7 +790,7 @@ Print Styles
     }
 
     h3 + p.date, h4 + p.date {
-        margin: 1rem 0px !important;
+        margin: 0.9rem 0px !important;
     }
 
     p.summary, ul {
