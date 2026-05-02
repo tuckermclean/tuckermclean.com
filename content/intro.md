@@ -19,9 +19,11 @@ navLinks:
 
 I started in 1990 with a keyboard and BASIC. Thirty-five plus years later, I'm still solving the same problem: how do you make complex systems reliable, automatable, and understandable to the people who depend on them?
 
-My career has run the full stack — physical infrastructure, networking, Linux, software development, cloud architecture, and supply chain security. I scope architecture, make judgment calls on what ships, and I build things that work.
+I'm a Linux infrastructure and automation engineer based in the Portland, OR metro. My career has run the full stack — physical infrastructure, networking, Linux, software development, cloud architecture, and supply chain security — and I build things that work.
 
-**At Intel (2021–2024),** I was the technical backbone of a NIC firmware and driver validation lab. When a facility move left us without infrastructure, I built a complete lab network from scratch: 100G fiber, Cisco and Extreme switches, DHCP, DNS, firewall, and a custom PXE provisioning system in Python that cut issue reproduction time by 50%. I repurposed existing hardware and delivered thousands in savings. I also earned enough trust across the org to grow from contractor validation tech into a cross-functional compliance and release engineering role that most people don't reach.
+**Currently at Intel (via Kelly OCG),** I'm automating IT lab compute provisioning across Intel's Global IT Lab Compute using Ansible, AWX, and FOG, and building Grafana dashboards that surface provisioning metrics and failure rates across lab environments.
+
+**Previously at Intel (2021–2024),** I was the technical backbone of a NIC firmware and driver validation lab. When a facility move left us without infrastructure, I built a complete lab network from scratch: 100G fiber, Cisco and Extreme switches, DHCP, DNS, firewall, and a custom PXE provisioning system in Python that cut issue reproduction time by 50%. I repurposed existing hardware and delivered thousands in savings. I also earned enough trust across the org to grow from contractor validation tech into a cross-functional compliance and release engineering role that most people don't reach.
 
 As acting **SWLC liaison**, I owned the full software supply chain compliance pipeline — Coverity, Klocwork, and Black Duck Binary Analysis — for multi-hundred-component Cisco NIC firmware and driver releases. I ran the builds, managed the audit trail, coordinated security advisory disclosure across product lines, and built PowerBI dashboards used across the business unit. That role requires someone who understands the legal, the technical, and the process well enough to keep all three honest simultaneously.
 

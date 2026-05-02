@@ -8,7 +8,7 @@ icon: "📜"
 
 ## Summary
 
-Infrastructure architect with 20+ years on Linux, specializing in system design, automation, and build engineering. I scope architecture, orchestrate AI-augmented development, and make judgment calls on what ships. Track record across network validation, firmware compliance, software supply chain security, release engineering, and full-stack product development. Currently automating IT infrastructure at Intel while simultaneously building and shipping production applications on a self-hosted Kubernetes cluster.
+Linux infrastructure and automation engineer with 20+ years of hands-on systems experience and a track record of shipping at Intel. Currently automating IT lab compute provisioning at Intel using Ansible, AWX, and FOG. Prior Intel work includes building a PXE/iPXE provisioning platform that cut environment reproduction time by 50%, owning software legal compliance and release engineering for Cisco-bound network driver releases, and 100G network validation. Comfortable from kernel and bootloader up through Kubernetes, CI/CD, and full-stack web applications. Based in Portland, OR.
 
 ## Projects & Independent Work
 
@@ -32,7 +32,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 
 ## Professional Experience
 
-### IT Infrastructure Automation Engineer
+### Data Center / Systems Administrator
 
 #### Kelly OCG at Intel Corporation | Hillsboro, Oregon
 
@@ -41,25 +41,26 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 - Automating IT lab compute infrastructure using **Ansible, AWX, and FOG** for OS provisioning and configuration management across Intel's Global IT Lab Compute.
 - Building data visualization dashboards in **Grafana** and proprietary Intel tools to surface provisioning metrics and failure rates across lab environments.
 
-### Fab Logistics & Automation Specialist
+### Inventory Clerk — Process Automation
 
 #### Randstad/GXO at Applied Materials (Intel Fabs) | Hillsboro, Oregon
 
 {{< date >}}Sep 2025 – Jan 2026{{< /date >}}
 
 - Tracked movement of equipment kits in **SAP** across Intel semiconductor fabrication facilities.
-- Created operational dashboards and workflow automations in **Microsoft 365** (Power Automate, SharePoint, Excel) to streamline parts logistics and reduce manual tracking overhead.
+- Built **Power Automate** workflows and **SharePoint/Excel** automation that replaced manual tracking processes for fab equipment logistics — the work that led directly to my current IT automation role at Intel.
 
-### Software Engineering Consultant
+### Senior Software Engineering Reviewer (Contract)
 
-#### Independent Contractor
+#### AI/LLM Training Platforms (under NDA) | Remote
 
 {{< date >}}Feb 2025 – Sep 2025{{< /date >}}
 
-- Technical review and specification writing for open-source projects — analyzing codebases, CI/CD pipelines, and GitHub issue histories to produce structured specs for AI-assisted development.
-- Built containerized validation environments and reproducible test harnesses for client teams.
+- Senior-level code review and software engineering spec work for contracts producing training data for large language models.
+- Performed augmentation passes on engineering specifications and issue tracker content; reviewed code submissions for technical correctness and quality.
 
-### Software Legal Compliance Liaison & Release Engineer
+### Technology Program/Project Management Analyst
+*Acting role: Software Legal Compliance Liaison & Release Engineer*
 
 #### Intel Corporation | Hillsboro, Oregon
 
@@ -70,7 +71,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 - Built multi-hundred-component **release projects for Cisco** — assembling drivers, firmware, and tools into validated release packages, personally performing the builds and managing the full compliance audit trail.
 - Built **PowerBI dashboards** for tracking technical and security advisories across product lines. Point of contact for security advisory coordination and disclosure.
 
-### Network Validation Engineer
+### Network Product Validation Technician
 
 #### Intel Corporation | Hillsboro, Oregon
 
@@ -81,7 +82,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 - Wired **100G fiber backbones** and built **Python automation** for switch management and test orchestration.
 - Provided senior-level technical guidance in the network validation lab — the go-to resource for complex reproduction environments.
 
-### Validation Engineer
+### Engineer I — Network Validation
 
 #### Kelly Services at Intel | Hillsboro, Oregon
 
@@ -89,7 +90,7 @@ Architected and operate a multi-node K3s cluster spanning bare metal and cloud V
 
 - Built customer issue-reproduction environments for Linux and Windows networking stacks. Authored automation for validation and data collection that became team-standard tooling.
 
-### Developer & Technical Support Engineer
+### Technical Support & Developer
 
 #### Bertram Communications | Random Lake, Wisconsin
 

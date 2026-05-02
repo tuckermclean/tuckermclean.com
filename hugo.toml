@@ -1,6 +1,6 @@
 baseURL = 'https://tuckermclean.com/'
 languageCode = 'en-us'
-title = 'Tucker McLean — Infrastructure Architect & Platform Engineer'
+title = 'Tucker McLean — Linux Infrastructure & Automation Engineer'
 uglyURLs = true
 publishDir = 'dist'
 disableKinds = ['taxonomy', 'term', 'section']
@@ -15,7 +15,7 @@ disableKinds = ['taxonomy', 'term', 'section']
   domain = "tuckermclean.com"
   linkedin = "tucker-mclean"
   github = "tuckermclean"
-  role = "Infrastructure Architect & Platform Engineer"
+  role = "Linux Infrastructure & Automation Engineer"
 
 [markup.goldmark.renderer]
   unsafe = true
