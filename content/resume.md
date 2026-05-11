@@ -8,7 +8,7 @@ icon: "📜"
 
 ## Summary
 
-Linux infrastructure and automation engineer with 20+ years of hands-on systems experience and a track record of shipping at Intel. Currently automating IT lab compute provisioning at Intel using Ansible, AWX, and FOG. Prior Intel work includes building a PXE/iPXE provisioning platform that cut environment reproduction time by 50%, owning software legal compliance and release engineering for Cisco-bound network driver releases, and 100G network validation. Comfortable from kernel and bootloader up through Kubernetes, CI/CD, and full-stack web applications. Based in Portland, OR metro.
+Linux infrastructure and automation engineer with 20+ years of hands-on systems experience and a track record of shipping at Intel. Currently automating IT lab compute provisioning at Intel using Ansible, AWX, FOG and Python. Prior Intel work includes building a PXE/iPXE provisioning platform that cut environment reproduction time by 50%, owning software legal compliance and release engineering for Cisco-bound network driver releases, and 100G network validation. Comfortable from kernel and bootloader up through Kubernetes, CI/CD, and full-stack web applications. Based in Portland, OR metro.
 
 ## Professional Experience
 
@@ -18,7 +18,7 @@ Linux infrastructure and automation engineer with 20+ years of hands-on systems 
 
 {{< date >}}Feb 2026 – Present{{< /date >}}
 
-- Automating IT lab compute infrastructure using **Ansible, AWX, FOG and Python** for OS provisioning and configuration management across Intel's Global IT Lab Compute.
+- Automating IT lab compute infrastructure using **Ansible, AWX, FOG** and **Python** for OS provisioning and configuration management across Intel's Global IT Lab Compute.
 - Building data visualization dashboards in **Grafana** and proprietary Intel tools to surface provisioning metrics and failure rates across lab environments.
 
 ### Inventory Clerk — Process Automation
