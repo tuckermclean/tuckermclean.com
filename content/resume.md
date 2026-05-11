@@ -30,7 +30,7 @@ Linux infrastructure and automation engineer with 20+ years of hands-on systems 
 - Tracked movement of equipment kits in **SAP** across Intel semiconductor fabrication facilities.
 - Built **Power Automate** workflows and **SharePoint/Excel** automation that replaced manual tracking processes for fab equipment logistics.
 
-### Senior Software Engineering Reviewer (Contract)
+### Senior Software Engineering Reviewer
 
 #### AI/LLM Training Platforms (under NDA) | Remote
 
