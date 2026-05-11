@@ -18,7 +18,7 @@ Linux infrastructure and automation engineer with 20+ years of hands-on systems 
 
 {{< date >}}Feb 2026 – Present{{< /date >}}
 
-- Automating IT lab compute infrastructure using **Ansible, AWX, and FOG** for OS provisioning and configuration management across Intel's Global IT Lab Compute.
+- Automating IT lab compute infrastructure using **Ansible, AWX, FOG and Python** for OS provisioning and configuration management across Intel's Global IT Lab Compute.
 - Building data visualization dashboards in **Grafana** and proprietary Intel tools to surface provisioning metrics and failure rates across lab environments.
 
 ### Inventory Clerk — Process Automation
@@ -47,7 +47,7 @@ Linux infrastructure and automation engineer with 20+ years of hands-on systems 
 {{< date >}}Apr 2024 – Sep 2024{{< /date >}}
 
 - Owned **software legal compliance (SWLC)** process for network interface drivers and firmware releases to top-tier accounts including Cisco.
-- Ran static analysis (**Coverity**, previously **Klocwork**) and binary composition analysis (**Black Duck Binary Analysis**) on all built components — releases shipped only when analysis was green.
+- Ran static analysis (**Coverity**, previously **Klocwork**) and composition analysis (**Black Duck Protex** & **Black Duck Binary Analysis**) on all built components — releases shipped only when analysis was green.
 - Built multi-hundred-component **release projects for Cisco** — assembling drivers, firmware, and tools into validated release packages, personally performing the builds and managing the full compliance audit trail.
 - Coordinated with PSIRT to track technical and security advisories across product lines. Point of contact for security advisory coordination and disclosure.
 
@@ -59,7 +59,7 @@ Linux infrastructure and automation engineer with 20+ years of hands-on systems 
 
 - Designed and deployed an automated **OS provisioning platform (PXE/iPXE)** that **cut environment reproduction time by 50%** across the validation team.
 - Validated NIC firmware, drivers, and virtualization workloads across Linux, ESXi, and Windows at scale.
-- Wired **100G fiber backbones** and built **Python automation** for switch management and test orchestration.
+- Wired **100G fiber backbones** and built **Python automation** for switch management, OS deployment, and test orchestration.
 - Provided senior-level technical guidance in the network validation lab — the go-to resource for complex reproduction environments.
 
 ### Engineer I — Network Validation
