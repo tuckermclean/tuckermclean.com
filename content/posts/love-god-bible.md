@@ -229,4 +229,4 @@ In my view, and the view of 2 billion Muslims, that is the truth, without doubt,
 
 And Allah knows best.
 
-*Ameen.*
+*Ameen.* 🤲
