@@ -41,8 +41,8 @@ baseline diverge from the code being ported and would grow scope.
 | Concern | Choice | Rationale |
 |---|---|---|
 | E2E runner | `@playwright/test` | Auto-waiting web-first assertions, retries, HTML report, fixtures. Chromium cached. |
-| Site build/serve | `hugo-extended` (pinned npm dev-dep) | No system Hugo present. Self-contained + version-pinned; works locally and in CI. |
-| Serving during tests | `hugo server` on port 1313 via Playwright `webServer` | Single process, auto-serves, no separate static server. Playwright waits for the URL before running. |
+| Site build/serve | `hugo-bin` (pinned npm dev-dep) | No system Hugo present. Self-contained + version-pinned; works locally and in CI. Hugo *extended* is not required — the site has no SCSS (plain CSS + esbuild `js.Build`, which is bundled in standard Hugo). |
+| Serving during tests | `hugo server` (from `hugo-bin`) on port 1313 via Playwright `webServer` | Single process, auto-serves, rewrites baseURL to localhost, no separate static server. Playwright waits for the URL before running. |
 | Unit runner | `vitest` + jsdom environment | `env.js` reads `window.location.hostname`; jsdom lets us stub it. |
 | Viewport | Fixed **1280×900** (desktop, >768px) | Determinism. Avoids the mobile (`<=768`) code branch and stabilizes window offset math. |
 
@@ -192,7 +192,14 @@ _(Populated during implementation as characterization reveals questionable
 behavior. Each entry: observed behavior, why it looks wrong, and the test that
 currently locks it in.)_
 
-- None yet.
+- **`toggleShade` guard is dead code** (`assets/js/window.js` ~line 262).
+  The guard `if (typeof(e) === 'Event') { … }` can never be true — `typeof`
+  returns `'object'` for Event instances, never `'Event'`. As a result the
+  button-click and minimized-window guards inside it never run, and
+  `e.preventDefault()` is never called on a real shade double-click. Observable
+  effect: double-clicking a header button region can still shade the window.
+  The baseline locks the *current* (buggy) behavior; the shade tests assert what
+  actually happens today. Flagged for the framework port to fix intentionally.
 
 ## Deliverables
 
