@@ -13,8 +13,14 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'desktop',
+      testDir: './tests/e2e',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
+    },
+    {
+      name: 'mobile',
+      testDir: './tests/mobile',
+      use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
     },
   ],
   webServer: {
