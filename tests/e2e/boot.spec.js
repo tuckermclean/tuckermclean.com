@@ -41,3 +41,28 @@ test('browser Back/Forward navigate between opened windows', async ({ page }) =>
   await expect(page).toHaveURL(/#\/intro$/);
   await expect(win(page, 'intro')).toHaveClass(/front/);
 });
+
+test('back/forward recycles windows rather than duplicating them', async ({ page }) => {
+  await openApp(page);                 // welcome
+  await openViaMenu(page, 'Resume');   // resume
+  await openViaMenu(page, 'Intro');    // intro
+  await expect(page.locator('.window')).toHaveCount(3);
+
+  // popstate's navigateToPage() recycles the *current top* window's DOM
+  // element into the target name; if a window with that target name is
+  // already open, navigateToPage closes it first. Here goBack's target
+  // ("resume") already has its own window, so that window is closed and
+  // the (until-now front) "intro" window is renamed to "resume" in place
+  // — net window count drops from 3 to 2, it does not stay at 3. See
+  // "Suspected bugs" in the design doc.
+  await page.goBack();
+  await expect(win(page, 'resume')).toHaveClass(/front/);
+  await expect(page.locator('.window')).toHaveCount(2);
+
+  // goForward's target ("intro") no longer has its own window (its DOM
+  // element was just renamed to "resume" above), so this leg is a pure
+  // rename with no closeWindow call — count stays at 2, not back to 3.
+  await page.goForward();
+  await expect(win(page, 'intro')).toHaveClass(/front/);
+  await expect(page.locator('.window')).toHaveCount(2);
+});

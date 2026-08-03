@@ -200,6 +200,19 @@ or here as characterization reveals them.
 
 - (Existing) `toggleShade` `typeof(e) === 'Event'` guard is unreachable dead
   code — see `2026-08-02-test-baseline-design.md`.
+- (New, task 6) `navigateToPage` does not purely "recycle" the current top
+  window on `popstate` — when the target page name already has its own
+  window open, `navigateToPage` calls `closeWindow(oldWindow)` on that
+  existing window and then renames the top window's DOM element into the
+  target name. Net effect for `welcome → +resume → +intro → goBack →
+  goForward`: window count goes 3 → 2 → 2 (never back to 3). One of the two
+  windows that legitimately represent "resume" and "intro" is silently
+  destroyed rather than the two windows swapping which name they hold. This
+  looks like unintended data loss (an open window's live content/state is
+  discarded) rather than deliberate recycling; flagged here rather than
+  "fixed" per characterization-testing rules — the `boot.spec.js` recycling
+  test now asserts the observed 3 → 2 → 2 sequence with this explanation
+  inline.
 
 ## Deliverables
 
