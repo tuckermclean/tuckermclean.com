@@ -13,5 +13,7 @@ export async function openViaMenu(page, label) {
   await page.locator('#menu .menu-item', { hasText: label }).click();
 }
 
-/** The window element for a given page name. */
-export const win = (page, name) => page.locator(`#window-${name}`);
+/** The window element for a given page name. Escapes '/' since nested-path
+ *  page names (e.g. 'posts/my-cloud-journey') produce a DOM id containing a
+ *  literal slash, which is invalid in an unescaped CSS id selector. */
+export const win = (page, name) => page.locator(`#window-${name.replace(/\//g, '\\/')}`);
