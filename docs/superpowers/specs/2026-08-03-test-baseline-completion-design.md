@@ -147,11 +147,11 @@ Two independent collectors; neither gates CI.
   `assets/js/**`, emitting a text summary + HTML report for `window.js` and
   `main.js`. Remapping requires source maps (below).
 - **Source maps (the one authorized source edit):** in `layouts/home.html`, the
-  `main.js` build is `js.Build $jsOpts`. Add `"sourceMap" "external"` to
-  `$jsOpts` **only when `hugo.IsServer`** — e.g. build `$jsOpts` conditionally so
-  the server/test build emits an external `.map` and the production
-  (`hugo --minify`) build is byte-for-byte unchanged. This is the sole
-  modification to site source in this effort.
+  `main.js` build is `js.Build $jsOpts`. Add `"sourceMap" "inline"` to
+  `$jsOpts` **only when `hugo.IsServer`** — inline (not external) so it survives
+  `resources.Fingerprint` without a `sourceMappingURL`/filename desync, and so
+  the production (`hugo --minify`) build is byte-for-byte unchanged. This is the
+  sole modification to site source in this effort.
 - **Reporting:** coverage is printed to the console and written to
   `coverage/` (git-ignored). No threshold, no CI failure on low numbers.
   CI uploads the reports as artifacts.
