@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, win } from './helpers.js';
 
 const TOL = 2;
@@ -30,7 +30,7 @@ async function moveAndResize(page, w, { resize = false } = {}) {
 
 test('maximize then restore returns the window to its prior box', async ({ page }) => {
   // NOTE: `.window.maximized` sets width/height/top/left via CSS `!important`
-  // (see assets/scss); toggleMaximize() never rewrites the inline
+  // (see assets/css/style.css); toggleMaximize() never rewrites the inline
   // style.top/left/width/height while maximized, so restoreWindowState() on
   // exit is a no-op -- class removal alone reveals the untouched inline
   // styles. This test characterizes the observable CSS-class round-trip,

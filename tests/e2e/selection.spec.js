@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, win } from './helpers.js';
 
 async function dragSelect(page, from, to, { release = true } = {}) {

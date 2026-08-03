@@ -95,6 +95,7 @@
     {{ $chatJS := resources.Get "js/chat.js" | js.Build (dict "targetPath" "js/chat.js") }}
     <link rel="modulepreload" href="{{ $chatJS.RelPermalink }}">
     {{ $jsOpts := dict "minify" true "targetPath" "js/bundle.js" }}
+    {{ if hugo.IsServer }}{{ $jsOpts = merge $jsOpts (dict "sourceMap" "inline") }}{{ end }}
     {{ $js := resources.Get "js/main.js" | js.Build $jsOpts | resources.Fingerprint }}
     <script type="module" src="{{ $js.RelPermalink }}"></script>
 </body>

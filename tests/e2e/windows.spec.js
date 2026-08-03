@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, openViaMenu, win } from './helpers.js';
 
 test('opening a page shows correct title + icon and sets the hash', async ({ page }) => {

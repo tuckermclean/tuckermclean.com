@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../e2e/fixtures.js';
 import { openApp, openViaMenu, win } from '../e2e/helpers.js';
 
 test('an opened window fits within the mobile viewport', async ({ page }) => {

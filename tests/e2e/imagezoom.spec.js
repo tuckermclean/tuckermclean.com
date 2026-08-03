@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, win } from './helpers.js';
 
 // aws_graph.png -> filename 'aws_graph' -> non-alnum ('_') to '-' -> 'aws-graph'

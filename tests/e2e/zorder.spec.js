@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, openViaMenu, win } from './helpers.js';
 
 const zIndexOf = (locator) => locator.evaluate((el) => parseInt(el.style.zIndex || '0', 10));

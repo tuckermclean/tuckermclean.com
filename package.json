@@ -8,16 +8,20 @@
     "preview": "hugo server",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
+    "test:unit:cov": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:cov": "npm run test:unit:cov && npm run test:e2e"
   },
   "dependencies": {
     "playwright": "^1.62.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@vitest/coverage-v8": "^2.1.9",
     "hugo-bin": "^0.145.2",
     "jsdom": "^25.0.1",
+    "monocart-coverage-reports": "^2.12.12",
     "vitest": "^2.1.9"
   }
 }

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, win } from './helpers.js';
 
 const TOL = 3; // px tolerance for rounding

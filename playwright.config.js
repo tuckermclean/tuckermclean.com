@@ -6,6 +6,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [['html', { open: 'never' }], ['list']],
+  globalSetup: './tests/e2e/coverage-setup.js',
+  globalTeardown: './tests/e2e/coverage-teardown.js',
   use: {
     baseURL: 'http://localhost:1313',
     viewport: { width: 1280, height: 900 },

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { openApp, openViaMenu, win } from './helpers.js';
 
 test('resizing the viewport re-cascades and un-minimizes all windows', async ({ page }) => {
