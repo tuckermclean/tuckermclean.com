@@ -11,6 +11,7 @@ function setHostname(hostname) {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('envVars — identity by hostname', () => {

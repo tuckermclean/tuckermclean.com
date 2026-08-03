@@ -40,7 +40,7 @@ baseline diverge from the code being ported and would grow scope.
 
 | Concern | Choice | Rationale |
 |---|---|---|
-| E2E runner | `@playwright/test` | Auto-waiting web-first assertions, retries, HTML report, fixtures. Chromium cached. |
+| E2E runner | `@playwright/test` | Auto-waiting web-first assertions, retries, HTML report, fixtures. Chromium browser installed via `npx playwright install chromium`, matching the pinned `@playwright/test` version. |
 | Site build/serve | `hugo-bin` (pinned npm dev-dep) | No system Hugo present. Self-contained + version-pinned; works locally and in CI. Hugo *extended* is not required — the site has no SCSS (plain CSS + esbuild `js.Build`, which is bundled in standard Hugo). |
 | Serving during tests | `hugo server` (from `hugo-bin`) on port 1313 via Playwright `webServer` | Single process, auto-serves, rewrites baseURL to localhost, no separate static server. Playwright waits for the URL before running. |
 | Unit runner | `vitest` + jsdom environment | `env.js` reads `window.location.hostname`; jsdom lets us stub it. |
@@ -195,16 +195,17 @@ currently locks it in.)_
 - **`toggleShade` guard is dead code** (`assets/js/window.js` ~line 262).
   The guard `if (typeof(e) === 'Event') { … }` can never be true — `typeof`
   returns `'object'` for Event instances, never `'Event'`. As a result the
-  button-click and minimized-window guards inside it never run, and
-  `e.preventDefault()` is never called on a real shade double-click. Observable
-  effect: double-clicking a header button region can still shade the window.
-  The baseline locks the *current* (buggy) behavior; the shade tests assert what
-  actually happens today. Flagged for the framework port to fix intentionally.
+  intended button-click guard, the minimized-window guard, and
+  `e.preventDefault()` never run on a real shade double-click. This is
+  provable by reading the source; it is not asserted by a test. The shade
+  E2E test (`tests/e2e/windows.spec.js`) double-clicks the header's center,
+  which lands in `.title`, not `.button` — so it characterizes the shade
+  *toggle* behavior, not the dead-guard symptom, and neither guard branch is
+  exercised. Flagged for the framework port to fix intentionally.
 
 ## Deliverables
 
-1. Dev dependencies added: `@playwright/test`, `vitest`, `hugo-extended`
-   (pinned).
+1. Dev dependencies added: `@playwright/test`, `vitest`, `hugo-bin` (pinned).
 2. `playwright.config.js` (webServer = `hugo server`, 1280×900, Chromium) and
    `vitest.config.js` (jsdom).
 3. `package.json` test scripts.
