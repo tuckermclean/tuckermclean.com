@@ -85,6 +85,14 @@ Classify each into three buckets:
 
 Rules whose selector lists mix a MOVE class with a STAY class (e.g. `.window, .menu { … }` at line 259; `.window, .window-header, .window-status-bar, .menu, .start-button, .grippy { … }` in the media block) **cannot** be cut byte-identical. For each, **duplicate the declaration block**: put an Iconostat-only copy (`.window, .window-header, .window-status-bar, .grippy { … }`) in `iconostat.css`, and leave a site-only copy (`.menu, .start-button { … }`) in `style.css`, both with the identical declarations. This is behavior-identical (same declarations, same specificity, same source order relative to neighbors).
 
+**Guard 1 — ordering check (required).** Splitting a shared rule preserves specificity but changes *position*: `iconostat.css` loads *before* `style.css`, so a moved rule now sits earlier than it did. If an equal-specificity rule targeting the same selector previously won by appearing *later* in `style.css`, moving one copy earlier flips the winner. For each split (and each moved) rule, grep `style.css` for other rules touching the same selectors at equal specificity and confirm no "later-position wins" dependency existed. Example:
+```bash
+grep -nE '\.(window|window-header|window-body|window-status-bar|grippy|front)\b' assets/css/style.css
+```
+The screenshot spot-check catches a regression, but knowing the mechanism turns an hour of diagnosis into seconds.
+
+**Guard 2 — mark the duplication (required).** Every duplicated declaration block gets a paired comment in **both** files: `/* DUP:SP-B <rule-id> */` (pick a short stable `<rule-id>` per pair, e.g. `window-menu-base`). This makes SP-B's cleanup a grep rather than archaeology, and makes any interim divergence between the two copies findable.
+
 - [ ] **Step 3: Create `iconostat.css` preserving order**
 
 Move the MOVE-bucket rules into `assets/iconostat/iconostat.css` in the **same relative order they appeared** in `style.css` (cascade order matters for equal-specificity rules). Add one new rule at the top for the desktop root (layout-neutral):
