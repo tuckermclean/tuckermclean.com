@@ -7,7 +7,67 @@ Native Web Components window manager. Extractable, framework-free, no bundler.
 - `<iconostat-window>` — draggable/resizable/minimizable/maximizable/shadeable window.
 
 ## Public API
-_Documented as the library grows (see SP-A plan). Elements, methods, events, and `--iconostat-*` theming properties land in Tasks 3–8._
+
+### Elements
+
+- `<iconostat-desktop>` (`assets/iconostat/desktop.js`, class `IconostatDesktop`) — the root element. Owns the window registry, z-order/focus, rubber-band selection, and resize/orientation reflow. Windows are **not** DOM descendants of `<iconostat-desktop>` (it renders `display:contents` and windows are appended to `document.body`); coordination happens exclusively via bubbling `iconostat-*` `CustomEvent`s observed at the `document` level, not via listeners on the element itself.
+- `<iconostat-window>` (`assets/iconostat/window.js`, class `IconostatWindow`) — a draggable/resizable/minimizable/maximizable/shadeable window. Builds its own light-DOM markup on `connectedCallback`.
+
+### Window identity
+
+Windows are identified by `id="window-<name>"`, not by an HTML attribute. `name`, `windowTitle`, and `icon` are **JS properties on the element instance**, not reflected attributes — there is no `name=`/`window-title=`/`icon=` attribute in the DOM to select on.
+
+- `el.name = 'foo'` — setter also sets `el.id = 'window-foo'`.
+- `el.windowTitle = 'Foo'` — setter also sets `aria-label="Foo"` on the element and updates the `.window-title` text.
+- `el.icon = '🧪'` — setter updates the `.window-icon` text.
+
+Consumers should locate a window with `document.querySelector('#window-' + name)` (or `getDesktop().windows.find(w => w.id === 'window-' + name)`), **not** `[name=...]`.
+
+### `<iconostat-window>` methods
+
+All defined in `assets/iconostat/window.js`:
+
+| Method | Effect |
+|---|---|
+| `setContent(html)` | Sets the `.window-body` innerHTML. |
+| `bringToFront()` | Dispatches `iconostat-focus` (bubbles) for the desktop to handle. |
+| `minimize(force?)` | Toggles (or forces) minimized state; moves the element between `document.body` and `#tasks`. Dispatches `iconostat-minimize`. |
+| `maximize(force?)` | Toggles (or forces) maximized state. Dispatches `iconostat-maximize`. |
+| `shade(force?)` | Toggles (or forces) shaded (rolled-up) state. Dispatches `iconostat-shade`. |
+| `close()` | Dispatches `iconostat-close`; the element does not remove itself — the desktop unregisters it and site glue is responsible for actually removing it from the DOM (see `assets/js/window.js`'s `iconostat-close` listener). |
+
+### `<iconostat-desktop>` methods
+
+All defined in `assets/iconostat/desktop.js`:
+
+| Method | Effect |
+|---|---|
+| `createWindow({ name, title, icon, classes })` | Creates an `<iconostat-window>`, sets `name`/`windowTitle`/`icon`, appends any `classes`, appends it to `document.body`, registers it with the desktop, and returns the element. Callers set content separately via `setContent()`. |
+| `cascade()` | Un-minimizes and resets/cascades all registered windows, bringing each to front in order. |
+| `tile()` | Arranges all registered windows in a grid sized to the viewport. |
+| `minimizeAll()` | Minimizes every registered window that isn't already minimized. |
+| `getTop()` | Returns the topmost (highest z-index) registered window, or `undefined` if none. |
+| `register(el)` | Adds a window element to the registry. |
+| `unregister(el)` | Removes a window element from the registry and calls `promoteTop()`. |
+| `bringToFront(el, changeHash = true)` | Raises `el` above all other registered windows. If `changeHash` is `true`, dispatches `iconostat-focused` (for the site-side router to translate into a history transition); pass `false` to suppress that announcement (e.g. image-zoom windows, initial load). |
+| `promoteTop()` | Re-focuses the current top window (if not minimized) and dispatches `iconostat-promoted` unconditionally, announcing the resulting state. |
+| `windows` (getter) | Returns the live array of registered window elements. |
+
+### Events
+
+All `iconostat-*` events are `CustomEvent`s carrying `detail: { name }` (the window's `name`), except `iconostat-promoted`, whose detail is `{ empty, minimized }`. The library never touches browser history or does site routing — these events are the entire library→site contract for that.
+
+Windows are children of `document.body`, not of `<iconostat-desktop>`; the desktop's own listeners (and any consumer's listeners) must be attached to `document`, not to the `<iconostat-desktop>` element, or they will never fire.
+
+| Event | Dispatched by | Bubbles | `detail` | Meaning |
+|---|---|---|---|---|
+| `iconostat-focus` | `<iconostat-window>` (`bringToFront()`, and internally on mousedown/touchstart) | yes | `{ name }` | A window requests focus. The desktop's `document`-level listener calls its own `bringToFront(el)` in response. |
+| `iconostat-focused` | `<iconostat-desktop>` (`bringToFront()`, only when `changeHash` is true) | dispatched directly on `document` | `{ name }` | Focus has changed — for the site-side router to translate into a history transition. |
+| `iconostat-minimize` | `<iconostat-window>` (`minimize()`) | yes | `{ name }` | The window's minimized state changed. Desktop responds with `promoteTop()`. |
+| `iconostat-maximize` | `<iconostat-window>` (`maximize()`) | yes | `{ name }` | The window's maximized state changed. Desktop responds with `promoteTop()`. |
+| `iconostat-shade` | `<iconostat-window>` (`shade()` / `_toggleShade()`) | yes | `{ name }` | The window's shaded state changed. The desktop takes no action on this event (matches legacy behavior — shading never used to promote the top window). |
+| `iconostat-close` | `<iconostat-window>` (`close()`) | yes | `{ name }` | The window requests closing. The desktop unregisters it; actually removing the element from the DOM (and running any consumer cleanup) is a site-glue responsibility (see `assets/js/window.js`). |
+| `iconostat-promoted` | `<iconostat-desktop>` (`promoteTop()`) | dispatched directly on `document` | `{ empty, minimized }` | Announces the outcome of the last top-window promotion: `empty` is true if no windows remain registered; `minimized` is true if the (new) top window is minimized. Used by the site-side router to decide between `history.replaceState`/`pushState`. |
 
 ## Theming
 
@@ -74,3 +134,9 @@ never vary with theme, so they're only ever declared once.
 | `--iconostat-maximize-bg` | `--maximize-bg` |
 | `--iconostat-maximize-bg-gradient` | `--maximize-bg-gradient` |
 | `--iconostat-symlink-color` | `--symlink-color` |
+
+## Build / packaging
+
+Point your bundler (or Hugo's `js.Build`) at a **leaf entry module that imports from `iconostat/index.js`** — e.g. the site's `assets/js/main.js` (via `assets/js/window.js`) or the standalone fixture's `assets/iconostat-fixture/entry.js` — never at `assets/iconostat/index.js` itself.
+
+Why: Hugo's `js.Build`, when piped a `resources.Get` resource, feeds that resource's content to esbuild as a **stdin** virtual module, which gets a distinct module identity from the same file reached via a real on-disk relative import. `assets/iconostat/window.js` legitimately imports back from `./index.js` (for `getDesktop()`). If `index.js` is itself the `js.Build` entry, esbuild ends up bundling it twice — once as the stdin entry, once as the disk-resolved import reached through `window.js` — and the two copies' `customElements.define()` calls race the still-uninitialized class binding from the other copy, throwing `Failed to execute 'define' on 'CustomElementRegistry': parameter 2 is not of type 'Function'` (a temporal-dead-zone crash). This is specific to Hugo's stdin-piping of `js.Build` entries, not a library defect — bundling `index.js` directly from disk with plain `esbuild --bundle` works fine, as does loading it natively via `<script type="module" src=".../index.js">` (ES module loading is single-instance per URL). See `assets/iconostat-fixture/entry.js` and `.superpowers/sdd/2026-08-04-iconostat-core/task-6-report.md` for the verified repro/fix.

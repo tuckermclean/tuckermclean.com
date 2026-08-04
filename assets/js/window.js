@@ -238,12 +238,6 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
     });
 }
 
-function getAddressBarHeight() {
-    const totalScreenHeight = window.screen.height; // Total screen height
-    const visibleViewportHeight = window.innerHeight; // Visible viewport height
-    return totalScreenHeight - visibleViewportHeight; // Address bar height
-}
-
 function goTo(name, niceName, icon = '⚙️') {
     // Get top window
     const topWindow = getDesktop().getTop();
