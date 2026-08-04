@@ -43,6 +43,28 @@ document.addEventListener('iconostat-close', (e) => {
     windowElement.remove();
 });
 
+// Site-side SPA router. The library (assets/iconostat/desktop.js) performs
+// no browser history calls; it only announces focus/promotion outcomes via
+// document-level CustomEvents, which this router translates into the exact
+// history.pushState/replaceState transitions the old library code used to
+// make directly. See task-5-report.md for the old->new mapping.
+document.addEventListener('iconostat-focused', e => {
+    const name = e.detail.name;
+    // If new state does not match most recent history state, push new state
+    if (name !== window.location.hash.substring(2)) {
+        history.pushState(null, null, '#/' + name);
+    } else if (window.location.hash === '') {
+        history.replaceState(null, null, '/' + name);
+    }
+});
+document.addEventListener('iconostat-promoted', e => {
+    if (e.detail.empty) {
+        history.replaceState(null, null, '/');
+    } else if (e.detail.minimized) {
+        history.pushState(null, null, '');
+    }
+});
+
 // Toggle Light/Dark Mode
 function toggleMode() {
     document.body.classList.toggle('toggled');

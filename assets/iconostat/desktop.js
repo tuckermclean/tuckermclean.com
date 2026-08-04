@@ -59,12 +59,18 @@ export class IconostatDesktop extends HTMLElement {
         if (typeof(topWindow) !== 'undefined') {
             if (!topWindow.classList.contains('minimized')) {
                 this.bringToFront(topWindow);
-            } else {
-                history.pushState(null, null, '');
             }
-        } else {
-            history.replaceState(null, null, '/');
         }
+        // Announce the outcome for the site-side router to translate into
+        // history transitions. Emitted unconditionally, after the
+        // not-minimized branch (which itself emits 'iconostat-focused' via
+        // bringToFront) so the router sees both the focus and the promotion
+        // outcome without double-handling the not-minimized case here.
+        const top = this.getTop();
+        document.dispatchEvent(new CustomEvent('iconostat-promoted', { detail: {
+            empty: top === undefined,
+            minimized: top ? top.classList.contains('minimized') : false,
+        } }));
     }
 
     bringToFront(windowElement, changeHash = true) {
@@ -82,12 +88,12 @@ export class IconostatDesktop extends HTMLElement {
         // Add 'front' class to the clicked window
         windowElement.classList.add('front');
         if (changeHash) {
-            // If new state does not match most recent history state, push new state
-            if (windowElement.name !== window.location.hash.substring(2)) {
-                history.pushState(null, null, '#/' + windowElement.name);
-            } else if (window.location.hash === '') {
-                history.replaceState(null, null, '/' + windowElement.name);
-            }
+            // Announce focus for the site-side router to translate into a
+            // history transition. The library itself performs no browser
+            // history calls; changeHash=false (image-zoom windows, initial
+            // load) suppresses this announcement, preserving the old
+            // suppression behavior.
+            document.dispatchEvent(new CustomEvent('iconostat-focused', { detail: { name: windowElement.name } }));
         }
     }
 
