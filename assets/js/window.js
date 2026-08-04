@@ -1,12 +1,13 @@
 import { envVars } from './env.js';
+import { getDesktop } from '../iconostat/index.js';
 
 // Dynamically manage multiple windows using a template
-let zIndexCounter = 100; // Starting point for z-index values
-let windows = Array(); // Store window elements
+// (window registry, z-order, focus, rubber-band selection, and resize
+// reflow now live on the <iconostat-desktop> element; see assets/iconostat/desktop.js)
 
 // Create and manage windows programmatically
 function createWindow(name, title, content, icon = '⚙️', bringToFront_ = true, classes = []) {
-    const id = windows.length;
+    const desktop = getDesktop();
     const template = document.getElementById('window-template');
     const windowClone = template.content.cloneNode(true);
     
@@ -33,12 +34,12 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     windowElement.addEventListener('mousedown', (e) => {
         // If clicking on a link, don't bring window to front
         if (e.target.tagName === 'A') return;
-        bringToFront(windowElement)
+        desktop.bringToFront(windowElement)
     });
     windowElement.addEventListener('touchstart', (e) => {
         // If clicking on a link, don't bring window to front
         if (e.target.tagName === 'A') return;
-        bringToFront(windowElement)
+        desktop.bringToFront(windowElement)
     });
     windowElement.addEventListener('click', (e) => restoreWindow(e, windowElement));
     windowElement.addEventListener('touchstart', (e) => restoreWindow(e, windowElement), { passive: false });
@@ -51,46 +52,22 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
     grippy.addEventListener('mousedown', (e) => startResize(e, windowElement));
     grippy.addEventListener('touchstart', (e) => startResize(e, windowElement), { passive: false });
     
-    // Append to the DOM
+    // Append to the DOM. Windows stay direct children of <body> (unchanged
+    // from the pre-refactor DOM shape); the desktop only tracks them.
     document.body.appendChild(windowElement);
-    windows[id] = windowElement;
+    desktop.register(windowElement);
     // Reset the window
     resetWindow(windowElement, true, bringToFront_);
     return windowElement;
 }
 
 // Export functions and variables
-export { createWindow, zIndexCounter, windows, openPage, goTo, toggleMode, cascadeWindows, tileWindows, minimizeWindows };
-
-// Function to determine the topmost window
-function getTopWindow() {
-    // Sort windows by z-index (descending) and return the first one
-    try {
-        return windows
-        .map(w => ({ element: w, zIndex: parseInt(w.style.zIndex || 0, 10) }))
-        .sort((a, b) => b.zIndex - a.zIndex)[0].element;
-    } catch (e) {
-        return undefined;
-    }
-}
-
-function promoteTopWindow() {
-    const topWindow = getTopWindow();
-    if (typeof(topWindow) !== 'undefined') {
-        if (!topWindow.classList.contains('minimized')) {
-            bringToFront(topWindow);
-        } else {
-            history.pushState(null, null, '');
-        }
-    } else {
-        history.replaceState(null, null, '/');
-    }
-}
+export { createWindow, openPage, goTo, toggleMode, cascadeWindows, tileWindows, minimizeWindows, bringToFront, toggleMinimize, resetWindow };
 
 // Bake the window
 function bakeWindow(windowElement) {
     // Get window's ordinal position
-    const index = windows.indexOf(windowElement);
+    const index = getDesktop().windows.indexOf(windowElement);
     let offset = (windowElement.querySelector('.window-header').getBoundingClientRect().height * index ) + 1;
     // If on mobile, only offset by half the address bar height, and shrink the width by that amount
     if (window.innerWidth <= 768) {
@@ -107,83 +84,12 @@ function bakeWindow(windowElement) {
     saveWindowState(windowElement);
 }
 
-function minimizeWindows() {
-    windows.forEach(windowElement => {
-        if (windowElement.classList.contains('minimized')) return;
-        toggleMinimize(windowElement);
-    });
-}
-
-function cascadeWindows() {
-    windows.forEach((windowElement, i) => {
-        // If window is minimized, un-minimize it
-        if (windowElement.classList.contains('minimized')) {
-            toggleMinimize(windowElement, false);
-        }
-        resetWindow(windowElement);
-        bringToFront(windowElement);
-    });
-}
-
-function tileWindows() {
-    const windowCount = windows.length;
-    if (windowCount === 0) return;
-    
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Calculate grid dimensions
-    const columns = Math.ceil(Math.sqrt(windowCount));
-    const rows = Math.ceil(windowCount / columns);
-    
-    // Calculate size of each window
-    const windowWidth = Math.floor(viewportWidth / columns);
-    const windowHeight = Math.floor(viewportHeight / rows);
-    
-    // Position each window in the grid
-    windows.forEach((windowElement, index) => {
-        // If window is minimized, un-minimize it
-        if (windowElement.classList.contains('minimized')) {
-            toggleMinimize(windowElement, false);
-        }
-        windowElement.classList.remove('maximized', 'shaded');
-        
-        const row = Math.floor(index / columns);
-        const column = index % columns;
-        
-        windowElement.style.position = 'absolute';
-        windowElement.style.width = `${windowWidth}px`;
-        windowElement.style.height = `${windowHeight}px`;
-        windowElement.style.top = `${windowHeight / 2 + row * windowHeight}px`;
-        windowElement.style.left = `${windowWidth / 2 + column * windowWidth}px`;
-        bringToFront(windowElement);
-    });
-}
-
-function bringToFront(windowElement, changeHash = true) {
-    if (typeof(windowElement) === 'undefined') return;
-    // If window is already visible and up front, stop function
-    if (windowElement.classList.contains('front')) return;
-    // If window is minimized, un-minimize it
-    if (windowElement.classList.contains('minimized')) {
-        toggleMinimize(windowElement, false);
-    }
-    zIndexCounter++; // Increment global counter
-    windowElement.style.zIndex = zIndexCounter; // Assign new z-index to the element
-    // Remove 'front' class from all windows
-    windows.forEach(w => w.classList.remove('front'));
-    // Add 'front' class to the clicked window
-    windowElement.classList.add('front');
-    if (changeHash) {
-        // If new state does not match most recent history state, push new state
-        if (windowElement.name !== window.location.hash.substring(2)) {
-            history.pushState(null, null, '#/' + windowElement.name);
-        } else if (window.location.hash === '') {
-            history.replaceState(null, null, '/' + windowElement.name);
-        }
-    }
-}
+// Thin delegators onto <iconostat-desktop>, which now owns the window
+// registry, z-order, focus, rubber-band selection, and resize reflow.
+function minimizeWindows() { getDesktop().minimizeAll(); }
+function cascadeWindows() { getDesktop().cascade(); }
+function tileWindows() { getDesktop().tile(); }
+function bringToFront(windowElement, changeHash = true) { getDesktop().bringToFront(windowElement, changeHash); }
 
 // Dragging Functionality
 function startDrag(e, windowElement) {
@@ -254,8 +160,7 @@ function closeWindow(windowElement) {
         delete window.windowCleanup[windowElement.name];
     }
     windowElement.remove();
-    windows = windows.filter(w => w !== windowElement);
-    promoteTopWindow();
+    getDesktop().unregister(windowElement);
 }
 
 function toggleShade(e, windowElement, force = undefined) {
@@ -341,7 +246,7 @@ function toggleMinimize(windowElement, force = undefined) {
         document.body.appendChild(windowElement);
         bringToFront(windowElement);
     }
-    promoteTopWindow();
+    getDesktop().promoteTop();
 }
 
 function toggleMaximize(windowElement, force = undefined) {
@@ -353,7 +258,7 @@ function toggleMaximize(windowElement, force = undefined) {
         clearWindowState(windowElement);
         windowElement.classList.remove('maximized');
     }
-    promoteTopWindow();
+    getDesktop().promoteTop();
 }
 
 function resetWindow(windowElement, bake = true, bringToFront_ = true) {
@@ -382,7 +287,7 @@ function resetWindow(windowElement, bake = true, bringToFront_ = true) {
     if (bringToFront_) {
         bringToFront(windowElement);
     }
-    promoteTopWindow();
+    getDesktop().promoteTop();
 }
 
 function restoreWindow(e, windowElement) {
@@ -503,7 +408,7 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
                     img.addEventListener('click', () => {
                         const slug = img.src.split('/').pop().replace(/\.[^.]+$/, '').replace(/[^a-z0-9]/gi, '-');
                         const winName = 'img-' + slug;
-                        const existing = windows.find(w => w.id === `window-${winName}`);
+                        const existing = getDesktop().windows.find(w => w.id === `window-${winName}`);
                         if (existing) { bringToFront(existing); return; }
                         const imgAlt = (img.alt || slug).replace(/"/g, '&quot;');
                         const win = createWindow(winName, img.alt || slug, `<img src="${img.src}" alt="${imgAlt}" style="max-width:100%;height:auto;display:block;">`, '🖼️', false, ['image']);
@@ -575,7 +480,7 @@ function getAddressBarHeight() {
 
 function goTo(name, niceName, icon = '⚙️') {
     // Get top window
-    const topWindow = getTopWindow();
+    const topWindow = getDesktop().getTop();
     // If top window is not undefined, navigate to the page
     if (typeof(topWindow) !== 'undefined') {
         navigateToPage(topWindow.id, name, niceName, icon);
@@ -586,8 +491,8 @@ function goTo(name, niceName, icon = '⚙️') {
 
 function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
     if (targetWindowId === `window-${name}`) return;
-    const windowElement = windows.find(w => w.id === targetWindowId);
-    const oldWindow = windows.find(w => w.id === `window-${name}`);
+    const windowElement = getDesktop().windows.find(w => w.id === targetWindowId);
+    const oldWindow = getDesktop().windows.find(w => w.id === `window-${name}`);
     if (typeof(oldWindow) !== 'undefined') {
         closeWindow(oldWindow);
     }
@@ -614,7 +519,7 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
         event.preventDefault();
     }
     // If window with name already open, bring to front and then stop function
-    let windowElement = windows.find(w => w.id === `window-${name}`);
+    let windowElement = getDesktop().windows.find(w => w.id === `window-${name}`);
     let windowExists = typeof(windowElement) !== 'undefined';
     if (windowExists) {
         bringToFront(windowElement, changeHash);
@@ -644,7 +549,7 @@ function toggleMenu(x, y, offset = false) {
     } else {
         contextMenu.style.left = `${x}px`;
     }
-    contextMenu.style.zIndex = zIndexCounter + 1;
+    contextMenu.style.zIndex = getDesktop()._z + 1;
 }
 
 function getCurrentPage() {
@@ -661,7 +566,7 @@ function openPageFromUrl() {
     const page = getCurrentPage();
     if (!page) {
         goTo('welcome', 'Welcome!', '👋');
-        bringToFront(windows[0], false);
+        bringToFront(getDesktop().windows[0], false);
         history.replaceState(null, null, '/');
     } else if (page === 'welcome') {
         goTo('welcome', 'Welcome!', '👋');
@@ -720,65 +625,14 @@ function openPageFromUrl() {
         });
     });
     
-    // Cascade windows after viewport resize or orientation change
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(cascadeWindows, 300);
-    });
-    window.addEventListener('orientationchange', () => {
-        setTimeout(cascadeWindows, 100);
-    });
-
     // Handle history back event
     window.addEventListener('popstate', e => {
         openPageFromUrl();
     });
-    
-    if (typeof(getTopWindow()) === 'undefined') {
+
+    if (typeof(getDesktop().getTop()) === 'undefined') {
         openPageFromUrl();
     }
-
-    // Rubber-band selection box
-    const selBox = document.createElement('div');
-    selBox.id = 'desktop-select';
-    document.body.appendChild(selBox);
-    let selActive = false, selX, selY;
-
-    document.addEventListener('mousedown', e => {
-        if (e.button !== 0) return;
-        if (e.target.closest('.window, .tasks, .menu, .start-button')) return;
-        selActive = true;
-        selX = e.clientX;
-        selY = e.clientY;
-        selBox.style.cssText = `left:${selX}px;top:${selY}px;width:0;height:0;display:block;`;
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (!selActive) return;
-        const x = Math.min(e.clientX, selX), y = Math.min(e.clientY, selY);
-        const w = Math.abs(e.clientX - selX), h = Math.abs(e.clientY - selY);
-        selBox.style.left = x + 'px';
-        selBox.style.top = y + 'px';
-        selBox.style.width = w + 'px';
-        selBox.style.height = h + 'px';
-        const r = selBox.getBoundingClientRect();
-        windows.forEach(win => {
-            const wr = win.getBoundingClientRect();
-            win.classList.toggle('desktop-selected',
-                r.right > wr.left && r.left < wr.right &&
-                r.bottom > wr.top && r.top < wr.bottom);
-        });
-    });
-
-    function endSelect() {
-        if (!selActive) return;
-        selActive = false;
-        selBox.style.display = 'none';
-        windows.forEach(win => win.classList.remove('desktop-selected'));
-    }
-    document.addEventListener('mouseup', endSelect);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') endSelect(); });
-    window.addEventListener('blur', endSelect);
+    // Resize/orientation reflow and rubber-band selection now live on
+    // <iconostat-desktop> (see assets/iconostat/desktop.js).
 })();
