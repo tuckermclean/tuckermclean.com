@@ -46,10 +46,13 @@
             color: black !important;
         }
     </style>
+    {{ $ico := resources.Get "iconostat/iconostat.css" | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $ico.RelPermalink }}">
     {{ $css := resources.Get "css/style.css" | resources.Minify | resources.Fingerprint }}
     <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 </head>
 <body>
+    <iconostat-desktop id="desktop"></iconostat-desktop>
     <div class="tasks" id="tasks">
         <!-- Menu button (start button)-->
         <div class="start-button" id="start-button">
@@ -71,26 +74,6 @@
         <div class="menu-item" onclick="tileWindows();">Tile Windows</div>
         <div class="menu-item" onclick="minimizeWindows();">Minimize All</div>
     </div>
-
-    <!-- Template for window -->
-    <template id="window-template">
-        <div class="window">
-            <div class="window-header">
-                <div class="buttons">
-                    <div class="button close" aria-label="Close"></div>
-                    <div class="button minimize" aria-label="Minimize"></div>
-                    <div class="button maximize" aria-label="Maximize"></div>
-                </div>
-                <div class="title">
-                    <span class="window-icon">⚙️</span>
-                    <span class="window-title">Window</span>
-                </div>
-            </div>
-            <div class="window-body"></div>
-            <div class="window-status-bar">Status: Ready to work!</div>
-            <div class="grippy"></div>
-        </div>
-    </template>
 
     {{ $chatJS := resources.Get "js/chat.js" | js.Build (dict "targetPath" "js/chat.js") }}
     <link rel="modulepreload" href="{{ $chatJS.RelPermalink }}">

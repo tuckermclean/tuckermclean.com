@@ -1,0 +1,9 @@
+{{ if hugo.IsServer }}<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+{{ $ico := resources.Get "iconostat/iconostat.css" | resources.Minify }}
+<link rel="stylesheet" href="{{ $ico.RelPermalink }}">
+{{ $js := resources.Get "iconostat-fixture/entry.js" | js.Build (dict "targetPath" "js/iconostat-fixture.js" "format" "esm") }}
+</head><body>
+<iconostat-desktop id="desktop"></iconostat-desktop>
+<script type="module" src="{{ $js.RelPermalink }}"></script>
+</body></html>{{ end }}
