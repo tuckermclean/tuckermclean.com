@@ -9,6 +9,13 @@ writings/.hugo_build.lock
 writings/hugo_stats.json
 writings/resources/
 
+# Test artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+coverage/
+
 # OS junk
 .DS_Store
 Thumbs.db
