@@ -75,26 +75,6 @@
         <div class="menu-item" onclick="minimizeWindows();">Minimize All</div>
     </div>
 
-    <!-- Template for window -->
-    <template id="window-template">
-        <div class="window">
-            <div class="window-header">
-                <div class="buttons">
-                    <div class="button close" aria-label="Close"></div>
-                    <div class="button minimize" aria-label="Minimize"></div>
-                    <div class="button maximize" aria-label="Maximize"></div>
-                </div>
-                <div class="title">
-                    <span class="window-icon">⚙️</span>
-                    <span class="window-title">Window</span>
-                </div>
-            </div>
-            <div class="window-body"></div>
-            <div class="window-status-bar">Status: Ready to work!</div>
-            <div class="grippy"></div>
-        </div>
-    </template>
-
     {{ $chatJS := resources.Get "js/chat.js" | js.Build (dict "targetPath" "js/chat.js") }}
     <link rel="modulepreload" href="{{ $chatJS.RelPermalink }}">
     {{ $jsOpts := dict "minify" true "targetPath" "js/bundle.js" }}

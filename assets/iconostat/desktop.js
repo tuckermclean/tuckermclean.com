@@ -1,19 +1,43 @@
 import { pickTopIndex } from './geometry.js';
-import { toggleMinimize, resetWindow } from '../js/window.js';
 
 // Owns the window registry, z-order, focus/.front handling, rubber-band
-// selection, and resize->cascade reflow. Windows are still created and
-// appended to the DOM by window.js's createWindow(); this element only
-// coordinates them once they exist.
+// selection, and resize->cascade reflow. Windows are <iconostat-window>
+// elements, created by this.createWindow() and appended to document.body
+// (not to this element — <iconostat-desktop> is `display:contents`, and
+// existing e2e assertions use the `body > #window-X` child combinator).
+// Windows are not DOM descendants of <iconostat-desktop>, so coordination
+// happens via `iconostat-*` CustomEvents observed at the document level,
+// not via listeners on `this`.
 export class IconostatDesktop extends HTMLElement {
     connectedCallback() {
         this._windows = this._windows || [];
         this._z = this._z || 100; // Starting point for z-index values
         this._installSelection();
         this._installReflow();
+
+        document.addEventListener('iconostat-focus',    e => this.bringToFront(e.target));
+        document.addEventListener('iconostat-close',    e => this.unregister(e.target));
+        document.addEventListener('iconostat-minimize', () => this.promoteTop());
+        document.addEventListener('iconostat-maximize', () => this.promoteTop());
+        // iconostat-shade: no desktop action (old toggleShade never called promoteTop)
     }
 
     get windows() { return this._windows; }
+
+    // Build an <iconostat-window>, append it to document.body, and register
+    // it with the desktop. Returns the element; callers (site glue) still
+    // set its content.
+    createWindow({ name, title, icon = '⚙️', classes = [] }) {
+        const el = document.createElement('iconostat-window');
+        el.name = name;
+        el.windowTitle = title;
+        el.icon = icon;
+        classes.forEach(c => el.classList.add(c));
+        document.body.appendChild(el);
+        this.register(el);
+        el.reset(true, false); // baseline geometry (was resetWindow)
+        return el;
+    }
 
     register(el) {
         this._windows.push(el);
@@ -49,7 +73,7 @@ export class IconostatDesktop extends HTMLElement {
         if (windowElement.classList.contains('front')) return;
         // If window is minimized, un-minimize it
         if (windowElement.classList.contains('minimized')) {
-            toggleMinimize(windowElement, false);
+            windowElement.minimize(false);
         }
         this._z++; // Increment global counter
         windowElement.style.zIndex = this._z; // Assign new z-index to the element
@@ -71,9 +95,9 @@ export class IconostatDesktop extends HTMLElement {
         this._windows.forEach((windowElement, i) => {
             // If window is minimized, un-minimize it
             if (windowElement.classList.contains('minimized')) {
-                toggleMinimize(windowElement, false);
+                windowElement.minimize(false);
             }
-            resetWindow(windowElement);
+            windowElement.reset();
             this.bringToFront(windowElement);
         });
     }
@@ -98,7 +122,7 @@ export class IconostatDesktop extends HTMLElement {
         this._windows.forEach((windowElement, index) => {
             // If window is minimized, un-minimize it
             if (windowElement.classList.contains('minimized')) {
-                toggleMinimize(windowElement, false);
+                windowElement.minimize(false);
             }
             windowElement.classList.remove('maximized', 'shaded');
 
@@ -117,7 +141,7 @@ export class IconostatDesktop extends HTMLElement {
     minimizeAll() {
         this._windows.forEach(windowElement => {
             if (windowElement.classList.contains('minimized')) return;
-            toggleMinimize(windowElement);
+            windowElement.minimize();
         });
     }
 
