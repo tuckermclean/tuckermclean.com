@@ -1,0 +1,354 @@
+/* ==================================
+Iconostat
+Native Web Components window manager.
+Relocated from assets/css/style.css (pure move, Task 1 of SP-B iconostat-core).
+================================== */
+iconostat-desktop { display: contents; }
+
+/* ==================================
+Window
+================================== */
+/* DUP:SP-B window-menu-base */
+.window {
+    background-color: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--tooltip-bg-light);
+    box-sizing: border-box;
+    color: var(--text);
+}
+
+.window {
+    display: flex;
+    flex-direction: column;
+    height: 80%;
+    left: 50%;
+    overflow: hidden;
+    position: absolute;
+    top: calc(50%);
+    transform: translate(-50%, -50%);
+    width: 90%;
+}
+
+/* Media query for responsive adjustments */
+@media (max-width: 768px) {
+    .window {
+        top: 50%;
+        width: calc(100vw - 1.5rem);
+        height: calc(100vh - 10rem);
+    }
+}
+
+.window-header {
+    align-items: center;
+    background: var(--header-bg-gradient);
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    cursor: move;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+}
+
+.window-header .buttons, .window-header .title {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: row;
+}
+
+.window-header .title {
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.window-header .window-title {
+    text-align: center;
+    color: var(--header-text);
+    font-size: 1rem;
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.window-header .window-icon {
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg-dark);
+}
+
+body.toggled .window-header .window-icon {
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg-light);
+}
+
+.window-header .window-title {
+    text-shadow: 0 0.075rem 0.075rem var(--header-bg);
+}
+
+.window-body {
+    background-color: var(--bg);
+    flex-grow: 1;
+    height: calc(100% - 2.5rem); /* Adjust for header height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
+}
+
+.window.image .window-body {
+    overflow: auto;
+    padding: 0;
+    background-color: #111;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.window.image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    cursor: zoom-in;
+}
+
+.window-status-bar {
+    background-color: var(--header-bg);
+    border-top: 1px solid var(--border);
+    color: var(--header-text);
+    flex-shrink: 0;
+    line-height: 1.5rem;
+    padding-left: 0.4rem;
+    text-align: left;
+}
+
+/* ==================================
+Window Buttons
+================================== */
+.window-header .button {
+    border-radius: 50%;
+    box-shadow: 0 1px 2px var(--header-bg-dark), 0 -1px 1px var(--bg-light);
+    cursor: pointer;
+    height: 1rem;
+    width: 1rem;
+}
+
+body.toggled .window-header .button {
+    box-shadow: 0 1px 2px var(--header-bg-light), 0 -1px 1px var(--bg-dark);
+}
+
+.close {
+    background: var(--close-bg-gradient);
+}
+
+.close:active {
+    background: var(--close-bg);
+}
+
+.minimize {
+    background: var(--minimize-bg-gradient);
+}
+
+.minimize:active {
+    background: var(--minimize-bg);
+}
+
+.maximize {
+    background: var(--maximize-bg-gradient);
+}
+
+.maximize:active {
+    background: var(--maximize-bg);
+}
+
+/* ==================================
+Resize Handle (Grippy)
+================================== */
+.grippy {
+    background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 0.25rem,
+    var(--border) 0.25rem,
+    var(--border) 0.35rem
+    );
+    border-left: 1px solid var(--border);
+    bottom: 0;
+    content: '';
+    cursor: nwse-resize;
+    height: 1.5rem;
+    position: absolute;
+    right: -1px;
+    width: 1.5rem;
+    z-index: 10;
+}
+
+.window.minimized .grippy, .window.maximized .grippy, .window.closed .grippy, .window.shaded .grippy {
+    display: none;
+}
+
+/* ==================================
+Animations and Effects
+================================== */
+.front .blink {
+    border: none;
+    animation: blink 1s steps(1, start) infinite;
+}
+
+/* ==================================
+Utility Classes
+================================== */
+.window.shaded {
+    height: 2.5rem !important;
+    /* left: 1.25rem !important;
+    top: calc(100% - 4rem) !important;
+    transform: none !important;
+    width: calc(100% - 2.5rem) !important; */
+}
+
+.window.maximized {
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    position: fixed !important;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+}
+
+.window.minimized {
+    background: none;
+    border: 0;
+    border-radius: 5px;
+    position: static !important;
+    display: block;
+    top: calc(100vh - 4.5rem) !important; /* Distance from the top of the viewport */
+    bottom: 1rem !important; /* Distance from the bottom of the viewport */
+    left: 1rem !important; /* Distance from the left of the viewport */
+    width: 5rem; /* Adjust width for compact display */
+    height: 5rem; /* Fit content without stretching */
+    box-shadow: none;
+    color: var(--header-text);
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    transform: none !important; /* Ensure no transforms interfere */
+    /* line-height: 5rem; /* Center content vertically */
+    text-align: center; /* Center content horizontally */
+    padding: 0; /* Remove padding */
+    margin: 0.5rem; /* Add margin between windows */
+}
+
+.window.minimized:hover {
+    overflow: visible;
+}
+
+.window.minimized .window-header {
+    padding: 0;
+    background: none;
+    cursor: inherit;
+    border: 0;
+    flex-direction: column;
+    height: 5rem;
+}
+
+.window.minimized .title {
+    flex-direction: column;
+}
+
+.window.minimized .window-title {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
+}
+
+.window.minimized .window-icon {
+    font-size: 3.5rem;
+    text-align: center;
+    text-shadow: 0 0.325rem 0.325rem var(--header-bg-dark) !important;
+    line-height: 4.85rem;
+}
+
+body.toggled .window.minimized .window-icon {
+    text-shadow: 0 0.325rem 0.325rem rgba(0, 0, 0, 0.25) !important;
+}
+
+.window.minimized:hover {
+    background-color: var(--header-bg);
+    background: var(--header-bg-gradient);
+    border: 1px solid var(--border);
+    margin: calc(0.5rem - 1px) 0.5rem;
+}
+
+.window.minimized:hover .window-title {
+    background-color: var(--tooltip-bg);
+    border-radius: 0.25rem;
+    margin-top: -5rem;
+    color: var(--tooltip-text);
+    width: fit-content;
+    block-size: fit-content;
+    padding: 0.25rem 0.5rem;
+    margin: -2.75rem auto;
+    text-shadow: none;
+}
+
+body.toggled .window.minimized:hover .window-title {
+    text-shadow: none;
+}
+
+/* Hide unnecessary sections when minimized */
+.window.minimized .window-body,
+.window.minimized .window-status-bar,
+.window.minimized .buttons {
+    display: none;
+}
+
+@media print {
+    /* DUP:SP-B print-natural-flow */
+    /* Ensure natural flow order */
+    .window-body, .front {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: relative !important;
+    }
+
+    .window-body {
+        background-color: #ffffff !important; /* Ensure white background */
+    }
+
+    /* DUP:SP-B print-hide-window-chrome */
+    .window, .window-header, .window-status-bar, .grippy {
+        display: none !important; /* Hide all windows */
+    }
+
+    /* Override inline styles */
+    .front {
+        all: unset !important; /* Resets most styles */
+    }
+
+    /* Show and style the element with class 'front' */
+    .front {
+        display: block !important;
+        width: 100%; /* Let it adapt to page width */
+        height: auto; /* Allow natural height for content */
+        margin: 0;
+        padding: 0;
+        position: static; /* Ensure it flows naturally across pages */
+    }
+}
+
+#desktop-select {
+    display: none;
+    position: fixed;
+    pointer-events: none;
+    border: 1px solid var(--symlink-color);
+    background: color-mix(in srgb, var(--symlink-color) 20%, transparent);
+    z-index: 9999;
+}
+
+.window.desktop-selected {
+    outline: 1px solid var(--symlink-color);
+    outline-offset: 1px;
+}

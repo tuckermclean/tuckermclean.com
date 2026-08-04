@@ -46,6 +46,8 @@
             color: black !important;
         }
     </style>
+    {{ $ico := resources.Get "iconostat/iconostat.css" | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $ico.RelPermalink }}">
     {{ $css := resources.Get "css/style.css" | resources.Minify | resources.Fingerprint }}
     <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 </head>
