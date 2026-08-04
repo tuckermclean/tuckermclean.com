@@ -109,6 +109,45 @@ Variables
     --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
     --tooltip-bg: var(--tooltip-bg-dark);
     --tooltip-text: var(--tooltip-text-dark);
+
+    /* ==================================
+    Iconostat theming contract (--iconostat-*)
+    NOTE: custom-property var() substitution is resolved once, at the
+    element where the property is DECLARED, then the resulting value is
+    what inherits down -- it does not re-resolve per descendant. Since
+    --header-bg et al. are re-declared on body.toggled (a different
+    element than :root), these aliases must also be re-declared in
+    .toggled (both here and in the light-scheme media query below) or
+    they go stale and stop tracking the theme toggle. (The naive
+    "define once in :root" approach was tried and verified broken via
+    the theme screenshot gate -- see task-7-report.md.)
+    ================================== */
+    --iconostat-titlebar-bg: var(--header-bg);
+    --iconostat-titlebar-bg-gradient: var(--header-bg-gradient);
+    --iconostat-titlebar-text: var(--header-text);
+    --iconostat-border: var(--border);
+    --iconostat-window-bg: var(--bg);
+    --iconostat-window-text: var(--text);
+    --iconostat-tooltip-bg: var(--tooltip-bg);
+    --iconostat-tooltip-text: var(--tooltip-text);
+
+    /* Raw dark/light variant pass-throughs, for component-owned
+    body.toggled overrides inside iconostat.css that intentionally pick a
+    fixed variant rather than the active alias. */
+    --iconostat-header-bg-dark: var(--header-bg-dark);
+    --iconostat-header-bg-light: var(--header-bg-light);
+    --iconostat-bg-dark: var(--bg-dark);
+    --iconostat-bg-light: var(--bg-light);
+    --iconostat-tooltip-bg-light: var(--tooltip-bg-light);
+
+    /* Theme-independent constants (traffic-light buttons, symlink color) */
+    --iconostat-close-bg: var(--close-bg);
+    --iconostat-close-bg-gradient: var(--close-bg-gradient);
+    --iconostat-minimize-bg: var(--minimize-bg);
+    --iconostat-minimize-bg-gradient: var(--minimize-bg-gradient);
+    --iconostat-maximize-bg: var(--maximize-bg);
+    --iconostat-maximize-bg-gradient: var(--maximize-bg-gradient);
+    --iconostat-symlink-color: var(--symlink-color);
 }
 
 .toggled {
@@ -125,6 +164,16 @@ Variables
     --button-bg-gradient-active: var(--button-bg-gradient-active-light);
     --tooltip-bg: var(--tooltip-bg-light);
     --tooltip-text: var(--tooltip-text-light);
+
+    /* --iconostat-* re-declared here: see note in :root above. */
+    --iconostat-titlebar-bg: var(--header-bg);
+    --iconostat-titlebar-bg-gradient: var(--header-bg-gradient);
+    --iconostat-titlebar-text: var(--header-text);
+    --iconostat-border: var(--border);
+    --iconostat-window-bg: var(--bg);
+    --iconostat-window-text: var(--text);
+    --iconostat-tooltip-bg: var(--tooltip-bg);
+    --iconostat-tooltip-text: var(--tooltip-text);
 }
 
 @media (prefers-color-scheme: light) {
@@ -158,6 +207,16 @@ Variables
         --button-bg-gradient-active: var(--button-bg-gradient-active-dark);
         --tooltip-bg: var(--tooltip-bg-dark);
         --tooltip-text: var(--tooltip-text-dark);
+
+        /* --iconostat-* re-declared here: see note in :root above. */
+        --iconostat-titlebar-bg: var(--header-bg);
+        --iconostat-titlebar-bg-gradient: var(--header-bg-gradient);
+        --iconostat-titlebar-text: var(--header-text);
+        --iconostat-border: var(--border);
+        --iconostat-window-bg: var(--bg);
+        --iconostat-window-text: var(--text);
+        --iconostat-tooltip-bg: var(--tooltip-bg);
+        --iconostat-tooltip-text: var(--tooltip-text);
     }
 }
 

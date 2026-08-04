@@ -10,12 +10,12 @@ Window
 ================================== */
 /* DUP:SP-B window-menu-base */
 .window {
-    background-color: var(--header-bg);
-    border: 1px solid var(--border);
+    background-color: var(--iconostat-titlebar-bg, var(--header-bg));
+    border: 1px solid var(--iconostat-border, var(--border));
     border-radius: 8px;
-    box-shadow: 0 4px 15px var(--tooltip-bg-light);
+    box-shadow: 0 4px 15px var(--iconostat-tooltip-bg-light, var(--tooltip-bg-light));
     box-sizing: border-box;
-    color: var(--text);
+    color: var(--iconostat-window-text, var(--text));
 }
 
 .window {
@@ -41,8 +41,8 @@ Window
 
 .window-header {
     align-items: center;
-    background: var(--header-bg-gradient);
-    border-bottom: 1px solid var(--border);
+    background: var(--iconostat-titlebar-bg-gradient, var(--header-bg-gradient));
+    border-bottom: 1px solid var(--iconostat-border, var(--border));
     border-radius: 6px 6px 0 0;
     cursor: move;
     display: flex;
@@ -65,7 +65,7 @@ Window
 
 .window-header .window-title {
     text-align: center;
-    color: var(--header-text);
+    color: var(--iconostat-titlebar-text, var(--header-text));
     font-size: 1rem;
     font-weight: bold;
     overflow: hidden;
@@ -74,19 +74,19 @@ Window
 }
 
 .window-header .window-icon {
-    text-shadow: 0 0.075rem 0.075rem var(--header-bg-dark);
+    text-shadow: 0 0.075rem 0.075rem var(--iconostat-header-bg-dark, var(--header-bg-dark));
 }
 
 body.toggled .window-header .window-icon {
-    text-shadow: 0 0.075rem 0.075rem var(--header-bg-light);
+    text-shadow: 0 0.075rem 0.075rem var(--iconostat-header-bg-light, var(--header-bg-light));
 }
 
 .window-header .window-title {
-    text-shadow: 0 0.075rem 0.075rem var(--header-bg);
+    text-shadow: 0 0.075rem 0.075rem var(--iconostat-titlebar-bg, var(--header-bg));
 }
 
 .window-body {
-    background-color: var(--bg);
+    background-color: var(--iconostat-window-bg, var(--bg));
     flex-grow: 1;
     height: calc(100% - 2.5rem); /* Adjust for header height */
     overflow-y: auto;
@@ -111,9 +111,9 @@ body.toggled .window-header .window-icon {
 }
 
 .window-status-bar {
-    background-color: var(--header-bg);
-    border-top: 1px solid var(--border);
-    color: var(--header-text);
+    background-color: var(--iconostat-titlebar-bg, var(--header-bg));
+    border-top: 1px solid var(--iconostat-border, var(--border));
+    color: var(--iconostat-titlebar-text, var(--header-text));
     flex-shrink: 0;
     line-height: 1.5rem;
     padding-left: 0.4rem;
@@ -125,38 +125,38 @@ Window Buttons
 ================================== */
 .window-header .button {
     border-radius: 50%;
-    box-shadow: 0 1px 2px var(--header-bg-dark), 0 -1px 1px var(--bg-light);
+    box-shadow: 0 1px 2px var(--iconostat-header-bg-dark, var(--header-bg-dark)), 0 -1px 1px var(--iconostat-bg-light, var(--bg-light));
     cursor: pointer;
     height: 1rem;
     width: 1rem;
 }
 
 body.toggled .window-header .button {
-    box-shadow: 0 1px 2px var(--header-bg-light), 0 -1px 1px var(--bg-dark);
+    box-shadow: 0 1px 2px var(--iconostat-header-bg-light, var(--header-bg-light)), 0 -1px 1px var(--iconostat-bg-dark, var(--bg-dark));
 }
 
 .close {
-    background: var(--close-bg-gradient);
+    background: var(--iconostat-close-bg-gradient, var(--close-bg-gradient));
 }
 
 .close:active {
-    background: var(--close-bg);
+    background: var(--iconostat-close-bg, var(--close-bg));
 }
 
 .minimize {
-    background: var(--minimize-bg-gradient);
+    background: var(--iconostat-minimize-bg-gradient, var(--minimize-bg-gradient));
 }
 
 .minimize:active {
-    background: var(--minimize-bg);
+    background: var(--iconostat-minimize-bg, var(--minimize-bg));
 }
 
 .maximize {
-    background: var(--maximize-bg-gradient);
+    background: var(--iconostat-maximize-bg-gradient, var(--maximize-bg-gradient));
 }
 
 .maximize:active {
-    background: var(--maximize-bg);
+    background: var(--iconostat-maximize-bg, var(--maximize-bg));
 }
 
 /* ==================================
@@ -167,10 +167,10 @@ Resize Handle (Grippy)
     135deg,
     transparent,
     transparent 0.25rem,
-    var(--border) 0.25rem,
-    var(--border) 0.35rem
+    var(--iconostat-border, var(--border)) 0.25rem,
+    var(--iconostat-border, var(--border)) 0.35rem
     );
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--iconostat-border, var(--border));
     bottom: 0;
     content: '';
     cursor: nwse-resize;
@@ -228,7 +228,7 @@ Utility Classes
     width: 5rem; /* Adjust width for compact display */
     height: 5rem; /* Fit content without stretching */
     box-shadow: none;
-    color: var(--header-text);
+    color: var(--iconostat-titlebar-text, var(--header-text));
     cursor: pointer;
     padding: 0.5rem 1rem;
     transform: none !important; /* Ensure no transforms interfere */
@@ -264,7 +264,7 @@ Utility Classes
 .window.minimized .window-icon {
     font-size: 3.5rem;
     text-align: center;
-    text-shadow: 0 0.325rem 0.325rem var(--header-bg-dark) !important;
+    text-shadow: 0 0.325rem 0.325rem var(--iconostat-header-bg-dark, var(--header-bg-dark)) !important;
     line-height: 4.85rem;
 }
 
@@ -273,17 +273,17 @@ body.toggled .window.minimized .window-icon {
 }
 
 .window.minimized:hover {
-    background-color: var(--header-bg);
-    background: var(--header-bg-gradient);
-    border: 1px solid var(--border);
+    background-color: var(--iconostat-titlebar-bg, var(--header-bg));
+    background: var(--iconostat-titlebar-bg-gradient, var(--header-bg-gradient));
+    border: 1px solid var(--iconostat-border, var(--border));
     margin: calc(0.5rem - 1px) 0.5rem;
 }
 
 .window.minimized:hover .window-title {
-    background-color: var(--tooltip-bg);
+    background-color: var(--iconostat-tooltip-bg, var(--tooltip-bg));
     border-radius: 0.25rem;
     margin-top: -5rem;
-    color: var(--tooltip-text);
+    color: var(--iconostat-tooltip-text, var(--tooltip-text));
     width: fit-content;
     block-size: fit-content;
     padding: 0.25rem 0.5rem;
@@ -343,12 +343,12 @@ body.toggled .window.minimized:hover .window-title {
     display: none;
     position: fixed;
     pointer-events: none;
-    border: 1px solid var(--symlink-color);
-    background: color-mix(in srgb, var(--symlink-color) 20%, transparent);
+    border: 1px solid var(--iconostat-symlink-color, var(--symlink-color));
+    background: color-mix(in srgb, var(--iconostat-symlink-color, var(--symlink-color)) 20%, transparent);
     z-index: 9999;
 }
 
 .window.desktop-selected {
-    outline: 1px solid var(--symlink-color);
+    outline: 1px solid var(--iconostat-symlink-color, var(--symlink-color));
     outline-offset: 1px;
 }
