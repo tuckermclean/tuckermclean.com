@@ -25,6 +25,8 @@ export class IconostatDesktop extends HTMLElement {
 
     get windows() { return this._windows; }
 
+    get zIndex() { return this._z; }
+
     // Build an <iconostat-window>, append it to document.body, and register
     // it with the desktop. Returns the element; callers (site glue) still
     // set its content.
