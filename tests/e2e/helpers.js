@@ -18,7 +18,7 @@ export async function openApp(page, hash = '') {
   const vp = page.viewportSize();
   if (vp && vp.width <= 768) {
     await page.waitForFunction((w) => window.innerWidth <= w, vp.width);
-    await page.waitForTimeout(400); // > the 300ms reflow debounce
+    await page.waitForTimeout(600); // debounce is 300ms; wait 600ms for margin
   }
 }
 
