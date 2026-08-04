@@ -27,6 +27,10 @@ export class IconostatDesktop extends HTMLElement {
 
     get zIndex() { return this._z; }
 
+    registerTaskbar(el) { this._taskbar = el; }
+
+    get taskbar() { return this._taskbar || document.getElementById('tasks'); }
+
     // Build an <iconostat-window>, append it to document.body, and register
     // it with the desktop. Returns the element; callers (site glue) still
     // set its content.

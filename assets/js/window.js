@@ -326,23 +326,12 @@ function openPageFromUrl() {
 }
 
 (function() {
-    const startButton = document.getElementById('start-button');
-
     // If light/dark mode is set, toggle it
     if (localStorage.getItem('mode') === 'light') {
         document.body.classList.add('toggled');
     } else {
         document.body.classList.remove('toggled');
     }
-    // When clicking on the start button, open the menu (temporary bridge:
-    // the menu owns its own open/close/position logic on <iconostat-menu>;
-    // Task 2 moves this handler onto the taskbar element).
-    startButton.addEventListener('click', e => {
-        const r = startButton.getBoundingClientRect();
-        document.dispatchEvent(new CustomEvent('iconostat-menu-open', {
-            detail: { x: r.left + startButton.offsetWidth / 2, y: r.top, offset: true }
-        }));
-    });
 
     // Handle history back event
     window.addEventListener('popstate', e => {
