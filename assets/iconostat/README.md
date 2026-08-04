@@ -80,6 +80,12 @@ Windows are children of `document.body`, not of `<iconostat-desktop>`; the deskt
 | `iconostat-close` | `<iconostat-window>` (`close()`) | yes | `{ name }` | The window requests closing. The desktop unregisters it; actually removing the element from the DOM (and running any consumer cleanup) is a site-glue responsibility (see `assets/js/window.js`). |
 | `iconostat-promoted` | `<iconostat-desktop>` (`promoteTop()`) | dispatched directly on `document` | `{ empty, minimized }` | Announces the outcome of the last top-window promotion: `empty` is true if no windows remain registered; `minimized` is true if the (new) top window is minimized. Used by the site-side router to decide between `history.replaceState`/`pushState`. |
 
+### Limitations / host requirements
+
+The library currently expects a site-provided element with `id="tasks"` present in the DOM to host minimized windows. `<iconostat-window>.minimize()` — and restoring a minimized window via `.reset()` — call `document.getElementById('tasks')` directly (`assets/iconostat/window.js`) to move the window element into/out of that container; if no such element exists, calling `minimize()` throws (`Cannot read properties of null (reading 'appendChild')`). The rubber-band selection code in `<iconostat-desktop>` also references a `.tasks` (as well as `.menu`/`.start-button`) class selector to exclude those regions from selection-drag.
+
+This is a known, intentional SP-A boundary — `#tasks` is site markup (`layouts/home.html`), kept in place until a future `<iconostat-taskbar>` component absorbs it. The standalone/extractability claim elsewhere in this README holds for create / drag / focus / close / maximize / shade; `minimize()` additionally requires the host page to provide a `#tasks` element until that taskbar component lands.
+
 ## Theming
 
 `iconostat.css` consumes every color/shadow value through a `--iconostat-*`
