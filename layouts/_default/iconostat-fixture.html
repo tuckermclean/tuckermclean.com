@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="{{ $ico.RelPermalink }}">
 {{ $js := resources.Get "iconostat-fixture/entry.js" | js.Build (dict "targetPath" "js/iconostat-fixture.js" "format" "esm") }}
 </head><body>
+<iconostat-taskbar id="tasks"></iconostat-taskbar>
 <iconostat-desktop id="desktop"></iconostat-desktop>
 <script type="module" src="{{ $js.RelPermalink }}"></script>
 </body></html>{{ end }}
