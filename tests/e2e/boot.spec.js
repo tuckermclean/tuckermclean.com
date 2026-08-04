@@ -66,3 +66,29 @@ test('back/forward recycles windows rather than duplicating them', async ({ page
   await expect(win(page, 'intro')).toHaveClass(/front/);
   await expect(page.locator('.window')).toHaveCount(2);
 });
+
+test('a resize->cascade does not corrupt back/forward history', async ({ page }) => {
+  await openApp(page);                 // welcome, url '/'
+  await openViaMenu(page, 'Resume');   // #/resume
+  await openViaMenu(page, 'Intro');    // #/intro  (3 windows)
+  await expect(page.locator('.window')).toHaveCount(3);
+
+  await page.goBack();
+  await expect(win(page, 'resume')).toHaveClass(/front/);
+
+  // Fire a resize, then navigate forward just before the 300ms debounce
+  // fires. This interleaves the debounced cascade() with the still-settling
+  // goForward navigation: cascade()'s per-window bringToFront() pushes
+  // extra 'iconostat-focused' history entries (see desktop.js) on top of
+  // the real navigation, so goForward's popstate handler resolves against
+  // a polluted history stack. A cascade/tile bulk-layout op must never
+  // touch browser history -- this reliably reproduces the corruption
+  // against the un-fixed library (front lands on 'resume' instead of
+  // 'intro') and must be stable once cascade/tile are history-suppressed.
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await page.waitForTimeout(295);
+  await page.goForward();
+  await page.waitForTimeout(200); // let the debounced cascade fully settle
+
+  await expect(win(page, 'intro')).toHaveClass(/front/);
+});

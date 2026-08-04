@@ -12,6 +12,7 @@ export class IconostatDesktop extends HTMLElement {
     connectedCallback() {
         this._windows = this._windows || [];
         this._z = this._z || 100; // Starting point for z-index values
+        this._suppressHistory = this._suppressHistory || false;
         this._installSelection();
         this._installReflow();
 
@@ -67,10 +68,12 @@ export class IconostatDesktop extends HTMLElement {
         // bringToFront) so the router sees both the focus and the promotion
         // outcome without double-handling the not-minimized case here.
         const top = this.getTop();
-        document.dispatchEvent(new CustomEvent('iconostat-promoted', { detail: {
-            empty: top === undefined,
-            minimized: top ? top.classList.contains('minimized') : false,
-        } }));
+        if (!this._suppressHistory) {
+            document.dispatchEvent(new CustomEvent('iconostat-promoted', { detail: {
+                empty: top === undefined,
+                minimized: top ? top.classList.contains('minimized') : false,
+            } }));
+        }
     }
 
     bringToFront(windowElement, changeHash = true) {
@@ -87,25 +90,37 @@ export class IconostatDesktop extends HTMLElement {
         this._windows.forEach(w => w.classList.remove('front'));
         // Add 'front' class to the clicked window
         windowElement.classList.add('front');
-        if (changeHash) {
+        if (changeHash && !this._suppressHistory) {
             // Announce focus for the site-side router to translate into a
             // history transition. The library itself performs no browser
             // history calls; changeHash=false (image-zoom windows, initial
             // load) suppresses this announcement, preserving the old
-            // suppression behavior.
+            // suppression behavior. _suppressHistory additionally silences
+            // this during bulk layout ops (cascade/tile) so a viewport
+            // resize or Cascade/Tile command never pollutes browser
+            // history -- see cascade()/tile().
             document.dispatchEvent(new CustomEvent('iconostat-focused', { detail: { name: windowElement.name } }));
         }
     }
 
     cascade() {
-        this._windows.forEach((windowElement, i) => {
-            // If window is minimized, un-minimize it
-            if (windowElement.classList.contains('minimized')) {
-                windowElement.minimize(false);
-            }
-            windowElement.reset();
-            this.bringToFront(windowElement);
-        });
+        // Cascade is a layout operation, not a navigation: bringing every
+        // window to front must not push a browser history entry per
+        // window. Suppress iconostat-focused/iconostat-promoted for the
+        // duration (see bringToFront()/promoteTop()).
+        this._suppressHistory = true;
+        try {
+            this._windows.forEach((windowElement, i) => {
+                // If window is minimized, un-minimize it
+                if (windowElement.classList.contains('minimized')) {
+                    windowElement.minimize(false);
+                }
+                windowElement.reset();
+                this.bringToFront(windowElement);
+            });
+        } finally {
+            this._suppressHistory = false;
+        }
     }
 
     tile() {
@@ -124,24 +139,33 @@ export class IconostatDesktop extends HTMLElement {
         const windowWidth = Math.floor(viewportWidth / columns);
         const windowHeight = Math.floor(viewportHeight / rows);
 
-        // Position each window in the grid
-        this._windows.forEach((windowElement, index) => {
-            // If window is minimized, un-minimize it
-            if (windowElement.classList.contains('minimized')) {
-                windowElement.minimize(false);
-            }
-            windowElement.classList.remove('maximized', 'shaded');
+        // Tile is a layout operation, not a navigation: bringing every
+        // window to front must not push a browser history entry per
+        // window. Suppress iconostat-focused/iconostat-promoted for the
+        // duration (see bringToFront()/promoteTop()).
+        this._suppressHistory = true;
+        try {
+            // Position each window in the grid
+            this._windows.forEach((windowElement, index) => {
+                // If window is minimized, un-minimize it
+                if (windowElement.classList.contains('minimized')) {
+                    windowElement.minimize(false);
+                }
+                windowElement.classList.remove('maximized', 'shaded');
 
-            const row = Math.floor(index / columns);
-            const column = index % columns;
+                const row = Math.floor(index / columns);
+                const column = index % columns;
 
-            windowElement.style.position = 'absolute';
-            windowElement.style.width = `${windowWidth}px`;
-            windowElement.style.height = `${windowHeight}px`;
-            windowElement.style.top = `${windowHeight / 2 + row * windowHeight}px`;
-            windowElement.style.left = `${windowWidth / 2 + column * windowWidth}px`;
-            this.bringToFront(windowElement);
-        });
+                windowElement.style.position = 'absolute';
+                windowElement.style.width = `${windowWidth}px`;
+                windowElement.style.height = `${windowHeight}px`;
+                windowElement.style.top = `${windowHeight / 2 + row * windowHeight}px`;
+                windowElement.style.left = `${windowWidth / 2 + column * windowWidth}px`;
+                this.bringToFront(windowElement);
+            });
+        } finally {
+            this._suppressHistory = false;
+        }
     }
 
     minimizeAll() {
