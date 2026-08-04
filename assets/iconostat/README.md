@@ -38,7 +38,18 @@ All defined in `assets/iconostat/window.js`:
 
 ### `<iconostat-desktop>` methods
 
-All defined in `assets/iconostat/desktop.js`:
+**Getting the desktop:** `getDesktop()` (exported from `assets/iconostat/index.js`) is the entry point — call it to get the singleton `<iconostat-desktop>` element, then call any method below on the returned instance:
+
+```js
+import { getDesktop } from 'iconostat/index.js';
+
+const desktop = getDesktop();
+desktop.createWindow({ name: 'foo', title: 'Foo', icon: '🧪' });
+```
+
+`getDesktop()` is equivalent to `document.querySelector('iconostat-desktop')` (that's its entire implementation) — a page needs exactly one `<iconostat-desktop>` element present in the document (e.g. `<iconostat-desktop></iconostat-desktop>` in the body) for it to resolve.
+
+All methods below are defined in `assets/iconostat/desktop.js`:
 
 | Method | Effect |
 |---|---|
