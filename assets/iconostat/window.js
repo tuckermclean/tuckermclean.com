@@ -83,12 +83,12 @@ export class IconostatWindow extends HTMLElement {
             this.classList.add('minimized');
             this.classList.remove('front');
             document.body.removeChild(this);
-            document.getElementById('tasks').appendChild(this);
+            getDesktop().taskbar.appendChild(this);
         } else if (this.classList.contains('minimized') || (typeof(force) === 'boolean' && force === false)) {
             this.restoreWindowState();
             this.clearWindowState();
             this.classList.remove('minimized');
-            document.getElementById('tasks').removeChild(document.getElementById(this.id));
+            getDesktop().taskbar.removeChild(document.getElementById(this.id));
             document.body.appendChild(this);
             this.bringToFront();
         }
@@ -124,7 +124,7 @@ export class IconostatWindow extends HTMLElement {
         this.style.left = '';
         this.style.zIndex = '';
         if (this.classList.contains('minimized')) {
-            document.getElementById('tasks').removeChild(document.getElementById(`window-${this.id}`));
+            getDesktop().taskbar.removeChild(document.getElementById(`window-${this.id}`));
             document.body.appendChild(this);
         }
         this.classList.remove('maximized');

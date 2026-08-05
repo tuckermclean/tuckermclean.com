@@ -5,6 +5,8 @@ Native Web Components window manager. Extractable, framework-free, no bundler.
 ## Elements
 - `<iconostat-desktop>` — root; owns window registry, z-order, focus, rubber-band selection, resize reflow.
 - `<iconostat-window>` — draggable/resizable/minimizable/maximizable/shadeable window.
+- `<iconostat-taskbar>` — host for minimized windows; registers itself with the desktop as the `minimize()`/`reset()` relocation target.
+- `<iconostat-menu>` — start/context menu mechanism. Menu *items* are site-authored children — see [Site responsibilities](#site-responsibilities).
 
 ## Public API
 
@@ -12,6 +14,8 @@ Native Web Components window manager. Extractable, framework-free, no bundler.
 
 - `<iconostat-desktop>` (`assets/iconostat/desktop.js`, class `IconostatDesktop`) — the root element. Owns the window registry, z-order/focus, rubber-band selection, and resize/orientation reflow. Windows are **not** DOM descendants of `<iconostat-desktop>` (it renders `display:contents` and windows are appended to `document.body`); coordination happens exclusively via bubbling `iconostat-*` `CustomEvent`s observed at the `document` level, not via listeners on the element itself.
 - `<iconostat-window>` (`assets/iconostat/window.js`, class `IconostatWindow`) — a draggable/resizable/minimizable/maximizable/shadeable window. Builds its own light-DOM markup on `connectedCallback`.
+- `<iconostat-taskbar>` (`assets/iconostat/taskbar.js`, class `IconostatTaskbar`) — the host for minimized `<iconostat-window>` elements. On `connectedCallback` it adds the `.tasks` class and calls `getDesktop().registerTaskbar(this)`, so `<iconostat-window>.minimize()`/`.reset()` can relocate windows into it. If it contains a child matching `.start-button`, it wires that child's `click` to dispatch `iconostat-menu-open` on `document` (computing `x`/`y` from the button's bounding rect, `offset: true`). The `.start-button` child itself — its markup/icon — is site-authored; the taskbar only looks for the class.
+- `<iconostat-menu>` (`assets/iconostat/menu.js`, class `IconostatMenu`) — the start/context menu mechanism. On `connectedCallback` it adds the `.menu` class and wires: (1) a `document`-level `iconostat-menu-open` listener that opens the menu at the event's `{x, y, offset}`; (2) a `document`-level `contextmenu` listener that opens the menu at the cursor (suppressed when the right-click target is inside `.window-body`, so the browser's native context menu still works there); (3) a `document`-level `click` listener that closes the menu unless the click target is inside `.menu` or `.start-button`; (4) a `click` listener on each of its own `.menu-item` children (present at connect time) that closes the menu. It has no public methods — its entire consumer-facing surface is the `iconostat-menu-open` event. The menu *items* themselves (`.menu-item` children and their `onclick` behavior) are site-authored — see [Site responsibilities](#site-responsibilities).
 
 ### Window identity
 
@@ -31,7 +35,7 @@ All defined in `assets/iconostat/window.js`:
 |---|---|
 | `setContent(html)` | Sets the `.window-body` innerHTML. |
 | `bringToFront()` | Dispatches `iconostat-focus` (bubbles) for the desktop to handle. |
-| `minimize(force?)` | Toggles (or forces) minimized state; moves the element between `document.body` and `#tasks`. Dispatches `iconostat-minimize`. |
+| `minimize(force?)` | Toggles (or forces) minimized state; moves the element between `document.body` and `getDesktop().taskbar`. Dispatches `iconostat-minimize`. |
 | `maximize(force?)` | Toggles (or forces) maximized state. Dispatches `iconostat-maximize`. |
 | `shade(force?)` | Toggles (or forces) shaded (rolled-up) state. Dispatches `iconostat-shade`. |
 | `close()` | Dispatches `iconostat-close`; the element does not remove itself — the desktop unregisters it and site glue is responsible for actually removing it from the DOM (see `assets/js/window.js`'s `iconostat-close` listener). |
@@ -63,6 +67,9 @@ All methods below are defined in `assets/iconostat/desktop.js`:
 | `bringToFront(el, changeHash = true)` | Raises `el` above all other registered windows. If `changeHash` is `true`, dispatches `iconostat-focused` (for the site-side router to translate into a history transition); pass `false` to suppress that announcement (e.g. image-zoom windows, initial load). |
 | `promoteTop()` | Re-focuses the current top window (if not minimized) and dispatches `iconostat-promoted` unconditionally, announcing the resulting state. |
 | `windows` (getter) | Returns the live array of registered window elements. |
+| `zIndex` (getter) | Returns the desktop's current top-of-stack z-index counter (the same value `bringToFront()` assigns then increments). Public accessor for `<iconostat-menu>` to raise itself above all windows when opening (`getDesktop().zIndex + 1`) — replaces reaching into the private `_z` field. |
+| `registerTaskbar(el)` | Registers `el` as the taskbar host; called by `<iconostat-taskbar>` on its own `connectedCallback`. Not normally called by consumers directly. |
+| `taskbar` (getter) | Returns the registered taskbar element (via `registerTaskbar()`), falling back to `document.getElementById('tasks')` if none was registered. `<iconostat-window>.minimize()`/`.reset()` use this to resolve where to relocate a minimized window — see [Taskbar host requirement](#taskbar-host-requirement). |
 
 ### Events
 
@@ -79,12 +86,21 @@ Windows are children of `document.body`, not of `<iconostat-desktop>`; the deskt
 | `iconostat-shade` | `<iconostat-window>` (`shade()` / `_toggleShade()`) | yes | `{ name }` | The window's shaded state changed. The desktop takes no action on this event (matches legacy behavior — shading never used to promote the top window). |
 | `iconostat-close` | `<iconostat-window>` (`close()`) | yes | `{ name }` | The window requests closing. The desktop unregisters it; actually removing the element from the DOM (and running any consumer cleanup) is a site-glue responsibility (see `assets/js/window.js`). |
 | `iconostat-promoted` | `<iconostat-desktop>` (`promoteTop()`) | dispatched directly on `document` | `{ empty, minimized }` | Announces the outcome of the last top-window promotion: `empty` is true if no windows remain registered; `minimized` is true if the (new) top window is minimized. Used by the site-side router to decide between `history.replaceState`/`pushState`. |
+| `iconostat-menu-open` | `<iconostat-taskbar>` (start-button `click` handler) | dispatched directly on `document` | `{ x, y, offset }` | Requests that `<iconostat-menu>` open at `(x, y)`; `offset` (boolean) tells the menu to shift left by its own width first (used when opening from a button, so the menu doesn't overhang the viewport edge under the button). Consumed by `<iconostat-menu>`'s `document`-level listener. A right-click anywhere outside `.window-body` opens the menu the same way but *without* this event — `<iconostat-menu>` handles `contextmenu` directly and calls its own positioning logic with `offset: false`. |
 
-### Limitations / host requirements
+### Site responsibilities
 
-The library currently expects a site-provided element with `id="tasks"` present in the DOM to host minimized windows. `<iconostat-window>.minimize()` — and restoring a minimized window via `.reset()` — call `document.getElementById('tasks')` directly (`assets/iconostat/window.js`) to move the window element into/out of that container; if no such element exists, calling `minimize()` throws (`Cannot read properties of null (reading 'appendChild')`). The rubber-band selection code in `<iconostat-desktop>` also references a `.tasks` (as well as `.menu`/`.start-button`) class selector to exclude those regions from selection-drag.
+The library owns the menu *mechanism* (open/close/position/z-raise, wired by `<iconostat-menu>`) and the taskbar *host* (relocation target, wired by `<iconostat-taskbar>`) — it does not own their content:
 
-This is a known, intentional SP-A boundary — `#tasks` is site markup (`layouts/home.html`), kept in place until a future `<iconostat-taskbar>` component absorbs it. The standalone/extractability claim elsewhere in this README holds for create / drag / focus / close / maximize / shade; `minimize()` additionally requires the host page to provide a `#tasks` element until that taskbar component lands.
+- **Menu items** are plain site-authored child elements of `<iconostat-menu>` (e.g. `<div class="menu-item" onclick="...">`, `<div class="menu-separator">`). `<iconostat-menu>` only wires a close-on-click listener onto whatever `.menu-item` children exist at connect time and applies the `.menu`/`.active` classes it needs for CSS — it has no concept of what a menu item does or navigates to. See `layouts/home.html` for the site's actual item list (page links, `toggleMode()`, `cascadeWindows()`, etc.).
+- **The start button** is a site-authored child of `<iconostat-taskbar>` carrying the `.start-button` class; `<iconostat-taskbar>` only looks for that class to wire the click-to-open-menu behavior. Its icon/markup is site content (see `layouts/home.html`).
+- **Idle status-bar messages** (the periodic "Status: ..." placeholder text shown after inactivity) and **link-hover status-bar text** (showing the href of a hovered link) are both site-side behaviors — implemented in `assets/js/main.js` (idle messages) and `assets/js/window.js`'s `loadHTML()` (link hover/tooltip wiring), not in the library. The library's `<iconostat-window>` only renders the static `.window-status-bar` element and its default text; it does not update it in response to idle time or link hover.
+
+### Taskbar host requirement
+
+`<iconostat-window>.minimize()` and `.reset()` resolve the relocation target via `getDesktop().taskbar`, which returns the registered `<iconostat-taskbar>` (via `registerTaskbar()`, called automatically by `<iconostat-taskbar>` on connect) or, if none was registered, falls back to `document.getElementById('tasks')`. If a page uses `<iconostat-taskbar>`, this resolves automatically — no site glue required. If a page provides neither an `<iconostat-taskbar>` nor an element with `id="tasks"`, calling `minimize()` still throws (`Cannot read properties of null (reading 'appendChild')`), same failure mode as the prior SP-A boundary, just now avoidable by adding `<iconostat-taskbar>` to the page. The rubber-band selection code in `<iconostat-desktop>` also excludes `.window, .tasks, .menu, .start-button` from selection-drag by class selector; `.tasks`/`.menu` are self-applied by `<iconostat-taskbar>`/`<iconostat-menu>` on connect, and `.start-button` remains a class the host page's start-button markup must carry (see [Site responsibilities](#site-responsibilities)).
+
+The standalone/extractability claim elsewhere in this README holds fully for create / drag / focus / close / maximize / shade / minimize, provided the page includes `<iconostat-taskbar>` (see `layouts/_default/iconostat-fixture.html` + `assets/iconostat-fixture/entry.js` for a working standalone example with no site coupling).
 
 ## Theming
 

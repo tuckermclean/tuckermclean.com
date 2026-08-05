@@ -240,88 +240,6 @@ body {
     line-height: 1.35;
 }
 
-.menu {
-    display: none;
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-.menu.active {
-    display: flex;
-    position: fixed;
-    flex-direction: column;
-    flex-wrap: wrap;
-}
-
-.menu-item {
-    padding: 1rem;
-    margin: 0px;
-}
-
-.menu-item:last-child {
-    padding-bottom: 1rem;
-}
-
-.menu-separator {
-    border-top: 1px solid var(--border);
-    padding: 0 0.5rem;
-}
-
-.menu-item:hover, .menu-separator:hover {
-    background: var(--header-bg-gradient);
-    border-radius: 0.25rem;
-    color: var(--header-text);
-}
-
-.tasks {
-    position: fixed;
-    top: 0.325rem;
-    right: 0.325rem;
-    border: 0;
-    display: flex;
-    flex-direction: row-reverse;
-}
-
-.start-button {
-    /* Use animated GIF or WebP for better performance as background image */
-    background-image: url('/start-button.gif');
-    background-repeat: no-repeat;
-    background-size: 6rem;
-    background-position: 42.5% 20%;
-    border: none;
-    border-radius: 50%;
-    background-color: var(--header-bg);
-    cursor: pointer;
-    font-family: 'Fira Code', monospace !important;
-    transition: background-color 0.3s, color 0.3s;
-    margin: 0.5rem;
-    width: 5rem;
-    height: 5rem;
-}
-.start-button .start-button-icon {
-    color: var(--header-text-dark);
-    font-size: 2rem;
-    line-height: 5rem;
-    width: 5rem;
-    text-align: center;
-}
-
-@supports (background-image: url('/start-button.webp')) {
-    .start-button {
-        background-image: url('/start-button.webp'); /* Modern WebP image */
-    }
-}
-
-/* DUP:SP-B window-menu-base */
-.menu {
-    background-color: var(--header-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 4px 15px var(--tooltip-bg-light);
-    box-sizing: border-box;
-    color: var(--text);
-}
-
 /* ==================================
 Scrollbars
 ================================== */
@@ -494,17 +412,6 @@ Print Styles
         font-size: 0.1px !important;
      }
 
-    /* Ensure natural flow order */
-    /* DUP:SP-B print-natural-flow */
-    #resume-container {
-        display: block !important;
-        width: 100% !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        position: relative !important;
-    }
-
     article {
         page-break-before: auto !important;
         page-break-after: auto !important;
@@ -522,11 +429,6 @@ Print Styles
 
     span {
         color: #000000 !important; /* Ensure text is black */
-    }
-
-    /* DUP:SP-B print-hide-window-chrome */
-    .menu, .start-button {
-        display: none !important; /* Hide all windows */
     }
 
     /* Reduce the size of headers slightly */

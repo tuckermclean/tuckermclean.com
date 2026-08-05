@@ -298,20 +298,6 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
     }
 }
 
-// Toggle menu, and place it at the given coordinates
-function toggleMenu(x, y, offset = false) {
-    const contextMenu = document.getElementById('menu');
-    contextMenu.classList.toggle('active');
-    contextMenu.style.top = `${y}px`;
-    // Subtract width of menu from x position to prevent overflow if offset === true
-    if (offset) {
-        contextMenu.style.left = `${x - contextMenu.offsetWidth}px`;
-    } else {
-        contextMenu.style.left = `${x}px`;
-    }
-    contextMenu.style.zIndex = getDesktop()._z + 1;
-}
-
 function getCurrentPage() {
     const url = new URL(window.location.href);
     window.fullWindowHash = url.hash;
@@ -340,50 +326,12 @@ function openPageFromUrl() {
 }
 
 (function() {
-    const startButton = document.getElementById('start-button');
-
     // If light/dark mode is set, toggle it
     if (localStorage.getItem('mode') === 'light') {
         document.body.classList.add('toggled');
     } else {
         document.body.classList.remove('toggled');
     }
-    // When clicking on the start button, open the menu
-    startButton.addEventListener('click', e => {
-        if (document.getElementById('menu').classList.contains('active')) {
-            document.getElementById('menu').classList.remove('active');
-        }
-        // Set menu to open at the center of the start button
-        toggleMenu(startButton.getBoundingClientRect().left + startButton.offsetWidth / 2, startButton.getBoundingClientRect().top, true);
-    });
-
-    document.addEventListener('contextmenu', e => {
-        if (e.target.closest('.window-body')) return;
-        e.preventDefault();
-        // If context menu element is not body, exit
-        //if (e.target.tagName !== 'BODY')
-        //    return;
-        // If context menu is already open, kill it
-        if (document.getElementById('menu').classList.contains('active')) {
-            document.getElementById('menu').classList.remove('active');
-        }
-        toggleMenu(e.clientX, e.clientY);
-    });
-
-    // Make context menu go away when clicking outside of it
-    document.addEventListener('click', e => {
-        const contextMenu = document.getElementById('menu');
-        if (e.target.closest('.menu')) return;
-        if (e.target.closest('.start-button')) return;
-        contextMenu.classList.remove('active');
-    });
-
-    // Make context menu go away when clicking on a menu item
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-            document.getElementById('menu').classList.remove('active');
-        });
-    });
 
     // Handle history back event
     window.addEventListener('popstate', e => {

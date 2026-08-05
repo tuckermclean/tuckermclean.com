@@ -53,15 +53,15 @@
 </head>
 <body>
     <iconostat-desktop id="desktop"></iconostat-desktop>
-    <div class="tasks" id="tasks">
+    <iconostat-taskbar id="tasks">
         <!-- Menu button (start button)-->
         <div class="start-button" id="start-button">
             <div class="start-button-icon" title="Start Here">☰</div>
         </div>
-    </div>
+    </iconostat-taskbar>
 
     <!-- Menu -->
-    <div class="menu" id="menu">
+    <iconostat-menu id="menu">
         <div class="menu-item" onclick="openPage('welcome', 'Welcome', '👋');">Welcome</div>
         <div class="menu-item" onclick="openPage('intro', 'Intro', '🧠');">Intro</div>
         <div class="menu-item" onclick="openPage('resume', 'Resume', '📜');">Resume</div>
@@ -73,7 +73,7 @@
         <div class="menu-item" onclick="cascadeWindows();">Cascade Windows</div>
         <div class="menu-item" onclick="tileWindows();">Tile Windows</div>
         <div class="menu-item" onclick="minimizeWindows();">Minimize All</div>
-    </div>
+    </iconostat-menu>
 
     {{ $chatJS := resources.Get "js/chat.js" | js.Build (dict "targetPath" "js/chat.js") }}
     <link rel="modulepreload" href="{{ $chatJS.RelPermalink }}">

@@ -36,3 +36,12 @@ test('window drags in the standalone fixture', async ({ page }) => {
   const after = await win.boundingBox();
   expect(after.x).toBeGreaterThan(before.x);
 });
+
+test('minimize relocates the window into the taskbar with no site glue', async ({ page }) => {
+  await page.goto('/iconostat-fixture/');
+  const win = page.locator(FIXTURE_WINDOW);
+  await expect(win).toBeVisible();
+  await page.evaluate(() => document.querySelector('iconostat-window').minimize());
+  await expect(page.locator('iconostat-taskbar #window-fixture')).toHaveCount(1);
+  expect(await page.evaluate(() => typeof window.openPage)).toBe('undefined');
+});
