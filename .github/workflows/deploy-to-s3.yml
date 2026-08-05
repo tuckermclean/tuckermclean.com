@@ -44,6 +44,42 @@ jobs:
     - name: List built files for debugging
       run: find dist
 
+    # Step 3.6: Generate an SPDX SBOM of the built site
+    - name: Generate SBOM (SPDX) of dist/
+      id: sbom
+      continue-on-error: true
+      uses: anchore/sbom-action@v0.24.0
+      with:
+        path: ./dist
+        format: spdx-json
+        output-file: sbom.spdx.json
+        upload-artifact: false
+
+    # Step 3.7: Publish the SBOM into the deployed artifact and flag any dependency-hygiene concerns
+    - name: Publish SBOM into the deployed artifact + dependency-hygiene finding
+      continue-on-error: true
+      run: |
+        set -euo pipefail
+        if [ ! -f sbom.spdx.json ]; then
+          echo "::warning::SBOM was not generated; deploying without /.well-known/sbom.spdx.json"
+          exit 0
+        fi
+        mkdir -p dist/.well-known
+        cp sbom.spdx.json dist/.well-known/sbom.spdx.json
+        count=$(python3 -c "import json; print(len(json.load(open('sbom.spdx.json')).get('packages', [])))")
+        echo "SBOM package count: $count"
+        if [ "$count" -gt 10 ]; then
+          echo "::warning::SBOM lists $count packages (>10) — unexpected for a static artifact; investigate the supply chain."
+        fi
+
+    # Step 3.8: Upload the SBOM as a build artifact
+    - name: Upload SBOM artifact
+      continue-on-error: true
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: sbom-spdx
+        path: sbom.spdx.json
+
     # Step 4: Configure AWS credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
