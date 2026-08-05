@@ -51,6 +51,16 @@ aws s3 sync ./dist s3://your-bucket-name
 
 Deployment is automated via GitHub Actions on push to `master`. Required secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`.
 
+## Supply chain
+
+Every deploy to production is built and attested so the shipped artifact is verifiable:
+
+- **Pinned, checksum-verified toolchain.** The site is built with Hugo `0.164.0` (extended), whose release binary is verified against Hugo's published SHA-256 checksum before it is allowed to build — a tampered toolchain aborts the deploy.
+- **Software Bill of Materials.** An SPDX SBOM of the built site is generated with [syft](https://github.com/anchore/syft) on every deploy and published at [`/.well-known/sbom.spdx.json`](/.well-known/sbom.spdx.json). It is deliberately near-empty: the site ships essentially zero third-party runtime code (no framework, no bundler, no runtime dependencies) — the SBOM is the receipt.
+- **Build provenance.** The deployed artifact is attested with [SLSA build provenance](https://slsa.dev) via `actions/attest-build-provenance`, cryptographically linking the published site to the exact workflow run and commit that produced it.
+
+The attestation steps are structured so they can never block a deploy: SBOM generation is best-effort, and provenance is attested after the artifact ships.
+
 ## Writing a post
 
 Posts live in `content/posts/` as Markdown with standard Hugo frontmatter. They render into the Writings window and support categories, feature images, and full Markdown including code blocks and blockquotes.
