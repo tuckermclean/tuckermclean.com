@@ -12,6 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.164.0
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
 
     steps:
     # Step 1: Checkout the repository
@@ -96,3 +100,20 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    # Step 6: Package the deployed artifact and attest SLSA build provenance.
+    # These steps run only after a successful s3 sync; a failure here can
+    # never block the already-completed deploy.
+    - name: Package built artifact for attestation
+      run: tar -czf dist.tgz -C dist .
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@v4.1.1
+      with:
+        subject-path: dist.tgz
+
+    - name: Upload built artifact
+      uses: actions/upload-artifact@v7.0.1
+      with:
+        name: site-dist
+        path: dist.tgz
