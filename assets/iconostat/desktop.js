@@ -109,7 +109,7 @@ export class IconostatDesktop extends HTMLElement {
         }
     }
 
-    cascade() {
+    cascade({ keepMinimized = false } = {}) {
         // Cascade is a layout operation, not a navigation: bringing every
         // window to front must not push a browser history entry per
         // window. Suppress iconostat-focused/iconostat-promoted for the
@@ -117,8 +117,17 @@ export class IconostatDesktop extends HTMLElement {
         this._suppressHistory = true;
         try {
             this._windows.forEach((windowElement, i) => {
+                const isMinimized = windowElement.classList.contains('minimized');
+                // The automatic reflow cascade (resize/orientationchange)
+                // passes keepMinimized so it never disturbs a window the
+                // user deliberately minimized -- leave it alone entirely.
+                // The explicit "Cascade Windows" menu command omits the
+                // option and still un-minimizes everything, as intended.
+                if (keepMinimized && isMinimized) {
+                    return;
+                }
                 // If window is minimized, un-minimize it
-                if (windowElement.classList.contains('minimized')) {
+                if (isMinimized) {
                     windowElement.minimize(false);
                 }
                 windowElement.reset();
@@ -231,10 +240,10 @@ export class IconostatDesktop extends HTMLElement {
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => this.cascade(), 300);
+            resizeTimer = setTimeout(() => this.cascade({ keepMinimized: true }), 300);
         });
         window.addEventListener('orientationchange', () => {
-            setTimeout(() => this.cascade(), 100);
+            setTimeout(() => this.cascade({ keepMinimized: true }), 100);
         });
     }
 }

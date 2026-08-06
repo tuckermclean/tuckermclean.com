@@ -42,29 +42,26 @@ test('browser Back/Forward navigate between opened windows', async ({ page }) =>
   await expect(win(page, 'intro')).toHaveClass(/front/);
 });
 
-test('back/forward recycles windows rather than duplicating them', async ({ page }) => {
+test('back/forward navigates between open windows without dropping any', async ({ page }) => {
   await openApp(page);                 // welcome
   await openViaMenu(page, 'Resume');   // resume
   await openViaMenu(page, 'Intro');    // intro
   await expect(page.locator('.window')).toHaveCount(3);
 
-  // popstate's navigateToPage() recycles the *current top* window's DOM
-  // element into the target name; if a window with that target name is
-  // already open, navigateToPage closes it first. Here goBack's target
-  // ("resume") already has its own window, so that window is closed and
-  // the (until-now front) "intro" window is renamed to "resume" in place
-  // — net window count drops from 3 to 2, it does not stay at 3. See
-  // "Suspected bugs" in the design doc.
+  // popstate's navigateToPage() now brings an already-open target window to
+  // the front instead of closing it and renaming the current top window into
+  // its place. Here goBack's target ("resume") already has its own window,
+  // so that window is simply brought to front — the window count stays at 3,
+  // it does not drop to 2.
   await page.goBack();
   await expect(win(page, 'resume')).toHaveClass(/front/);
-  await expect(page.locator('.window')).toHaveCount(2);
+  await expect(page.locator('.window')).toHaveCount(3);    // no window dropped (was 2 — the bug)
 
-  // goForward's target ("intro") no longer has its own window (its DOM
-  // element was just renamed to "resume" above), so this leg is a pure
-  // rename with no closeWindow call — count stays at 2, not back to 3.
+  // goForward's target ("intro") still has its own window too, so this leg
+  // is also a pure bring-to-front — count stays at 3.
   await page.goForward();
   await expect(win(page, 'intro')).toHaveClass(/front/);
-  await expect(page.locator('.window')).toHaveCount(2);
+  await expect(page.locator('.window')).toHaveCount(3);
 });
 
 test('a resize->cascade does not corrupt back/forward history', async ({ page }) => {

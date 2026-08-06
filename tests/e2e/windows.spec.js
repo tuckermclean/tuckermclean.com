@@ -62,3 +62,10 @@ test('double-clicking the header toggles the shaded class', async ({ page }) => 
   await win(page, 'resume').locator('.window-header').dblclick();
   await expect(win(page, 'resume')).not.toHaveClass(/shaded/);
 });
+
+test('double-clicking a header button does not shade the window', async ({ page }) => {
+  await openApp(page, 'resume');
+  const w = win(page, 'resume');
+  await w.locator('.window-header .button.maximize').dblclick();
+  await expect(w).not.toHaveClass(/shaded/);
+});

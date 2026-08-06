@@ -124,7 +124,7 @@ export class IconostatWindow extends HTMLElement {
         this.style.left = '';
         this.style.zIndex = '';
         if (this.classList.contains('minimized')) {
-            getDesktop().taskbar.removeChild(document.getElementById(`window-${this.id}`));
+            getDesktop().taskbar.removeChild(document.getElementById(this.id));
             document.body.appendChild(this);
         }
         this.classList.remove('maximized');
@@ -216,10 +216,11 @@ export class IconostatWindow extends HTMLElement {
     // -- Internal event handlers (moved verbatim, `windowElement` -> `this`) --
 
     _toggleShade(e, force = undefined) {
-        // Locked bug, preserved verbatim: `typeof(e) === 'Event'` is never
-        // true (typeof an Event instance is 'object'), so this guard body
-        // never executes. Do not fix.
-        if (typeof(e) === 'Event') {
+        // Guard is live: `e instanceof Event` correctly detects a real dblclick
+        // event (as opposed to the programmatic `_toggleShade(undefined, force)`
+        // call above), so header-button clicks and minimized windows are
+        // excluded from shading, and the dblclick's default action is prevented.
+        if (e instanceof Event) {
             if (e.target.closest('.button')) return; // Prevent shading when clicking buttons
             if (this.classList.contains('minimized')) return; // Prevent shading when minimized
             e.preventDefault();
