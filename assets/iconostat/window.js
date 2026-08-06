@@ -124,7 +124,7 @@ export class IconostatWindow extends HTMLElement {
         this.style.left = '';
         this.style.zIndex = '';
         if (this.classList.contains('minimized')) {
-            getDesktop().taskbar.removeChild(document.getElementById(`window-${this.id}`));
+            getDesktop().taskbar.removeChild(document.getElementById(this.id));
             document.body.appendChild(this);
         }
         this.classList.remove('maximized');
