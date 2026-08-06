@@ -254,7 +254,10 @@ function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
     const windowElement = getDesktop().windows.find(w => w.id === targetWindowId);
     const oldWindow = getDesktop().windows.find(w => w.id === `window-${name}`);
     if (typeof(oldWindow) !== 'undefined') {
-        oldWindow.close();
+        // The target page already has its own window — navigate to it rather than
+        // destroying it and renaming the current top window (which lost a window).
+        getDesktop().bringToFront(oldWindow);
+        return;
     }
     if (typeof(windowElement) !== 'undefined') {
         windowElement.id = "window-" + name;
