@@ -95,3 +95,14 @@ test('a resize->cascade does not corrupt back/forward history', async ({ page })
 
   await expect(win(page, 'intro')).toHaveClass(/front/);
 });
+
+test('a freshly opened window is revealed (visible, positioned, no leftover building class)', async ({ page }) => {
+  await openApp(page);
+  await openViaMenu(page, 'Resume');
+  const w = win(page, 'resume');
+  await expect(w).toBeVisible();
+  await expect(w).not.toHaveClass(/building/);
+  const box = await w.boundingBox();
+  expect(box.width).toBeGreaterThan(0);
+  expect(box.height).toBeGreaterThan(0);
+});

@@ -36,13 +36,15 @@ export class IconostatDesktop extends HTMLElement {
     // set its content.
     createWindow({ name, title, icon = '⚙️', classes = [] }) {
         const el = document.createElement('iconostat-window');
+        el.classList.add('building');          // hidden until positioned (double-buffer)
         el.name = name;
         el.windowTitle = title;
         el.icon = icon;
         classes.forEach(c => el.classList.add(c));
         document.body.appendChild(el);
         this.register(el);
-        el.reset(true, false); // baseline geometry (was resetWindow)
+        el.reset(true, false);                 // build DOM + bake geometry (still measurable while hidden)
+        el.classList.remove('building');       // reveal, now correctly positioned
         return el;
     }
 

@@ -8,6 +8,13 @@ iconostat-desktop { display: contents; }
 /* ==================================
 Window
 ================================== */
+/* Double-buffer: a window is hidden only while it is being built + baked
+   (createWindow adds/removes the `building` class synchronously), so the
+   browser paints it once, already positioned — no build-time jump. Tag
+   selector matches regardless of when the `window` class is added. Uses
+   visibility:hidden (not display:none) so bake() can still measure layout. */
+iconostat-window.building { visibility: hidden; }
+
 .window, .menu {
     background-color: var(--iconostat-titlebar-bg, var(--header-bg));
     border: 1px solid var(--iconostat-border, var(--border));
