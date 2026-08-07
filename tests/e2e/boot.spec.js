@@ -9,6 +9,12 @@ test('cold boot opens the Welcome window and normalizes the URL to /', async ({ 
   await expect(page).toHaveURL('http://localhost:1313/');
 });
 
+test('both background images are preloaded to avoid a mode-toggle flash', async ({ page }) => {
+  await openApp(page);
+  await expect(page.locator('link[rel="preload"][as="image"][href*="I-Know-Better-1"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="preload"][as="image"][href*="I-Know-Better-2"]')).toHaveCount(1);
+});
+
 test('deep-link #/resume opens the Resume window with loaded content', async ({ page }) => {
   await openApp(page, 'resume');
   await expect(win(page, 'resume')).toBeVisible();
