@@ -9,6 +9,12 @@ test('cold boot opens the Welcome window and normalizes the URL to /', async ({ 
   await expect(page).toHaveURL('http://localhost:1313/');
 });
 
+test('both background images are preloaded to avoid a mode-toggle flash', async ({ page }) => {
+  await openApp(page);
+  await expect(page.locator('link[rel="preload"][as="image"][href*="I-Know-Better-1"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="preload"][as="image"][href*="I-Know-Better-2"]')).toHaveCount(1);
+});
+
 test('deep-link #/resume opens the Resume window with loaded content', async ({ page }) => {
   await openApp(page, 'resume');
   await expect(win(page, 'resume')).toBeVisible();
@@ -88,4 +94,15 @@ test('a resize->cascade does not corrupt back/forward history', async ({ page })
   await page.waitForTimeout(200); // let the debounced cascade fully settle
 
   await expect(win(page, 'intro')).toHaveClass(/front/);
+});
+
+test('a freshly opened window is revealed (visible, positioned, no leftover building class)', async ({ page }) => {
+  await openApp(page);
+  await openViaMenu(page, 'Resume');
+  const w = win(page, 'resume');
+  await expect(w).toBeVisible();
+  await expect(w).not.toHaveClass(/building/);
+  const box = await w.boundingBox();
+  expect(box.width).toBeGreaterThan(0);
+  expect(box.height).toBeGreaterThan(0);
 });
