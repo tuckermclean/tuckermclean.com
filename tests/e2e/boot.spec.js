@@ -138,3 +138,9 @@ test('the spinner image is the site-supplied eye via --iconostat-spinner-image',
     getComputedStyle(document.querySelector('.iconostat-spinner-eye')).backgroundImage);
   expect(bg).toContain('start-button');
 });
+
+test('the start button image is site-supplied via --iconostat-start-button-image', async ({ page }) => {
+  await openApp(page);
+  const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.start-button')).backgroundImage);
+  expect(bg).toContain('start-button');  // still shows the eye, resolved through the var
+});

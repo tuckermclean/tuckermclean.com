@@ -388,8 +388,8 @@ Taskbar / Start Menu
 }
 
 .start-button {
-    /* Use animated GIF or WebP for better performance as background image */
-    background-image: url('/start-button.gif');
+    /* Background image is host-supplied via --iconostat-start-button-image; the library ships no image */
+    background-image: var(--iconostat-start-button-image, none);
     background-repeat: no-repeat;
     background-size: 6rem;
     background-position: 42.5% 20%;
@@ -409,12 +409,6 @@ Taskbar / Start Menu
     line-height: 5rem;
     width: 5rem;
     text-align: center;
-}
-
-@supports (background-image: url('/start-button.webp')) {
-    .start-button {
-        background-image: url('/start-button.webp'); /* Modern WebP image */
-    }
 }
 
 @media print {
