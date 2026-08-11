@@ -459,6 +459,40 @@ test.describe('Tier 2 (forced, no-preference)', () => {
     expect(result.el2StillGhosted).toBe(true);
     expect(result.hiddenAfterBothProperlyEnded).toBe(true);
   });
+
+  // Finding 1 (task-F2-fix): desktop.minimizeAll() must report
+  // userGesture:false (mirroring cascade()/tile()) so controller.js's
+  // _onBeforeMinMax never preventDefault()s/animates a bulk minimize --
+  // "bulk ops never animate" per the spec's ground rules. At Tier 2 this
+  // means the shared canvas/genie must never engage either.
+  test('Minimize All is a bulk op: no animation, every before-minimize reports userGesture:false, all windows end minimized', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page); // welcome
+    await openViaMenu(page, 'Resume'); // + resume -- >=2 open windows
+
+    await page.evaluate(() => {
+      window.__beforeMinEvents = [];
+      document.addEventListener('iconostat-before-minimize', (e) => {
+        window.__beforeMinEvents.push({ name: e.detail.name, userGesture: e.detail.userGesture });
+      });
+    });
+
+    await openViaMenu(page, 'Minimize All');
+
+    // Bulk op, no genie animation: instant, no fx-ghost, canvas stays
+    // absent or, if the warmup probe already created it, hidden.
+    expect(await page.locator('.fx-ghost').count()).toBe(0);
+    const canvasCount = await page.locator('canvas#iconostat-fx-canvas').count();
+    if (canvasCount > 0) {
+      await expect(page.locator('canvas#iconostat-fx-canvas')).toBeHidden();
+    }
+
+    const events = await page.evaluate(() => window.__beforeMinEvents);
+    expect(events.length).toBeGreaterThanOrEqual(2);
+    for (const ev of events) expect(ev.userGesture).toBe(false);
+
+    expect(await page.locator('.window:not(.minimized)').count()).toBe(0);
+  });
 });
 
 // -- What this suite could NOT verify (sandbox honesty, per the brief) ------

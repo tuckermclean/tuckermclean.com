@@ -209,7 +209,11 @@ export class IconostatDesktop extends HTMLElement {
     minimizeAll() {
         this._windows.forEach(windowElement => {
             if (windowElement.classList.contains('minimized')) return;
-            windowElement.minimize();
+            // Bulk op: explicit userGesture:false (mirrors cascade()/tile())
+            // so controller.js's _onBeforeMinMax does not animate a
+            // genie/Tier-1 effect on every open window at once, and
+            // jump-cuts (cancelAll(true)) any in-flight effect instead.
+            windowElement.minimize(undefined, { userGesture: false });
         });
     }
 

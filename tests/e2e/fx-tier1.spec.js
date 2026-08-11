@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.js';
-import { openApp, win } from './helpers.js';
+import { openApp, openViaMenu, win } from './helpers.js';
 
 // Iconostat FX -- Tier 1 (WAAPI, no WebGL) + tier selection + cancellation.
 // See docs/superpowers/specs/2026-08-11-iconostat-fx-design.md and
@@ -271,5 +271,100 @@ test.describe('Tier 1 (forced, no-preference)', () => {
     await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
     await expect(w).toBeVisible();
     await noFxGhostOrCanvas(page);
+  });
+
+  // Finding 1 (task-F2-fix): desktop.minimizeAll() must report
+  // userGesture:false (mirroring cascade()/tile()) so controller.js's
+  // _onBeforeMinMax never preventDefault()s/animates a bulk minimize --
+  // "bulk ops never animate" per the spec's ground rules.
+  test('Minimize All is a bulk op: no animation, every before-minimize reports userGesture:false, all windows end minimized', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page); // welcome
+    await openViaMenu(page, 'Resume'); // + resume -- >=2 open windows
+
+    await page.evaluate(() => {
+      window.__beforeMinEvents = [];
+      document.addEventListener('iconostat-before-minimize', (e) => {
+        window.__beforeMinEvents.push({ name: e.detail.name, userGesture: e.detail.userGesture });
+      });
+    });
+
+    await openViaMenu(page, 'Minimize All');
+
+    // Bulk op, no genie/Tier-1 animation: instant, no fx-ghost/canvas.
+    await noFxGhostOrCanvas(page);
+
+    const events = await page.evaluate(() => window.__beforeMinEvents);
+    expect(events.length).toBeGreaterThanOrEqual(2);
+    for (const ev of events) expect(ev.userGesture).toBe(false);
+
+    expect(await page.locator('.window:not(.minimized)').count()).toBe(0);
+  });
+
+  // Finding 2 (task-F2-fix): Tier-1 wobble must dispatch iconostat-fx-done
+  // {effect:'wobble'} on natural settle -- mirroring Tier-2 wobble
+  // (fx/wobble.js's finishAndReveal) exactly, including firing exactly once
+  // and NOT firing on a controller-driven cancellation/jump-cut.
+  test('a drag that settles naturally fires exactly one iconostat-fx-done {effect:"wobble"}', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    await page.evaluate(() => {
+      window.__fxDone = [];
+      document.addEventListener('iconostat-fx-done', (e) => window.__fxDone.push(e.detail));
+    });
+
+    const box = await w.locator('.window-header').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2 + 60, { steps: 8 });
+    await page.mouse.up(); // dragEnd -- kicks off the ~220ms settle-back animation
+
+    // finally-invariant: settles back to identity.
+    await expect(async () => {
+      expect(await w.evaluate((el) => el.style.transform)).toBe('');
+    }).toPass({ timeout: 2000 });
+
+    await expect.poll(() => page.evaluate(() =>
+      window.__fxDone.filter((d) => d.effect === 'wobble').length
+    ), { timeout: 2000 }).toBe(1);
+
+    const wobbleEvents = await page.evaluate(() => window.__fxDone.filter((d) => d.effect === 'wobble'));
+    expect(wobbleEvents).toEqual([{ name: 'resume', effect: 'wobble' }]);
+  });
+
+  test('a drag jump-cut by resize during the settle-back does NOT fire iconostat-fx-done', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    await page.evaluate(() => {
+      window.__fxDone = [];
+      document.addEventListener('iconostat-fx-done', (e) => window.__fxDone.push(e.detail));
+    });
+
+    const box = await w.locator('.window-header').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2 + 60, { steps: 8 });
+    await page.mouse.up(); // dragEnd -- kicks off the ~220ms settle-back animation
+
+    // Jump-cut the still-settling wobble via a resize (controller.js's
+    // unconditional `window.addEventListener('resize', () => cancelAll(true))`)
+    // before the settle-back animation has a chance to finish naturally.
+    await page.setViewportSize({ width: 1000, height: 800 });
+
+    // finally-invariant: no stranded transform regardless of how it ended.
+    await expect(async () => {
+      expect(await w.evaluate((el) => el.style.transform)).toBe('');
+    }).toPass({ timeout: 2000 });
+
+    // Give the cancelled anim's rejected `.finished` promise a turn to
+    // settle, then assert no wobble fx-done was ever dispatched -- the
+    // gesture was pre-empted, not completed.
+    await page.waitForTimeout(400);
+    const wobbleEvents = await page.evaluate(() => window.__fxDone.filter((d) => d.effect === 'wobble'));
+    expect(wobbleEvents).toEqual([]);
   });
 });

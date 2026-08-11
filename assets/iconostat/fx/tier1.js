@@ -384,7 +384,7 @@ export function dragEnd(controller, detail) {
     ], { duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
     state.anim = anim;
 
-    const settle = () => {
+    const settle = ({ dispatch = true } = {}) => {
         // Guard against a stale settle firing after a rapid re-grab of the
         // same window has already published a newer drag's state for `el`
         // (dragState is keyed only by `el`) -- this can happen either
@@ -397,6 +397,17 @@ export function dragEnd(controller, detail) {
         if (dragState.get(el) !== state) return;
         dragState.delete(el);
         controller.unregisterEffect(el);
+        if (dispatch) {
+            document.dispatchEvent(new CustomEvent('iconostat-fx-done', { detail: { name: el.name, effect: 'wobble' } }));
+        }
     };
-    anim.finished.then(settle).catch(settle);
+    // Natural settle (anim.finished resolves) fires iconostat-fx-done, once,
+    // after the spring-back completes -- mirroring Tier-2 wobble
+    // (fx/wobble.js's finishAndReveal) exactly. A controller-driven
+    // cancellation/jump-cut (dragStart's registerEffect cancel closure
+    // above calling anim.cancel(), e.g. resize or a second gesture)
+    // rejects `anim.finished` instead, routing here via .catch(): that
+    // path deliberately does NOT dispatch -- the gesture was pre-empted,
+    // not completed, so there's nothing to report as "done".
+    anim.finished.then(() => settle()).catch(() => settle({ dispatch: false }));
 }
