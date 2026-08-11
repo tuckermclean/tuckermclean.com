@@ -72,8 +72,16 @@ export class IconostatWindow extends HTMLElement {
 
     // -- Public API (standalone use; mirrors user-interaction effects) ----
 
-    bringToFront() {
-        this.dispatchEvent(new CustomEvent('iconostat-focus', { bubbles: true, detail: { name: this.name } }));
+    // `userGesture` (default false = programmatic) is threaded through to
+    // `iconostat-focus`'s detail so `desktop.bringToFront()` can pass it on
+    // to the `minimize(false, { userGesture })` call it makes when the
+    // target is minimized -- see `_wireEvents` (direct mousedown/touchstart
+    // pass true) and `desktop.js` (the `iconostat-focus` listener). Every
+    // other caller here (reset(), the internal call inside minimize()
+    // itself) omits the argument and stays programmatic, matching prior
+    // behavior exactly.
+    bringToFront(userGesture = false) {
+        this.dispatchEvent(new CustomEvent('iconostat-focus', { bubbles: true, detail: { name: this.name, userGesture } }));
     }
 
     // `opts.silent` skips the cancelable before-event (used by the fx canceler
@@ -270,12 +278,25 @@ export class IconostatWindow extends HTMLElement {
         this.dispatchEvent(new CustomEvent('iconostat-shade', { bubbles: true, detail: { name: this.name } }));
     }
 
-    _restoreWindow(e) {
-        if (e.target.closest('.button')) return; // Prevent dragging when clicking buttons
-
+    // Restoring a minimized chip is now owned entirely by the
+    // mousedown/touchstart -> bringToFront(true) handlers in `_wireEvents`
+    // (they thread userGesture:true through to the library's `minimize()`
+    // call for the desktop to make, so the fx controller sees exactly one
+    // userGesture:true `iconostat-before-minimize` per chip tap -- see the
+    // fx design spec's `userGesture` contract). This handler no longer
+    // restores; its only remaining job is to preventDefault() a minimized
+    // chip's `touchstart` so the browser doesn't synthesize a trailing
+    // mousedown/click afterward, which would otherwise fire
+    // bringToFront(true) (and thus the restore) a SECOND time. By the time
+    // the `click` listener below runs, the mousedown-triggered restore has
+    // already un-minimized the element (synchronously at Tier 0, or via the
+    // fx controller's own microtask at Tier 1+ -- either way strictly before
+    // `click`, a separate later task), so this is a harmless no-op there;
+    // kept wired on both events for symmetry rather than special-casing.
+    _suppressMinimizedChipDefault(e) {
+        if (e.target.closest('.button')) return; // Don't interfere with header-button clicks
         if (this.classList.contains('minimized')) {
             e.preventDefault();
-            this.minimize();
         }
     }
 
@@ -381,16 +402,22 @@ export class IconostatWindow extends HTMLElement {
         const grippy = this.querySelector('.grippy');
 
         // Focus-worthy interaction -> desktop coordinates z-order/focus.
+        // A direct mousedown/touchstart on the window (or its minimized
+        // taskbar chip -- the chip IS this element, reparented) is a genuine
+        // user pointer gesture, so this is the one true owner of a chip-tap
+        // restore; pass userGesture:true through bringToFront() so the
+        // desktop's un-minimize reports it accurately (see bringToFront()
+        // above and desktop.js's `iconostat-focus` listener).
         this.addEventListener('mousedown', (e) => {
             if (e.target.tagName === 'A') return; // If clicking on a link, don't bring window to front
-            this.bringToFront();
+            this.bringToFront(true);
         });
         this.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'A') return;
-            this.bringToFront();
+            this.bringToFront(true);
         });
-        this.addEventListener('click', (e) => this._restoreWindow(e));
-        this.addEventListener('touchstart', (e) => this._restoreWindow(e), { passive: false });
+        this.addEventListener('click', (e) => this._suppressMinimizedChipDefault(e));
+        this.addEventListener('touchstart', (e) => this._suppressMinimizedChipDefault(e), { passive: false });
         closeBtn.addEventListener('click', () => this.close());
         header.addEventListener('dblclick', (e) => this._toggleShade(e));
         minimizeBtn.addEventListener('click', () => this.minimize());

@@ -49,6 +49,35 @@ test('preventDefault() on iconostat-before-minimize leaves the window un-minimiz
   await expect(page.locator('#tasks #window-resume')).toHaveCount(0);
 });
 
+test('a real chip click restores via exactly one userGesture:true before-minimize (no double-fire)', async ({ page }) => {
+  await openApp(page, 'resume');
+  await win(page, 'resume').locator('.button.minimize').click();
+  await expect(win(page, 'resume')).toHaveClass(/minimized/);
+
+  // Registered (and awaited-in) before the click, so it can't miss the
+  // restore's before-event; every matching (entering:false) firing gets
+  // recorded so a regression that double-fires (or reintroduces the
+  // hardcoded userGesture:false on the mousedown->bringToFront path) shows
+  // up as count !== 1 or userGesture !== true, not just "it restored".
+  await page.evaluate(() => {
+    window.__restoreEvents = [];
+    document.addEventListener('iconostat-before-minimize', (e) => {
+      if (e.detail.entering === false) {
+        window.__restoreEvents.push({ userGesture: e.detail.userGesture });
+      }
+    });
+  });
+
+  // A real click = mousedown + mouseup + click, exercising the full
+  // bringToFront(true)-owns-restore / _suppressMinimizedChipDefault path.
+  await win(page, 'resume').click();
+  await expect(win(page, 'resume')).not.toHaveClass(/minimized/);
+
+  const restoreEvents = await page.evaluate(() => window.__restoreEvents);
+  expect(restoreEvents.length).toBe(1);
+  expect(restoreEvents[0].userGesture).toBe(true);
+});
+
 test('a programmatic un-minimize via bringToFront fires iconostat-before-minimize with userGesture:false', async ({ page }) => {
   await openApp(page, 'resume');
   await win(page, 'resume').locator('.button.minimize').click();

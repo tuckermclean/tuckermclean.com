@@ -98,6 +98,84 @@ test.describe('Tier 1 (forced, no-preference)', () => {
     expect(style2.opacity).toBe('');
   });
 
+  test('a real chip click restores via exactly one userGesture:true before-minimize and completes cleanly (Tier-1)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    await w.locator('.button.minimize').click();
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 });
+
+    await page.evaluate(() => {
+      window.__restoreEvents = [];
+      document.addEventListener('iconostat-before-minimize', (e) => {
+        if (e.detail.entering === false) {
+          window.__restoreEvents.push({ userGesture: e.detail.userGesture });
+        }
+      });
+    });
+
+    await w.click();
+    await expect(w).not.toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    const style = await w.evaluate((el) => ({ transform: el.style.transform, opacity: el.style.opacity }));
+    expect(style.transform).toBe('');
+    expect(style.opacity).toBe('');
+    await noFxGhostOrCanvas(page);
+
+    const restoreEvents = await page.evaluate(() => window.__restoreEvents);
+    expect(restoreEvents.length).toBe(1);
+    expect(restoreEvents[0].userGesture).toBe(true);
+  });
+
+  test('a rapid re-grab (re-wobble) within the settle window drags cleanly and leaves the registry consistent', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    const box1 = await w.locator('.window-header').boundingBox();
+    await page.mouse.move(box1.x + box1.width / 2, box1.y + box1.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box1.x + box1.width / 2 + 100, box1.y + box1.height / 2 + 60, { steps: 8 });
+    await page.mouse.up(); // ends drag 1 -- kicks off the ~220ms settle-back animation
+
+    // Immediately (well within the settle window) re-grab the SAME window
+    // and drag again -- this is defect 2's repro: a still in-flight prior
+    // wobble's cancel closure used to delete the new drag's just-published
+    // dragState entry (WeakMap keyed only by the element), so every
+    // subsequent dragMove would silently no-op.
+    const box2 = await w.locator('.window-header').boundingBox();
+    await page.mouse.move(box2.x + box2.width / 2, box2.y + box2.height / 2);
+    await page.mouse.down();
+
+    const beforeMove = await w.evaluate((el) => el.style.transform);
+    await page.mouse.move(box2.x + box2.width / 2 - 120, box2.y + box2.height / 2 + 90, { steps: 8 });
+    const duringMove = await w.evaluate((el) => el.style.transform);
+    // The second wobble must actually engage -- the transform must actually
+    // change during the move, proving dragMove found a live dragState entry
+    // instead of no-op'ing.
+    expect(duringMove).not.toBe('');
+    expect(duringMove).not.toBe(beforeMove);
+
+    await page.mouse.up();
+
+    // finally-invariant: settles back to identity, no stranded transform.
+    await expect(async () => {
+      expect(await w.evaluate((el) => el.style.transform)).toBe('');
+    }).toPass({ timeout: 2000 });
+    await expect(w).toBeVisible();
+    await expect(page.locator('body > #window-resume')).toHaveCount(1);
+    await noFxGhostOrCanvas(page);
+
+    // Registry sanity: the controller's in-flight registration for this
+    // element wasn't left stranded by a stale settle()/cancel closure --
+    // an unrelated minimize right after still engages the Tier-1 effect
+    // normally.
+    await w.locator('.button.minimize').click();
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 });
+  });
+
   test('FxController.setTier persists and a subsequent gesture honors it without reload', async ({ page }) => {
     await openApp(page, 'resume'); // default 'auto' setting
 

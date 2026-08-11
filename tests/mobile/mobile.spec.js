@@ -20,9 +20,61 @@ test('tapping a minimized window restores it', async ({ page }) => {
   await openApp(page, 'resume');
   await win(page, 'resume').locator('.button.minimize').tap();
   await expect(win(page, 'resume')).toHaveClass(/minimized/);
+
+  // A touch tap dispatches touchstart (twice-listened: bringToFront(true),
+  // then the guarded preventDefault) followed by (if not suppressed) a
+  // synthetic click -- exactly the double-fire risk defect 1's fix targets.
+  // Count every restore before-event the tap actually produces.
+  await page.evaluate(() => {
+    window.__restoreEvents = [];
+    document.addEventListener('iconostat-before-minimize', (e) => {
+      if (e.detail.entering === false) {
+        window.__restoreEvents.push({ userGesture: e.detail.userGesture });
+      }
+    });
+  });
+
   await page.locator('#tasks #window-resume').tap();
   await expect(win(page, 'resume')).not.toHaveClass(/minimized/);
   await expect(win(page, 'resume')).toHaveClass(/front/);
+
+  const restoreEvents = await page.evaluate(() => window.__restoreEvents);
+  expect(restoreEvents.length).toBe(1);
+  expect(restoreEvents[0].userGesture).toBe(true);
+});
+
+test.describe('Tier 1 (forced, no-preference) touch chip-tap restore', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.addInitScript(() => window.localStorage.setItem('iconostat-fx-tier', '1'));
+  });
+
+  test('a touch tap restores via exactly one userGesture:true before-minimize and completes cleanly', async ({ page }) => {
+    await openApp(page, 'resume');
+    await win(page, 'resume').locator('.button.minimize').tap();
+    await expect(win(page, 'resume')).toHaveClass(/minimized/, { timeout: 2000 });
+
+    await page.evaluate(() => {
+      window.__restoreEvents = [];
+      document.addEventListener('iconostat-before-minimize', (e) => {
+        if (e.detail.entering === false) {
+          window.__restoreEvents.push({ userGesture: e.detail.userGesture });
+        }
+      });
+    });
+
+    await page.locator('#tasks #window-resume').tap();
+    await expect(win(page, 'resume')).not.toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(win(page, 'resume')).toBeVisible();
+    const style = await win(page, 'resume').evaluate((el) => ({ transform: el.style.transform, opacity: el.style.opacity }));
+    expect(style.transform).toBe('');
+    expect(style.opacity).toBe('');
+
+    const restoreEvents = await page.evaluate(() => window.__restoreEvents);
+    expect(restoreEvents.length).toBe(1);
+    expect(restoreEvents[0].userGesture).toBe(true);
+  });
 });
 
 test('the start menu opens and closes via tap', async ({ page }) => {

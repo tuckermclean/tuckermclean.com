@@ -114,6 +114,19 @@ async function minimizeEnter(controller, el) {
     try {
         const startRect = el.getBoundingClientRect();
 
+        // NOTE (iframe cost, minor, no behavior change here): this probe
+        // reparents `el` into the taskbar and back, synchronously, purely to
+        // measure the chip rect -- on top of the real reparent at the end of
+        // the animation (line ~143 below), that's TWO reparents per Tier-1
+        // minimize instead of legacy's one, and an iframe descendant already
+        // reloads on every reparent (pre-existing library behavior, see
+        // README/spec ground rules) -- so a Tier-1 minimize of an
+        // iframe-bearing window reloads that iframe ~twice as often as
+        // legacy. No iframe windows exist on the site today, so this is
+        // latent. Flagged for Agent F's planned cross-origin iframe fixture,
+        // which is expected to demote iframe windows to Tier 1 via
+        // SnapshotError -- that's exactly when this doubles from
+        // theoretical to real.
         const taskbar = controller.getDesktop().taskbar;
         taskbar.appendChild(el);
         el.classList.add('minimized');
@@ -310,9 +323,19 @@ export function dragStart(controller, detail) {
     const state = { lastX: x, lastY: y, lastT: performance.now(), anim: null };
     dragState.set(el, state);
     controller.registerEffect(el, 'wobble', () => {
-        dragState.delete(el);
+        // `registerEffect` invokes a PRIOR in-flight effect's cancel
+        // closure synchronously, from *this* call -- including a still-
+        // settling wobble from a rapid re-grab of the same window (dragEnd's
+        // settle-back animation keeps the effect registered until it
+        // finishes, ~220ms). `dragState` is keyed only by `el`, so if the
+        // just-published `state` above has already been superseded (i.e.
+        // this closure is stale), skip the delete -- otherwise a stale
+        // cancel would wipe out the NEW drag's live state out from under it.
+        // Still always cancel/clean up OUR OWN animation and decoration
+        // below regardless, since those belong to this closure alone.
         if (state.anim) state.anim.cancel();
         el.style.transform = '';
+        if (dragState.get(el) === state) dragState.delete(el);
         // No further unregisterEffect() call needed -- cancelAll()/
         // _cancelFor() already removed us from the registry before invoking
         // this callback.
@@ -362,6 +385,16 @@ export function dragEnd(controller, detail) {
     state.anim = anim;
 
     const settle = () => {
+        // Guard against a stale settle firing after a rapid re-grab of the
+        // same window has already published a newer drag's state for `el`
+        // (dragState is keyed only by `el`) -- this can happen either
+        // because this settle-back animation finished naturally after the
+        // new drag started, or because the new drag's registerEffect() call
+        // cancelled it synchronously (which rejects `anim.finished`, routing
+        // here via .catch()). Either way, an unguarded delete/unregister
+        // would strip the NEW drag's live dragState entry and controller
+        // registration out from under it -- see dragStart's matching guard.
+        if (dragState.get(el) !== state) return;
         dragState.delete(el);
         controller.unregisterEffect(el);
     };
