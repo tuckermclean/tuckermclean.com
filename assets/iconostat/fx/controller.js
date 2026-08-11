@@ -355,6 +355,73 @@ export const FxController = {
             if (compositor && this.tierFor(el) === 2) {
                 const effectMod = await this._loadGenie();
                 if (effectMod) {
+                    if (kind === 'maximize') {
+                        // Open item (impact-wobble warm-load, see progress.md
+                        // task-D report / task-F-brief.md #1): wobble.js's
+                        // maximize-completion impact-jiggle listener is wired
+                        // via a plain `document.addEventListener
+                        // ('iconostat-fx-done', ...)` at MODULE-EVAL time
+                        // (see wobble.js's file banner + its bottom-of-file
+                        // `if (typeof document !== 'undefined')` block) -- it
+                        // only exists once wobble.js has actually been
+                        // imported at least once THIS session. Before this
+                        // fix, the only call site that ever imported
+                        // wobble.js was `_onDrag` (a real drag gesture), so a
+                        // session that maximizes a window before ever
+                        // dragging one got no impact jiggle for that first
+                        // maximize (and every maximize before the first
+                        // drag). Fire-and-forget `_loadWobble()` here --
+                        // deliberately NOT awaited -- warms it in parallel
+                        // with `effectMod.run()` below: genie's own
+                        // choreography (150ms) gives the dynamic import
+                        // plenty of time to resolve and register the
+                        // listener well before `run()` reaches its own
+                        // `iconostat-fx-done` dispatch at the end. Covers
+                        // BOTH maximize and unmaximize (kind==='maximize'
+                        // covers both; `entering` distinguishes them) per
+                        // the open item's wording, even though
+                        // wobble.js's `onFxDone` only actually reacts to
+                        // `effect==='maximize'` (entering:true) --
+                        // importing on unmaximize too is harmless (no
+                        // canvas/GL is created by the import itself, only by
+                        // an actual drag or impact invocation) and keeps
+                        // this call site simple. Already Tier-2-only (this
+                        // whole branch is gated on `tierFor(el) === 2`
+                        // above) -- never runs at Tier 0/1, so it can't
+                        // violate "reduced-motion/Tier 0 = zero canvas/GL".
+                        // `_loadWobble()` already resolves to `null` (never
+                        // rejects, see its own `.catch(() => null)`) on a
+                        // 404/import failure, so this can't introduce a new
+                        // unhandled-rejection path either.
+                        //
+                        // Loading the module alone only wires the LISTENER,
+                        // though -- `runImpactWobble()` also needs a live
+                        // `compositor` reference (normally supplied by
+                        // `dragStart`, see wobble.js's "Impact wobble:
+                        // compositor caching" file-banner section), which a
+                        // session with no prior drag would never otherwise
+                        // have. Supply it here too, once the import
+                        // resolves, via the same `compositor` this function
+                        // already has in hand from its own `_loadTier2()`
+                        // above -- `primeCompositor()` is idempotent
+                        // (first-write-wins) so this composes safely
+                        // whichever order a real drag vs. this warm-load
+                        // happens to resolve in.
+                        // Guard on the function's presence, not just
+                        // `wobble` truthiness: a resolved module namespace
+                        // object without `primeCompositor` (e.g. a test
+                        // double/stub -- see tests/unit/fx-controller-tier2
+                        // .test.js's aliased empty-fx-module.js stub, which
+                        // `_loadWobble()`'s REAL import() resolves to for any
+                        // test that doesn't monkeypatch `_loadWobble` itself)
+                        // must degrade to a no-op here, exactly like every
+                        // other optional-capability check in this file,
+                        // rather than throwing an unhandled rejection out of
+                        // this un-awaited `.then()`.
+                        this._loadWobble().then((wobble) => {
+                            if (wobble && typeof wobble.primeCompositor === 'function') wobble.primeCompositor(compositor);
+                        });
+                    }
                     try {
                         await effectMod.run(this, compositor, el, kind, entering);
                         return;

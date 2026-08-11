@@ -104,27 +104,45 @@ test('iconostat-drag-start/-move/-end fire during a header drag', async ({ page 
   const box = await w.locator('.window-header').boundingBox();
   const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-  const resultPromise = page.evaluate(() => new Promise((resolve) => {
-    const result = { startCount: 0, moveCount: 0, endCount: 0, sawMoveLeftTop: false };
-    document.addEventListener('iconostat-drag-start', () => { result.startCount++; });
+  // Stabilizes a pre-existing intermittent flake (task-F open item #4):
+  // `page.evaluate()` and `page.mouse.*()` are independent CDP round trips
+  // over the same connection. The old version fired `page.evaluate(...)`
+  // WITHOUT awaiting it, then immediately issued `page.mouse.move/down`,
+  // relying on the browser having already installed the listeners by the
+  // time the mouse input arrived -- true almost always (evaluate is sent
+  // first, in Node code order), but not GUARANTEED: `evaluate()` does
+  // Node-side work (serializing the function, resolving the execution
+  // context) before its command actually reaches the wire, while
+  // `page.mouse.move()` has a shorter path -- under load, the mouse command
+  // can overtake it, so the listeners aren't registered yet when
+  // `iconostat-drag-start` fires, and the test hangs on an
+  // `iconostat-drag-end` listener that was never attached either (it times
+  // out rather than failing fast, which is exactly the "intermittent, hard
+  // to pin down" flake signature). The fix: register the listeners (writing
+  // to `window`, not resolving a page-side Promise) in an `evaluate()` call
+  // that IS awaited -- guaranteeing registration has completed in the
+  // browser -- before any mouse input is dispatched. Reading the result back
+  // uses `expect.poll` (a deterministic, auto-retrying condition, not a
+  // fixed `waitForTimeout`) instead of a page-side resolving Promise.
+  await page.evaluate(() => {
+    window.__dragResult = { startCount: 0, moveCount: 0, endCount: 0, sawMoveLeftTop: false };
+    document.addEventListener('iconostat-drag-start', () => { window.__dragResult.startCount++; });
     document.addEventListener('iconostat-drag-move', (e) => {
-      result.moveCount++;
+      window.__dragResult.moveCount++;
       if (typeof e.detail.left === 'number' && typeof e.detail.top === 'number') {
-        result.sawMoveLeftTop = true;
+        window.__dragResult.sawMoveLeftTop = true;
       }
     });
-    document.addEventListener('iconostat-drag-end', () => {
-      result.endCount++;
-      resolve(result);
-    }, { once: true });
-  }));
+    document.addEventListener('iconostat-drag-end', () => { window.__dragResult.endCount++; });
+  });
 
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(start.x + 60, start.y + 40, { steps: 5 });
   await page.mouse.up();
 
-  const result = await resultPromise;
+  await expect.poll(() => page.evaluate(() => window.__dragResult.endCount)).toBe(1);
+  const result = await page.evaluate(() => window.__dragResult);
   expect(result.startCount).toBe(1);
   expect(result.moveCount).toBeGreaterThan(0);
   expect(result.sawMoveLeftTop).toBe(true);

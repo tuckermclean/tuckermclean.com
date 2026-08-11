@@ -123,20 +123,29 @@
 // the maximize-impact listener (a plain `document.addEventListener
 // ('iconostat-fx-done', ...)`, wired once at module-eval time -- there is no
 // call site that "passes in" a compositor for an event listener) has one
-// available. Since wobble.js itself is only ever dynamically imported by
-// controller.js's `_onDrag` (never by `_runEffect`, the minimize/maximize
-// path -- that only loads `./genie.js`), `cachedCompositor` is `null` until
-// the FIRST Tier-2 drag of the session, and the impact-wobble listener is a
-// silent no-op before that point. This is a deliberate, documented tradeoff
-// (not a bug): a session that maximizes a window before ever dragging one
-// simply doesn't get the residual-jiggle flourish for that first maximize;
-// every functional/hard-invariant guarantee (the maximize itself, via
-// genie.js/tier1.js, completes correctly either way) is entirely unaffected
-// -- impact wobble is decorative only. Flagged in the task report per the
-// brief's "report impact-wobble as deferred [if entangled]" guidance --
-// this isn't full entanglement (it doesn't destabilize the core drag path
-// at all), just a narrower activation window than a hypothetical
-// controller.js change (out of scope -- Do Not Edit) could give it.
+// available.
+//
+// UPDATE (task-F-brief.md open item #1, "impact-wobble warm-load"): before
+// this fix, wobble.js was only ever dynamically imported by controller.js's
+// `_onDrag` (never by `_runEffect`, the minimize/maximize path), so
+// `cachedCompositor` stayed `null` -- and the impact-wobble listener a
+// silent no-op -- until the session's FIRST Tier-2 DRAG. A session that
+// maximized a window before ever dragging one got no residual-jiggle
+// flourish for that (or any earlier) maximize. `_runEffect`'s maximize path
+// now ALSO fire-and-forget-imports wobble.js (see controller.js) and, once
+// that import resolves, calls `primeCompositor()` below with the SAME
+// `compositor` module reference it already has in hand from its own
+// `_loadTier2()` -- exactly the reference `dragStart` would otherwise have
+// been the first to hand this file. That closes the gap: the impact jiggle
+// can now engage on a session's very first Tier-2 maximize, with no prior
+// drag required. `primeCompositor()` is idempotent/first-write-wins (see
+// below) so it composes safely regardless of whether a real drag or a
+// maximize warm-load reaches it first. This whole path is unreachable at
+// Tier 0/1 (both call sites -- `_onDrag` and `_runEffect`'s warm-load -- are
+// already gated on `tierFor(el) === 2` in controller.js), so it cannot
+// create a canvas/GL context outside Tier 2. Mobile still skips the impact
+// wobble itself (`runImpactWobble`'s own `if (mobileViewport()) return;`,
+// unchanged) regardless of how `cachedCompositor` got primed.
 
 import { snapshot } from './snapshot.js';
 import { FxController } from './controller.js';
@@ -355,6 +364,31 @@ function currentImpactMax() { return impactMaxDurationOverride === null ? IMPACT
 const dragState = new WeakMap();
 
 let cachedCompositor = null; // see file banner's "Impact wobble: compositor caching" section
+
+// Open item #1 (task-F-brief.md, "impact-wobble warm-load"): lets
+// controller.js's maximize-path warm-load supply a `compositor` reference
+// without requiring a real drag first -- see the file banner's "UPDATE"
+// paragraph. First-write-wins/idempotent on purpose: whichever call site
+// (a real `dragStart`, or this priming call) reaches wobble.js first sets
+// the cache; every later call (of either kind) is then a harmless no-op,
+// since it's always the SAME singleton compositor module reference either
+// way (one shared canvas/compositor per page, per the spec's "one shared
+// canvas, not per-window" decision) -- there is never a reason to overwrite
+// an already-primed cache with an equal value.
+export function primeCompositor(compositor) {
+    if (!cachedCompositor) cachedCompositor = compositor;
+}
+
+// Test-only seam (mirrors `__testTuning`'s naming/intent): lets an e2e test
+// deterministically confirm the warm-load WIRING succeeded (the import
+// resolved and `primeCompositor` ran) without depending on the impact
+// jiggle's own real snapshot/WebGL round trip actually completing visually
+// -- that part is subject to the same sandbox-honesty caveats as every
+// other Tier-2 visual effect in this codebase (see fx-tier2-wobble.spec.js's
+// file banner). Never used by production code.
+export function __testHasCachedCompositor() {
+    return cachedCompositor !== null;
+}
 
 function rectOf(el) {
     const r = el.getBoundingClientRect();
@@ -585,6 +619,38 @@ export async function dragStart(controller, compositor, detail) {
         throw e;
     }
 
+    // Open item (task-F-brief.md #3) audit result: a prior review flagged
+    // this branch as possibly unreachable/dead under the beginGen
+    // generation-guard model (task-B2fix's EffectSupersededError). It is
+    // NOT dead -- it's the ONLY path that fires when `el` is cancelled
+    // (resize/orientationchange/cancelAll/context-loss/a plain
+    // `_cancelFor(el)`) during THIS gesture's own snapshot, and no COMPETING
+    // beginEffect(el) call for the same `el` ever starts. That distinction
+    // matters: `beginGen`'s generation guard only throws
+    // `EffectSupersededError` (the branch above) when a NEWER beginEffect(el)
+    // call bumps the generation before this one's snapshot resolves -- i.e.
+    // when SOME OTHER effect took over `el`. A bare cancellation with
+    // nothing else claiming `el` (by far the common real-world case: window
+    // resize/cancelAll firing mid-drag-start, or a resize-triggered
+    // `_cancelFor` on this exact el) never touches `beginGen` at all, so our
+    // own (only) `beginEffect(el)` call resolves normally, lands here with
+    // `settledEarly === true`, and this is what reveals `el` (see below) --
+    // exactly matching genie.js's `began`-flag rule in spirit (only
+    // endEffect what you actually began), just expressed as "we reached this
+    // line because our own beginEffect() didn't throw" instead of an
+    // explicit boolean field. Exercised by the cancellation-matrix e2e
+    // coverage added by Agent F (tests/e2e/fx-cancellation-matrix.spec.js's
+    // "wobble-drag x resize fired IMMEDIATELY after mousedown" test): firing
+    // a resize/cancelAll-style trigger right after mousedown, before
+    // beginEffect's own snapshot round trip has resolved, targets this
+    // exact window -- inherently timing-dependent (whether a given run
+    // actually lands inside it depends on real snapshot latency vs. the
+    // trigger's dispatch), so that test's assertion is the hard invariant
+    // (never stranded) rather than "this branch specifically ran", but its
+    // existence is what makes this branch's reachability an ongoing,
+    // continuously-exercised claim rather than a one-time audit note.
+    // Retained as-is --
+    // removing it would strand `el` fx-ghosted/hidden on that path.
     if (settledEarly) {
         // Cancelled while snapshotting. Our OWN beginEffect() succeeded
         // after the fact, so *something* now needs to reveal `el` --

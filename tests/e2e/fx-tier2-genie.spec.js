@@ -152,7 +152,17 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
     await noFxGhostOrHiddenCanvas(page);
 
     const events = await page.evaluate(() => window.__fxDone);
-    expect(events.map((e) => e.effect)).toEqual(['maximize', 'unmaximize']);
+    // genie's OWN pair must be exactly this shape and in this order. A
+    // 'wobble' event MAY also interleave right after 'maximize' now (task-F
+    // open item #1's impact-wobble warm-load fix, see controller.js/
+    // wobble.js: the maximize-completion impact jiggle intentionally
+    // engages even without a prior drag -- this fixture, a single forced-
+    // Tier-2 window that's never been dragged, is exactly that scenario) --
+    // filter it out rather than assert its absence, which would contradict
+    // the fix fx-tier2-wobble.spec.js's "impact-wobble warm-load" test
+    // exercises directly.
+    const genieEvents = events.filter((e) => e.effect !== 'wobble');
+    expect(genieEvents.map((e) => e.effect)).toEqual(['maximize', 'unmaximize']);
   });
 
   test('a viewport resize mid-genie-minimize jump-cuts to the correct end state (finally-invariant holds)', async ({ page }) => {

@@ -524,4 +524,59 @@ test.describe('Tier 2 wobble (forced, no-preference)', () => {
     await expect(w).not.toHaveClass(/fx-ghost/);
     await noFxGhostOrHiddenCanvas(page);
   });
+
+  test('open item #1 (impact-wobble warm-load): maximizing a FIRST window this session -- no prior drag at all -- wires the impact jiggle', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    // Register (and await registration of) a marker BEFORE the maximize
+    // click, per the fx-seams drag-events flake fix's lesson (task-F open
+    // item #4): never rely on an unawaited evaluate() racing a subsequent
+    // input/network action. This directly proves controller.js's maximize
+    // path -- not a drag -- is what triggered the wobble.js import: no
+    // `dragStart` (the OTHER call site that loads wobble.js) has run in
+    // this session at all.
+    const wobbleResponsePromise = page.waitForResponse((r) => r.url().endsWith('/iconostat/fx/wobble.js'));
+    await page.evaluate(() => {
+      window.__wobbleDoneResume = false;
+      document.addEventListener('iconostat-fx-done', (e) => {
+        if (e.detail.name === 'resume' && e.detail.effect === 'wobble') window.__wobbleDoneResume = true;
+      });
+    });
+
+    await w.locator('.button.maximize').click();
+    await expect(w).toHaveClass(/maximized/, { timeout: 2000 });
+
+    // 1) The warm-load actually fired the import (structural proof of the
+    // fix, independent of GL/snapshot timing).
+    await wobbleResponsePromise;
+
+    // 2) DETERMINISTIC, hard assertion: `primeCompositor()` actually ran --
+    // this is the exact thing the fix changes. Before this fix,
+    // `cachedCompositor` (see wobble.js's file banner) stayed `null` forever
+    // without a prior drag, and `runImpactWobble` silently no-op'd on every
+    // maximize for the rest of the session via its own
+    // `if (!compositor) return;` guard. This is independent of whether the
+    // impact's own snapshot/WebGL round trip below happens to succeed in
+    // this particular sandbox run.
+    await expect.poll(() => page.evaluate(async () => {
+      const wobble = await import('/iconostat/fx/wobble.js');
+      return wobble.__testHasCachedCompositor();
+    }), { timeout: 4000 }).toBe(true);
+
+    // 3) Best-effort observation of the jiggle itself actually completing
+    // end-to-end (fires 'iconostat-fx-done'{effect:'wobble'}) -- same
+    // sandbox-honesty caveat as the sibling "after a prior drag" test above
+    // (real foreignObject/WebGL round trip, not asserted as a hard
+    // requirement here): log it, but don't fail the test on it alone, since
+    // #2 already proves the fix's actual wiring deterministically.
+    const jiggleObserved = await page.evaluate(() => window.__wobbleDoneResume).catch(() => false);
+    test.info().annotations.push({ type: 'impact-jiggle-fired', description: String(jiggleObserved) });
+
+    // 4) Hard invariant regardless: ends fully revealed, no strand.
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    await noFxGhostOrHiddenCanvas(page);
+  });
 });

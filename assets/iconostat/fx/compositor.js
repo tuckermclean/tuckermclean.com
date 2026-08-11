@@ -284,7 +284,27 @@ function onContextLost(e) {
 }
 
 function onContextRestored() {
-    ensureCanvas(); // recreates gl + program lazily; safe even if a gesture never resumes
+    // Open item (task-F-brief.md #2): `ensureCanvas()` -> `initGL()` can
+    // throw the exact same shader compile/link failure `beginEffect()` and
+    // `runWarmupProbe()` already guard against elsewhere (headless-sandbox
+    // quirk / driver bug -- see their own try/catch comments), but THIS call
+    // site is invoked directly from the browser's own
+    // `webglcontextrestored` event -- nothing here awaits or catches it, so
+    // an unguarded throw would surface as an uncaught console error with no
+    // functional consequence (ensureCanvas() already leaves `gl`/`program`
+    // null on a throw, which every gl-gated caller -- drawMesh, beginEffect,
+    // runWarmupProbe -- already treats as "context lost gate, no-op or
+    // degrade": drawMesh silently skips, beginEffect throws a typed
+    // SnapshotError the caller falls through Tier 1 on, and a future
+    // gesture's own beginEffect() will simply retry ensureCanvas() again).
+    // Swallow here too, purely to keep a failed RESTORE from logging an
+    // uncaught error -- no strand, no behavior change either way.
+    try {
+        ensureCanvas(); // recreates gl + program lazily; safe even if a gesture never resumes
+    } catch (e) {
+        // See above -- a failed re-init already degrades quietly everywhere
+        // else; this handler has nothing further to do.
+    }
 }
 
 function ensureCanvas() {
