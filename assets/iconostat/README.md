@@ -87,6 +87,8 @@ Windows are children of `document.body`, not of `<iconostat-desktop>`; the deskt
 | `iconostat-close` | `<iconostat-window>` (`close()`) | yes | `{ name }` | The window requests closing. The desktop unregisters it; actually removing the element from the DOM (and running any consumer cleanup) is a site-glue responsibility (see `assets/js/window.js`). |
 | `iconostat-promoted` | `<iconostat-desktop>` (`promoteTop()`) | dispatched directly on `document` | `{ empty, minimized }` | Announces the outcome of the last top-window promotion: `empty` is true if no windows remain registered; `minimized` is true if the (new) top window is minimized. Used by the site-side router to decide between `history.replaceState`/`pushState`. |
 | `iconostat-menu-open` | `<iconostat-taskbar>` (start-button `click` handler) | dispatched directly on `document` | `{ x, y, offset }` | Requests that `<iconostat-menu>` open at `(x, y)`; `offset` (boolean) tells the menu to shift left by its own width first (used when opening from a button, so the menu doesn't overhang the viewport edge under the button). Consumed by `<iconostat-menu>`'s `document`-level listener. A right-click anywhere outside `.window-body` opens the menu the same way but *without* this event — `<iconostat-menu>` handles `contextmenu` directly and calls its own positioning logic with `offset: false`. |
+| `iconostat-content-loading` | **The host's content loader** (not the library — e.g. `assets/js/window.js`'s `loadHTML()`) | dispatched directly on `document` | none | Announces that a content fetch has started. `<iconostat-desktop>` listens for this on `document` and increments an in-flight load counter, showing its loading spinner while the count is ≥1. |
+| `iconostat-content-loaded` | **The host's content loader** (not the library) | dispatched directly on `document` | none | Announces that a content fetch has reached a terminal outcome (success, retries-exhausted, or fetch failure). `<iconostat-desktop>` decrements the in-flight load counter and hides the spinner once it reaches 0. The host must dispatch exactly one `iconostat-content-loaded` per `iconostat-content-loading` (i.e. balance them across every terminal branch of the load, not just the success path) or the spinner sticks. |
 
 ### Site responsibilities
 
@@ -167,6 +169,27 @@ never vary with theme, so they're only ever declared once.
 | `--iconostat-maximize-bg` | `--maximize-bg` |
 | `--iconostat-maximize-bg-gradient` | `--maximize-bg-gradient` |
 | `--iconostat-symlink-color` | `--symlink-color` |
+
+### Spinner properties
+
+Unlike the properties above, these have no built-in fallback — the library
+ships no spinner image of its own. The spinner element (shown/hidden by the
+`iconostat-content-loading`/`iconostat-content-loaded` events, see
+[Events](#events)) always exists in the DOM, but renders no image until the
+host sets `--iconostat-spinner-image`. This keeps the spinner *mechanism*
+(count tracking, show/hide, bounce/follow-cursor behavior) in the library
+while the spinner's *branding* (which image to show) stays a host concern —
+same split as the start-button icon and menu items (see
+[Site responsibilities](#site-responsibilities)).
+
+| Property | Default | Meaning |
+|---|---|---|
+| `--iconostat-spinner-image` | `none` (unset → no spinner rendered) | Host-supplied image (e.g. `url('/start-button.webp')`) shown inside the spinner while a content load is in flight. |
+| `--iconostat-spinner-size` | `2.5rem` | Controls the rendered width/height of the spinner (and its image). |
+
+See `assets/css/style.css`'s `:root` block for the site's setting (it
+reuses the already-cached start-button/eye image, so wiring this up costs
+no new network request).
 
 ## Build / packaging
 

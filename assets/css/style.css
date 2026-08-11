@@ -148,6 +148,11 @@ Variables
     --iconostat-maximize-bg: var(--maximize-bg);
     --iconostat-maximize-bg-gradient: var(--maximize-bg-gradient);
     --iconostat-symlink-color: var(--symlink-color);
+
+    /* Loading spinner: site-supplied branding image (the library ships no
+    image of its own -- see assets/iconostat/README.md). Theme-independent
+    (same eye in both light and dark), so declared once here. */
+    --iconostat-spinner-image: url('/start-button.webp');
 }
 
 .toggled {

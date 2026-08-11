@@ -77,6 +77,9 @@ function toggleMode() {
 
 // Load External HTML
 function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
+    if (retries === 5) {
+        document.dispatchEvent(new CustomEvent('iconostat-content-loading'));
+    }
     fetch(url)
     .then(response => {
         if (!response.ok) {
@@ -225,16 +228,19 @@ function loadHTML(url, targetElementId, callback = () => {}, retries = 5) {
             if (typeof(callback) === 'function') {
                 callback(ancestor);
             }
+            document.dispatchEvent(new CustomEvent('iconostat-content-loaded'));
         } else {
             if (retries > 0) {
                 setTimeout(() => loadHTML(url, targetElementId, callback, retries - 1), 100);
             } else {
                 callback(undefined);
+                document.dispatchEvent(new CustomEvent('iconostat-content-loaded'));
             }
         }
     })
     .catch(error => {
         console.error('Error loading HTML:', error);
+        document.dispatchEvent(new CustomEvent('iconostat-content-loaded'));
     });
 }
 

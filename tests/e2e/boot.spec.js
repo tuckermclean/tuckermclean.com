@@ -106,3 +106,35 @@ test('a freshly opened window is revealed (visible, positioned, no leftover buil
   expect(box.width).toBeGreaterThan(0);
   expect(box.height).toBeGreaterThan(0);
 });
+
+test('the loading spinner shows on content-loading events and hides when balanced', async ({ page }) => {
+  await openApp(page);
+  const spinner = page.locator('.iconostat-spinner');
+  await expect(spinner).toHaveCount(1);
+  await expect(spinner).not.toHaveClass(/active/);
+  // two concurrent loads share one indicator
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loading')));
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loading')));
+  await expect(spinner).toHaveClass(/active/);
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loaded')));
+  await expect(spinner).toHaveClass(/active/);   // still one load in flight
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loaded')));
+  await expect(spinner).not.toHaveClass(/active/); // count back to 0
+});
+
+test('opening a window fires iconostat-content-loaded and leaves no stuck spinner', async ({ page }) => {
+  await openApp(page);
+  const loaded = page.evaluate(() => new Promise(res => {
+    document.addEventListener('iconostat-content-loaded', () => res(true), { once: true });
+  }));
+  await openViaMenu(page, 'Resume');
+  expect(await loaded).toBe(true);
+  await expect(page.locator('.iconostat-spinner')).not.toHaveClass(/active/); // count settled to 0
+});
+
+test('the spinner image is the site-supplied eye via --iconostat-spinner-image', async ({ page }) => {
+  await openApp(page);
+  const bg = await page.evaluate(() =>
+    getComputedStyle(document.querySelector('.iconostat-spinner-eye')).backgroundImage);
+  expect(bg).toContain('start-button');
+});
