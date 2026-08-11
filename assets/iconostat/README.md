@@ -170,15 +170,17 @@ never vary with theme, so they're only ever declared once.
 | `--iconostat-maximize-bg-gradient` | `--maximize-bg-gradient` |
 | `--iconostat-symlink-color` | `--symlink-color` |
 
-### Spinner properties
+### Spinner and start-button properties
 
 Unlike the properties above, these have no built-in fallback — the library
-ships no spinner image of its own. The spinner element (shown/hidden by the
-`iconostat-content-loading`/`iconostat-content-loaded` events, see
-[Events](#events)) always exists in the DOM, but renders no image until the
-host sets `--iconostat-spinner-image`. This keeps the spinner *mechanism*
-(count tracking, show/hide, bounce/follow-cursor behavior) in the library
-while the spinner's *branding* (which image to show) stays a host concern —
+ships no spinner image and no start-button image of its own. The spinner
+element (shown/hidden by the `iconostat-content-loading`/`iconostat-content-loaded`
+events, see [Events](#events)) always exists in the DOM, but renders no image
+until the host sets `--iconostat-spinner-image`. Likewise, `.start-button`
+renders no background image until the host sets `--iconostat-start-button-image`.
+This keeps the *mechanism* (spinner count tracking/show/hide/bounce/
+follow-cursor behavior; start-button click-to-open-menu wiring) in the
+library while the *branding* (which image to show) stays a host concern —
 same split as the start-button icon and menu items (see
 [Site responsibilities](#site-responsibilities)).
 
@@ -186,6 +188,7 @@ same split as the start-button icon and menu items (see
 |---|---|---|
 | `--iconostat-spinner-image` | `none` (unset → no spinner rendered) | Host-supplied image (e.g. `url('/start-button.webp')`) shown inside the spinner while a content load is in flight. |
 | `--iconostat-spinner-size` | `2.5rem` | Controls the rendered width/height of the spinner (and its image). |
+| `--iconostat-start-button-image` | `none` (unset → no start-button image rendered) | Host-supplied image (e.g. `url('/start-button.webp')`) shown as `.start-button`'s background. Mirrors `--iconostat-spinner-image`. |
 
 See `assets/css/style.css`'s `:root` block for the site's setting (it
 reuses the already-cached start-button/eye image, so wiring this up costs

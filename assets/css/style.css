@@ -153,6 +153,19 @@ Variables
     image of its own -- see assets/iconostat/README.md). Theme-independent
     (same eye in both light and dark), so declared once here. */
     --iconostat-spinner-image: url('/start-button.webp');
+
+    /* Start button: site-supplied branding image (the library ships no
+    image of its own -- see assets/iconostat/README.md). Defaults to GIF;
+    upgraded to WebP below where supported. */
+    --iconostat-start-button-image: url('/start-button.gif');
+}
+
+/* @supports can't nest inside a rule, so the WebP upgrade for the start
+button image lives in its own top-level block rather than inside :root. */
+@supports (background-image: url('/start-button.webp')) {
+    :root {
+        --iconostat-start-button-image: url('/start-button.webp');
+    }
 }
 
 .toggled {
