@@ -104,13 +104,31 @@
          for everything but the small controller. */}}
     {{ $fxController := resources.Get "iconostat/fx/controller.js" | js.Build (dict "targetPath" "iconostat/fx/controller.js" "format" "esm" "externals" (slice "./tier1.js" "./compositor.js" "./genie.js" "./wobble.js")) }}
     {{ $fxTier1 := resources.Get "iconostat/fx/tier1.js" | js.Build (dict "targetPath" "iconostat/fx/tier1.js" "format" "esm") }}
+    {{/* compositor.js (Agent B) statically imports `./snapshot.js` (its own
+         sibling deliverable) and `./controller.js` (for the FxController
+         singleton -- see compositor.js's file banner). Both MUST be marked
+         external here too, for the same reason tier1.js/genie.js/wobble.js
+         are external on controller.js's OWN js.Build above: without it,
+         esbuild inlines controller.js's entire module body straight into
+         compositor.js's bundle, producing a SECOND, disconnected
+         `FxController` object -- `compositor.js`'s inlined copy would call
+         `cancelAll()`/`getDesktop()` on an instance nobody ever
+         `init()`-ed, instead of the one real singleton `main.js` wired up.
+         snapshot.js is marked external purely to keep it served at its own
+         stable, independently-cacheable path, matching every other fx
+         module (also avoids two separate `SnapshotError` class identities
+         existing at runtime, though controller.js only ever compares
+         `e.name === 'SnapshotError'`, not `instanceof`, specifically so
+         that would be harmless even if it happened). */}}
+    {{ $fxCompositor := resources.Get "iconostat/fx/compositor.js" | js.Build (dict "targetPath" "iconostat/fx/compositor.js" "format" "esm" "externals" (slice "./snapshot.js" "./controller.js")) }}
+    {{ $fxSnapshot := resources.Get "iconostat/fx/snapshot.js" | js.Build (dict "targetPath" "iconostat/fx/snapshot.js" "format" "esm") }}
     {{/* Not piped through resources.Minify: Minify renames output to
          `fx.min.css`, which would break controller.js's
          `new URL('./fx.css', import.meta.url)` runtime reference -- this
          file is tiny (one rule) so minification isn't worth the indirection. */}}
     {{ $fxCss := resources.Get "iconostat/fx/fx.css" }}
     <link rel="modulepreload" href="{{ $fxController.RelPermalink }}">
-    <!-- fx/tier1.js + fx/fx.css: lazy-loaded by controller.js at runtime; published here without an eager fetch -- {{ $fxTier1.RelPermalink }} {{ $fxCss.RelPermalink }} -->
+    <!-- fx/tier1.js + fx/compositor.js + fx/snapshot.js + fx/fx.css: lazy-loaded by controller.js at runtime; published here without an eager fetch -- {{ $fxTier1.RelPermalink }} {{ $fxCompositor.RelPermalink }} {{ $fxSnapshot.RelPermalink }} {{ $fxCss.RelPermalink }} -->
     {{/* Critical: main.js's own dynamic `import('../iconostat/fx/controller.js')`
          (see the FX bootstrap there) must ALSO be marked external here, on
          bundle.js's own js.Build call -- otherwise esbuild resolves and

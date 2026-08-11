@@ -59,8 +59,21 @@ function readStoredTier() {
 // tier-selection contract. Otherwise: explicit '0'/'1'/'2' pin that tier
 // (with '2' still falling back to 1 if WebGL2 truly isn't available);
 // 'auto' (the default, including no stored value at all) probes for
-// WebGL2 -- combined, when Agent B's compositor lands, with its warmup
-// verdict (treated as "capable" until that module exists).
+// WebGL2.
+//
+// This only picks a Tier-2 CANDIDATE -- it deliberately does NOT run the
+// compositor's warmup probe (that needs a live GL context, and creating one
+// here, eagerly, on every page load, would violate the "Tier-0/reduced-
+// motion machines must still create no canvas ever" hard invariant, since
+// computeTier() runs unconditionally from init() even when the answer is
+// about to be "0"). Instead, the warmup verdict is applied LAZILY, the FIRST
+// time `_loadTier2()` actually runs (i.e. the first time some window's
+// `tierFor(el) === 2` and a real gesture needs the compositor) -- see
+// `_loadTier2()` below. If the verdict comes back "demote", `_loadTier2()`
+// sets `this.tier = 1` session-wide and caches that (both via its own
+// `_tier2Promise` cache and the compositor's internal `warmupPromise` cache)
+// so the probe never re-runs and every subsequent gesture already sees
+// `tier === 1` without re-touching the GL context.
 function computeTier(explicitSetting) {
     if (reducedMotionRequested()) return 0;
     const setting = explicitSetting || readStoredTier() || 'auto';
@@ -81,8 +94,9 @@ export const FxController = {
     // el -> { name, cancel(jumpToEnd) }. Every currently-running fx effect,
     // regardless of tier, registers itself here so cancelAll() can reach it.
     _inFlight: new Map(),
-    // Per-window tier ceiling (SnapshotError demotions, fed in by the
-    // compositor once it exists; a plain WeakMap keeps this a no-op today).
+    // Per-window tier ceiling (SnapshotError demotions -- see `_runEffect`/
+    // `_onDrag` below, which call `demote()` after catching a SnapshotError
+    // thrown by genie.js/wobble.js's own `compositor.beginEffect()` call).
     _demotions: new WeakMap(),
 
     // -- Frozen public API --------------------------------------------------
@@ -194,19 +208,40 @@ export const FxController = {
         return this._tier1Promise;
     },
 
-    // Tier-2 modules (compositor.js/genie.js/wobble.js) are not built by
-    // this agent -- Agents B/C/D land them later, unchanged against this
-    // same call site. Until they exist, this import always rejects (404),
-    // which is exactly the degradation path this try/catch exists to
-    // exercise: demote to Tier 1 for the rest of the session and let the
-    // caller fall through to the Tier-1 effect.
-    async _loadTier2() {
-        try {
-            return await import('./compositor.js');
-        } catch (e) {
-            this.tier = 1;
-            return null;
+    // genie.js/wobble.js are not built by this agent -- Agents C/D land them
+    // later, unchanged against this same call site (see `_runEffect`/
+    // `_onDrag` below and compositor.js's file-banner contract for the exact
+    // invocation signature they must export).
+    //
+    // `compositor.js` (this agent's own deliverable) DOES exist from here
+    // on, so the import below now genuinely succeeds -- which is exactly the
+    // regression trap documented at `_runEffect`: succeeding here must NOT
+    // by itself make a gesture "fully Tier 2" (there's no genie/wobble yet
+    // to render anything). This function's only job is: (1) load the
+    // compositor, demoting to Tier 1 if that somehow fails; (2) the FIRST
+    // time it succeeds, run the compositor's warmup probe and demote to
+    // Tier 1 session-wide if the verdict says the GPU is too slow. Whether
+    // an effect module is actually present is `_runEffect`/`_onDrag`'s
+    // concern, not this function's.
+    _loadTier2() {
+        if (!this._tier2Promise) {
+            this._tier2Promise = (async () => {
+                let compositor;
+                try {
+                    compositor = await import('./compositor.js');
+                } catch (e) {
+                    this.tier = 1;
+                    return null;
+                }
+                const verdict = await compositor.warmup();
+                if (verdict === 'demote') {
+                    this.tier = 1;
+                    return null;
+                }
+                return compositor;
+            })();
         }
+        return this._tier2Promise;
     },
 
     _wireEvents() {
@@ -283,24 +318,92 @@ export const FxController = {
         this._runEffect(el, kind, entering);
     },
 
+    // THE REGRESSION TRAP (see docs/superpowers/specs/.../task-B-brief.md):
+    // the instant compositor.js exists, `_loadTier2()` starts succeeding.
+    // Naively treating "compositor present" as "fully Tier 2" would animate
+    // every Tier-2-selected gesture with NOTHING (no genie.js/wobble.js
+    // exists yet to actually render anything). The fix: Tier 2 only fully
+    // engages once the ACTUAL effect module is present too -- absent (404,
+    // the current post-B/pre-C-D state) or a `SnapshotError` from it always
+    // falls through to the existing Tier-1 effect, so a real gesture's
+    // user-visible result is unchanged from before this file existed.
     async _runEffect(el, kind, entering) {
         if (this.tierFor(el) === 2) {
             const compositor = await this._loadTier2();
-            if (compositor) {
-                // Tier-2 choreography (genie.js/wobble.js) is wired here once
-                // Agents C/D land it -- same call site, no controller change
-                // needed. Until then `_loadTier2()` always demotes to 1
-                // above, so this branch is unreachable today.
-                return;
+            // Re-check tierFor() AFTER the await, not just before it:
+            // `_loadTier2()`'s warmup probe (first call only) or a
+            // SnapshotError-driven per-window demote that raced in while we
+            // were awaiting can both have dropped this window (or the whole
+            // session) to Tier 1 in the meantime -- trusting a pre-await
+            // snapshot of `tierFor(el)` here would let a just-demoted window
+            // slip through to the tier-2 branch below anyway.
+            if (compositor && this.tierFor(el) === 2) {
+                const effectMod = await this._loadGenie();
+                if (effectMod) {
+                    try {
+                        await effectMod.run(this, compositor, el, kind, entering);
+                        return;
+                    } catch (e) {
+                        if (!(e && e.name === 'SnapshotError')) throw e; // an unrelated bug in genie.js must not be silently swallowed as "just fall back to Tier 1"
+                        this.demote(el, 1); // SnapshotError -> per-window demotion: this el skips Tier 2 for the rest of the session
+                        // fall through to Tier 1 below, for this gesture too
+                    }
+                }
+                // effectMod is null: genie.js doesn't exist yet (404) -- the
+                // exact post-B/pre-C-D state. Fall through to Tier 1 instead
+                // of returning with nothing rendered.
             }
-            // fallthrough: demoted to Tier 1 by _loadTier2()'s catch.
         }
         const tier1 = await this._loadTier1();
         tier1.run(this, el, kind, entering);
     },
 
-    _onDrag(fn, detail) {
-        if (this.tierFor(detail.el) === 0) return;
-        this._loadTier1().then((m) => m[fn](this, detail));
+    // Analogous Tier-2 branch for drag/wobble. Each of dragStart/dragMove/
+    // dragEnd independently awaits the same cached `_loadTier2()`/
+    // `_loadWobble()` promises -- since `_onDrag` is invoked synchronously,
+    // in event-dispatch order, from `_wireEvents`' listeners, and every call
+    // chains off THE SAME already-registered promises, microtask FIFO
+    // ordering guarantees dragStart's continuation runs before dragMove's
+    // even once those promises are long since settled (see compositor.js's
+    // file-banner contract for what this means for wobble.js).
+    async _onDrag(fn, detail) {
+        const el = detail.el;
+        if (this.tierFor(el) === 0) return;
+        if (this.tierFor(el) === 2) {
+            const compositor = await this._loadTier2();
+            if (compositor && this.tierFor(el) === 2) {
+                const wobble = await this._loadWobble();
+                if (wobble) {
+                    try {
+                        await wobble[fn](this, compositor, detail);
+                        return;
+                    } catch (e) {
+                        if (!(e && e.name === 'SnapshotError')) throw e;
+                        this.demote(el, 1);
+                        // fall through to Tier 1 for this event only -- see
+                        // compositor.js's contract comment for why
+                        // dragMove/dragEnd must tolerate a mid-gesture switch.
+                    }
+                }
+            }
+        }
+        const tier1 = await this._loadTier1();
+        tier1[fn](this, detail);
+    },
+
+    // Cached per-module dynamic-import promises for the Tier-2 effect
+    // modules -- mirrors `_loadTier1`'s caching pattern. Each `.catch(() =>
+    // null)` is the degradation path this whole file's regression-trap fix
+    // depends on: genie.js/wobble.js not existing yet (404) resolves to
+    // `null` here, which `_runEffect`/`_onDrag` treat as "fall through to
+    // Tier 1", not as an error.
+    _loadGenie() {
+        if (!this._geniePromise) this._geniePromise = import('./genie.js').catch(() => null);
+        return this._geniePromise;
+    },
+
+    _loadWobble() {
+        if (!this._wobblePromise) this._wobblePromise = import('./wobble.js').catch(() => null);
+        return this._wobblePromise;
     },
 };
