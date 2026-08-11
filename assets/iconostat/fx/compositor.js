@@ -150,6 +150,21 @@ import { FxController } from './controller.js';
 
 export { SnapshotError };
 
+// Thrown by `beginEffect(el)` (task-B2fix, see the swap-protocol section
+// below for the full writeup) when a NEWER `beginEffect(el)` call for the
+// SAME `el` started -- and thus took ownership of `el`'s fx-ghost/canvas/
+// texture -- while this call's own (slower) snapshot was still in flight.
+// Callers (genie.js/wobble.js) MUST catch this specifically and abandon
+// quietly: no `endEffect`, no rethrow (a Tier-1 fallthrough would
+// double-animate `el`, which the superseding effect already owns), no
+// `iconostat-fx-done` dispatch of their own.
+export class EffectSupersededError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'EffectSupersededError';
+    }
+}
+
 export const CANVAS_ID = 'iconostat-fx-canvas';
 
 const VERTEX_SRC = `#version 300 es
@@ -186,6 +201,14 @@ const meshCache = new Map(); // "colsxrows" -> { positionBuffer, uvBuffer, index
 
 let activeEffectCount = 0; // number of beginEffect() calls not yet matched by endEffect()
 const elTexture = new WeakMap(); // el -> WebGLTexture, so endEffect() knows what to release
+// el -> generation counter (task-B2fix). Bumped at the very TOP of every
+// beginEffect(el) call, before its await -- so a call whose async snapshot
+// resolves AFTER a newer beginEffect(el) has started for the same el can
+// tell it's been superseded (see beginEffect's own comment below for the
+// full race + rationale). A WeakMap needs no reset/cleanup: it GCs itself
+// along with el, and the counter only ever needs to be "monotonic per el
+// for as long as el exists", never reset to 0.
+const beginGen = new WeakMap();
 
 let needsClear = true;
 let clearLoopRunning = false;
@@ -565,6 +588,22 @@ export function warmup({ forceVerdict } = {}) {
 // Agents C/D -- this is just the implementation.
 
 export async function beginEffect(el) {
+    // Generation guard (task-B2fix). Captured BEFORE the await, synchronously,
+    // in the SAME turn as whatever `controller.registerEffect(el, ...)` call
+    // the caller made just before this (per the C/D contract: "a new effect
+    // always registerEffects -- jump-cutting the prior -- and THEN calls
+    // beginEffect"). That ordering is what makes "highest gen" and "current
+    // registered owner" the same effect: the LAST beginEffect(el) to START
+    // (not to RESOLVE) is always the one whose registerEffect call most
+    // recently jump-cut everything before it. So when an OLDER call's await
+    // finally resolves after a newer one already started, comparing its
+    // captured `myGen` against the (by-then-bumped) live value is exactly
+    // "am I still the current owner, or did someone newer already take
+    // over" -- see the check below, once we know we have something (a
+    // texture) that would otherwise need releasing/attributing.
+    const myGen = (beginGen.get(el) || 0) + 1;
+    beginGen.set(el, myGen);
+
     // snapshot() throws SnapshotError before touching `el`'s DOM at all (see
     // snapshot.js) -- if it rejects, this function has done nothing yet
     // either (no fx-ghost, no canvas shown), so the caller's fall-through-to-
@@ -590,6 +629,21 @@ export async function beginEffect(el) {
         // caller demotes/falls through instead of animating into a dead GL
         // context.
         throw new SnapshotError('compositor: WebGL2 context unavailable at beginEffect');
+    }
+
+    // The actual supersede check (task-B2fix), placed HERE deliberately:
+    // AFTER the await and the ensureCanvas()/gl checks above (so a genuine
+    // SnapshotError from either of those still wins and reports as itself),
+    // but BEFORE uploadTexture()/elTexture/fx-ghost/activeEffectCount below.
+    // If a newer beginEffect(el) call has started since we captured myGen,
+    // it already owns el (see the rationale above) -- abort here WITHOUT
+    // touching any shared state: there's no texture to release yet (we
+    // haven't uploaded), and el was never hidden by us (fx-ghost hasn't been
+    // added yet), so there's nothing of ours to undo. Everything from here
+    // to the end of the function is synchronous, so once this check passes
+    // the remaining bookkeeping is atomic.
+    if (beginGen.get(el) !== myGen) {
+        throw new EffectSupersededError('compositor: beginEffect(el) superseded by a newer beginEffect(el) call for the same el');
     }
 
     const texture = uploadTexture(rasterized);

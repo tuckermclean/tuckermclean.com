@@ -556,6 +556,26 @@ export async function dragStart(controller, compositor, detail) {
         const res = await compositor.beginEffect(el);
         texture = res.texture; width = res.width; height = res.height;
     } catch (e) {
+        if (e && e.name === 'EffectSupersededError') {
+            // Superseded mid-snapshot (task-B2fix -- see compositor.js's
+            // beginGen guard and the matching genie.js catch for the full
+            // rationale): a NEWER beginEffect(el) call started -- and, per
+            // the C/D contract, always registerEffect()s before calling
+            // beginEffect(), so whatever now owns `el` already jump-cut our
+            // OWN placeholder registration above (which only ever flips
+            // `settledEarly`, no state to unwind). No `dragState` entry was
+            // ever set for this gesture, so dragMove/dragEnd already no-op
+            // via their own `if (!state) return`. We never took ownership
+            // of `el` (no texture uploaded, no fx-ghost of our own), so
+            // there's nothing to release/reveal -- and we must NOT call
+            // `controller.unregisterEffect(el)` here: `el`'s registry entry
+            // now belongs to the superseding effect, not to us, and
+            // deleting it would strand ITS ability to be cancelled by a
+            // later resize/cancelAll. Abandon quietly: no endEffect, no
+            // rethrow (a Tier-1 fallthrough would double-animate `el` on
+            // top of whatever now owns it).
+            return;
+        }
         // SnapshotError (or anything else) -- propagate so controller.js
         // falls through to Tier 1 for this event. No dragState was ever
         // set, so dragMove/dragEnd for this gesture harmlessly no-op via

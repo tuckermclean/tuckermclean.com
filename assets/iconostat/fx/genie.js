@@ -236,6 +236,16 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
 
     const myState = {
         kind: 'minimize', entering, settled: false, reversing: false, committed: false,
+        // began (task-B2fix): true only once THIS instance actually owns
+        // el's fx-ghost/canvas -- either because ITS OWN beginEffect(el)
+        // resolved successfully, or because it inherited ownership via a
+        // reverse-from-current-t handoff (see below). "Don't end what you
+        // didn't begin": every endEffect(el) call this function makes is
+        // gated on this flag, so a call whose beginEffect(el) was superseded
+        // (threw EffectSupersededError) -- and thus never actually took
+        // ownership of el -- can never release a texture or hide a canvas
+        // that belongs to whichever effect DID win the race.
+        began: false,
         u: handoff ? handoff.startU : 0, texture: null, openRect: null, chipRect: null,
         donePromise,
     };
@@ -248,7 +258,7 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
         if (tween) tween.stop();
         if (stateMap.get(el) === myState) stateMap.delete(el);
         controller.unregisterEffect(el);
-        compositor.endEffect(el);
+        if (myState.began) compositor.endEffect(el);
         resolveDone();
     };
 
@@ -299,10 +309,12 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
             chipRect = handoff.chipRect;
             el.minimize(entering, { silent: true }); // commit while still fx-ghosted from the handed-off effect
             myState.committed = true;
+            myState.began = true; // ownership inherited from the prior (reversing) effect -- no beginEffect() call of our own, but we now own el's fx-ghost/canvas exactly as if we had
         } else if (entering) {
             openRect = rectOf(el.getBoundingClientRect());
             const res = await compositor.beginEffect(el);
-            if (myState.settled) { compositor.endEffect(el); return; } // cancelled while snapshotting (cancelFn already force-committed + revealed if jumpToEnd)
+            myState.began = true; // our beginEffect() resolved -- we now own el; safe to endEffect from here on
+            if (myState.settled) { if (myState.began) compositor.endEffect(el); return; } // cancelled while snapshotting (cancelFn already force-committed + revealed if jumpToEnd)
             texture = res.texture;
             el.minimize(true, { silent: true });
             myState.committed = true;
@@ -352,9 +364,25 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
                 const beginPromise = compositor.beginEffect(el);
                 el.classList.add('fx-ghost'); // see the writeup above -- must happen synchronously, right here
                 const res = await beginPromise;
-                if (myState.settled) { compositor.endEffect(el); return; } // cancelled while snapshotting
+                myState.began = true; // our beginEffect() resolved -- we now own el; safe to endEffect from here on
+                if (myState.settled) { if (myState.began) compositor.endEffect(el); return; } // cancelled while snapshotting
                 texture = res.texture;
             } catch (e) {
+                if (e && e.name === 'EffectSupersededError') {
+                    // Superseded mid-snapshot (task-B2fix): a newer
+                    // beginEffect(el) call started -- and, per the C/D
+                    // contract, its own registerEffect() call already
+                    // jump-cut US first -- while we were still snapshotting.
+                    // `myState.began` is still false (we never got past this
+                    // catch), so we never took ownership of el's fx-ghost/
+                    // canvas in the first place; there is nothing of ours to
+                    // release or reveal. Never revert el to chip here (that
+                    // would fight whichever effect now owns it -- el is
+                    // already committed open, on purpose, above) and never
+                    // rethrow (a Tier-1 fallthrough would double-animate el
+                    // on top of the effect that's already animating it).
+                    return;
+                }
                 if (myState.settled) {
                     // A cancellation (resize/cancelAll/second gesture) raced
                     // in during this very snapshot and already ran
@@ -383,7 +411,7 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
         myState.texture = texture;
         myState.openRect = openRect;
         myState.chipRect = chipRect;
-        if (myState.settled) { compositor.endEffect(el); return; }
+        if (myState.settled) { if (myState.began) compositor.endEffect(el); return; }
 
         const rectA = entering ? openRect : chipRect;
         const rectB = entering ? chipRect : openRect;
@@ -410,6 +438,24 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
         settleAndReveal();
         dispatchDone(el, effectName);
     } catch (e) {
+        if (e && e.name === 'EffectSupersededError') {
+            // Superseded by a newer effect that took ownership of `el`
+            // (task-B2fix -- see compositor.js's beginGen guard). Because a
+            // new effect always registerEffect()s -- jump-cutting us --
+            // BEFORE calling beginEffect(), OUR OWN cancelFn (registered
+            // above) has already run synchronously by the time this catch
+            // fires, so `myState.settled` is already true and
+            // `settleAndReveal()` (began-gated, and `began` is still false
+            // here since we never got past our own beginEffect) already ran.
+            // Abandon quietly: do not rethrow (the superseding effect owns
+            // `el` and is already animating it -- a Tier-1 fallthrough here
+            // would double-animate it) and do not dispatch our own fx-done
+            // (our cancelFn's jumpToEnd path already sent one for OUR
+            // effect if appropriate; the superseding effect sends its own
+            // when IT completes).
+            if (!myState.settled) settleAndReveal(); // defensive: should already be true, but never leave state dangling either way
+            return;
+        }
         // SnapshotError (or any other throw) -- must fall through to Tier 1
         // for this gesture. Never dispatch fx-done here: the gesture isn't
         // actually complete, Tier 1 will dispatch its own when it finishes.
@@ -432,6 +478,7 @@ async function runMaximize(controller, compositor, el, entering) {
 
     const myState = {
         kind: 'maximize', entering, settled: false, reversing: false, committed: false,
+        began: false, // see the matching field in runMinimizeOrRestore's myState -- same "don't end what you didn't begin" discipline
         u: handoff ? handoff.startU : 0, texture: null, windowedRect: null, maxRect: null,
     };
     stateMap.set(el, myState);
@@ -443,7 +490,7 @@ async function runMaximize(controller, compositor, el, entering) {
         if (tween) tween.stop();
         if (stateMap.get(el) === myState) stateMap.delete(el);
         controller.unregisterEffect(el);
-        compositor.endEffect(el);
+        if (myState.began) compositor.endEffect(el);
     };
 
     controller.registerEffect(el, effectName, (jumpToEnd) => {
@@ -475,13 +522,15 @@ async function runMaximize(controller, compositor, el, entering) {
             maxRect = handoff.maxRect;
             el.maximize(entering, { silent: true });
             myState.committed = true;
+            myState.began = true; // ownership inherited from the prior (reversing) effect
         } else {
             // No reparent, content unchanged either direction -- beginEffect
             // always runs before the real op; no flash-avoidance dance
             // needed (unlike restore above).
             const beforeRect = rectOf(el.getBoundingClientRect());
             const res = await compositor.beginEffect(el);
-            if (myState.settled) { compositor.endEffect(el); return; } // cancelled while snapshotting (cancelFn already force-committed + revealed if jumpToEnd)
+            myState.began = true; // our beginEffect() resolved -- we now own el
+            if (myState.settled) { if (myState.began) compositor.endEffect(el); return; } // cancelled while snapshotting (cancelFn already force-committed + revealed if jumpToEnd)
             texture = res.texture;
             el.maximize(entering, { silent: true });
             myState.committed = true;
@@ -493,7 +542,7 @@ async function runMaximize(controller, compositor, el, entering) {
         myState.texture = texture;
         myState.windowedRect = windowedRect;
         myState.maxRect = maxRect;
-        if (myState.settled) { compositor.endEffect(el); return; }
+        if (myState.settled) { if (myState.began) compositor.endEffect(el); return; }
 
         const rectA = entering ? windowedRect : maxRect;
         const rectB = entering ? maxRect : windowedRect;
@@ -519,6 +568,17 @@ async function runMaximize(controller, compositor, el, entering) {
         settleAndReveal();
         dispatchDone(el, effectName);
     } catch (e) {
+        if (e && e.name === 'EffectSupersededError') {
+            // See the matching catch in runMinimizeOrRestore for the full
+            // rationale (task-B2fix): our own cancelFn has already run
+            // synchronously by this point (a newer effect's registerEffect
+            // jump-cut us before its own beginEffect could ever bump the
+            // generation past ours), so `myState.settled` is already true
+            // and settleAndReveal() already ran with `began` still false --
+            // nothing of ours to release/reveal. Abandon quietly.
+            if (!myState.settled) settleAndReveal();
+            return;
+        }
         if (!myState.settled) settleAndReveal();
         throw e;
     }
