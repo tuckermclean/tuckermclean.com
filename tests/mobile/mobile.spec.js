@@ -53,3 +53,29 @@ test('touch-dragging the header moves the window (best-effort)', async ({ page }
   const after = await w.evaluate(el => ({ left: el.offsetLeft, top: el.offsetTop }));
   expect(after.left).not.toBe(before.left);
 });
+
+test('iconostat-drag-start/-move/-end fire on the touch drag path too', async ({ page }) => {
+  await openApp(page, 'resume');
+  const w = win(page, 'resume');
+  const box = await w.locator('.window-header').boundingBox();
+
+  const result = await w.locator('.window-header').evaluate((header, box) => new Promise((resolve) => {
+    const counts = { start: 0, move: 0, end: 0 };
+    document.addEventListener('iconostat-drag-start', () => { counts.start++; });
+    document.addEventListener('iconostat-drag-move', () => { counts.move++; });
+    document.addEventListener('iconostat-drag-end', () => { counts.end++; resolve(counts); }, { once: true });
+
+    const mk = (type, x, y) => {
+      const t = new Touch({ identifier: 1, target: header, clientX: x, clientY: y });
+      return new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], targetTouches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true });
+    };
+    const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+    header.dispatchEvent(mk('touchstart', cx, cy));
+    document.dispatchEvent(mk('touchmove', cx + 50, cy + 30));
+    document.dispatchEvent(mk('touchend', cx + 50, cy + 30));
+  }), box);
+
+  expect(result.start).toBe(1);
+  expect(result.move).toBeGreaterThan(0);
+  expect(result.end).toBe(1);
+});

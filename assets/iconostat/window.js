@@ -76,8 +76,29 @@ export class IconostatWindow extends HTMLElement {
         this.dispatchEvent(new CustomEvent('iconostat-focus', { bubbles: true, detail: { name: this.name } }));
     }
 
-    minimize(force = undefined) {
-        if (!this.classList.contains('minimized') || (typeof(force) === 'boolean' && force === true)) {
+    // `opts.silent` skips the cancelable before-event (used by the fx canceler
+    // to re-invoke the real op after having already preventDefault()ed once --
+    // without this, that re-invocation would dispatch a second before-event
+    // and loop forever). `opts.userGesture`, when provided, overrides the
+    // default userGesture computation below (used by internal callers --
+    // bringToFront/cascade/tile -- that un-minimize/un-maximize
+    // programmatically and must report userGesture:false regardless of
+    // `_suppressHistory`'s current value at the call site).
+    minimize(force = undefined, opts = {}) {
+        // Captured before any mutation so the before-event (and the branch
+        // below) see the exact same "entering vs restoring" outcome the
+        // un-refactored if/else-if pair would have computed.
+        const entering = !this.classList.contains('minimized') || (typeof(force) === 'boolean' && force === true);
+        const userGesture = opts.userGesture !== undefined ? opts.userGesture : !getDesktop()._suppressHistory;
+        if (!opts.silent) {
+            const beforeEvent = new CustomEvent('iconostat-before-minimize', {
+                cancelable: true,
+                detail: { name: this.name, el: this, entering, userGesture },
+            });
+            document.dispatchEvent(beforeEvent);
+            if (beforeEvent.defaultPrevented) return;
+        }
+        if (entering) {
             this.saveWindowState();
             this.reset(false, false);
             this.classList.add('minimized');
@@ -95,8 +116,18 @@ export class IconostatWindow extends HTMLElement {
         this.dispatchEvent(new CustomEvent('iconostat-minimize', { bubbles: true, detail: { name: this.name } }));
     }
 
-    maximize(force = undefined) {
-        if (!this.classList.contains('maximized') || (typeof(force) === 'boolean' && force === true)) {
+    maximize(force = undefined, opts = {}) {
+        const entering = !this.classList.contains('maximized') || (typeof(force) === 'boolean' && force === true);
+        const userGesture = opts.userGesture !== undefined ? opts.userGesture : !getDesktop()._suppressHistory;
+        if (!opts.silent) {
+            const beforeEvent = new CustomEvent('iconostat-before-maximize', {
+                cancelable: true,
+                detail: { name: this.name, el: this, entering, userGesture },
+            });
+            document.dispatchEvent(beforeEvent);
+            if (beforeEvent.defaultPrevented) return;
+        }
+        if (entering) {
             this.saveWindowState();
             this.classList.add('maximized');
         } else if (this.classList.contains('maximized') || (typeof(force) === 'boolean' && force === false)) {
@@ -255,8 +286,14 @@ export class IconostatWindow extends HTMLElement {
 
         const windowElement = this;
         const isTouch = e.type === 'touchstart';
-        const offsetX = (isTouch ? e.touches[0].clientX : e.clientX) - windowElement.offsetLeft;
-        const offsetY = (isTouch ? e.touches[0].clientY : e.clientY) - windowElement.offsetTop;
+        const startX = isTouch ? e.touches[0].clientX : e.clientX;
+        const startY = isTouch ? e.touches[0].clientY : e.clientY;
+        const offsetX = startX - windowElement.offsetLeft;
+        const offsetY = startY - windowElement.offsetTop;
+
+        document.dispatchEvent(new CustomEvent('iconostat-drag-start', {
+            detail: { name: windowElement.name, el: windowElement, x: startX, y: startY },
+        }));
 
         function onMove(event) {
             const clientX = isTouch ? event.touches[0].clientX : event.clientX;
@@ -268,11 +305,24 @@ export class IconostatWindow extends HTMLElement {
                 }
                 windowElement.style.left = `${clientX - offsetX}px`;
             }
+            document.dispatchEvent(new CustomEvent('iconostat-drag-move', {
+                detail: {
+                    name: windowElement.name,
+                    el: windowElement,
+                    x: clientX,
+                    y: clientY,
+                    left: windowElement.offsetLeft,
+                    top: windowElement.offsetTop,
+                },
+            }));
         }
 
         function stopDrag() {
             document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onMove);
             document.removeEventListener(isTouch ? 'touchend' : 'mouseup', stopDrag);
+            document.dispatchEvent(new CustomEvent('iconostat-drag-end', {
+                detail: { name: windowElement.name, el: windowElement },
+            }));
         }
 
         document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove, { passive: false });
@@ -288,17 +338,35 @@ export class IconostatWindow extends HTMLElement {
         const startX = isTouch ? e.touches[0].clientX : e.clientX;
         const startY = isTouch ? e.touches[0].clientY : e.clientY;
 
+        document.dispatchEvent(new CustomEvent('iconostat-resize-start', {
+            detail: { name: windowElement.name, el: windowElement, x: startX, y: startY },
+        }));
+
         function onResize(event) {
             const clientX = isTouch ? event.touches[0].clientX : event.clientX;
             const clientY = isTouch ? event.touches[0].clientY : event.clientY;
 
             windowElement.style.width = `${startWidth + (clientX - startX)}px`;
             windowElement.style.height = `${startHeight + (clientY - startY)}px`;
+
+            document.dispatchEvent(new CustomEvent('iconostat-resize-move', {
+                detail: {
+                    name: windowElement.name,
+                    el: windowElement,
+                    x: clientX,
+                    y: clientY,
+                    width: windowElement.offsetWidth,
+                    height: windowElement.offsetHeight,
+                },
+            }));
         }
 
         function stopResize() {
             document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onResize);
             document.removeEventListener(isTouch ? 'touchend' : 'mouseup', stopResize);
+            document.dispatchEvent(new CustomEvent('iconostat-resize-end', {
+                detail: { name: windowElement.name, el: windowElement },
+            }));
         }
 
         document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onResize, { passive: false });

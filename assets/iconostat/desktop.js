@@ -31,6 +31,11 @@ export class IconostatDesktop extends HTMLElement {
 
     get zIndex() { return this._z; }
 
+    // True during cascade()/tile()/reflow (i.e. whenever history/focus
+    // announcements are suppressed) -- exposed so the fx layer never needs to
+    // poke the private `_suppressHistory` field directly.
+    get fxSuppressed() { return this._suppressHistory; }
+
     registerTaskbar(el) { this._taskbar = el; }
 
     get taskbar() { return this._taskbar || document.getElementById('tasks'); }
@@ -94,7 +99,7 @@ export class IconostatDesktop extends HTMLElement {
         if (windowElement.classList.contains('front')) return;
         // If window is minimized, un-minimize it
         if (windowElement.classList.contains('minimized')) {
-            windowElement.minimize(false);
+            windowElement.minimize(false, { userGesture: false });
         }
         this._z++; // Increment global counter
         windowElement.style.zIndex = this._z; // Assign new z-index to the element
@@ -134,7 +139,7 @@ export class IconostatDesktop extends HTMLElement {
                 }
                 // If window is minimized, un-minimize it
                 if (isMinimized) {
-                    windowElement.minimize(false);
+                    windowElement.minimize(false, { userGesture: false });
                 }
                 windowElement.reset();
                 this.bringToFront(windowElement);
@@ -170,7 +175,7 @@ export class IconostatDesktop extends HTMLElement {
             this._windows.forEach((windowElement, index) => {
                 // If window is minimized, un-minimize it
                 if (windowElement.classList.contains('minimized')) {
-                    windowElement.minimize(false);
+                    windowElement.minimize(false, { userGesture: false });
                 }
                 windowElement.classList.remove('maximized', 'shaded');
 
