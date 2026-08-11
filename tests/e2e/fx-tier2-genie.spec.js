@@ -349,4 +349,108 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
     const beginEffectCount = await page.evaluate(() => window.__beginEffectCount);
     expect(beginEffectCount).toBe(1);
   });
+
+  test('task-Cfix regression: a rapid same-direction double-gesture (double-click minimize, and symmetrically double-trigger restore) never corrupts saved geometry', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    await page.evaluate(() => {
+      window.__fxDone = [];
+      document.addEventListener('iconostat-fx-done', (e) => window.__fxDone.push(e.detail));
+    });
+
+    const beforeGeometry = await w.evaluate((el) => ({ width: el.style.width, height: el.style.height, top: el.style.top, left: el.style.left }));
+    expect(beforeGeometry.width).not.toBe('');
+    expect(beforeGeometry.height).not.toBe('');
+    expect(beforeGeometry.top).not.toBe('');
+    expect(beforeGeometry.left).not.toBe('');
+
+    // Fire two SAME-direction minimize gestures back-to-back, synchronously,
+    // via the real public API rather than two synthetic `.click()`s: genie's
+    // `beginEffect()` snapshot round trip is only a few ms in this sandbox
+    // (real double-click timing would be a flaky race to depend on), but
+    // `FxController._loadTier2()`/`_loadGenie()` cache their import promises
+    // and both `iconostat-before-minimize` dispatches below chain off the
+    // SAME cached promise -- guaranteeing (by the microtask-FIFO ordering
+    // this codebase's own controller.js comments already rely on for
+    // dragStart/dragMove/dragEnd) that the first call's genie instance
+    // reaches `stateMap.set()`/`registerEffect()` before the second call's
+    // genie instance runs its own prior-state check. This deterministically
+    // reproduces the "second same-direction run() lands while the first is
+    // still mid-beginEffect" race from task-Cfix-brief.md without relying on
+    // real click-event timing.
+    await page.evaluate(() => {
+      const el = document.getElementById('window-resume');
+      el.minimize();
+      el.minimize();
+    });
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(page.locator('body > #window-resume')).toHaveCount(0);
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    await noFxGhostOrHiddenCanvas(page);
+
+    // Exactly one fx-done for the minimize -- the second, coalesced gesture
+    // must not fire its own.
+    let events = await page.evaluate(() => window.__fxDone);
+    expect(events.map((e) => e.effect)).toEqual(['minimize']);
+
+    // Restore via a real chip click and verify geometry is EXACTLY the
+    // pre-minimize values -- not corrupted to empty strings by a redundant
+    // `saveWindowState()` call racing in after `reset()` had already
+    // cleared the inline styles (the task-Cfix bug).
+    await w.click();
+    await expect(w).not.toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    await noFxGhostOrHiddenCanvas(page);
+
+    const afterGeometry = await w.evaluate((el) => ({ width: el.style.width, height: el.style.height, top: el.style.top, left: el.style.left }));
+    expect(afterGeometry.width).not.toBe('');
+    expect(afterGeometry.height).not.toBe('');
+    expect(afterGeometry.top).not.toBe('');
+    expect(afterGeometry.left).not.toBe('');
+    expect(afterGeometry).toEqual(beforeGeometry);
+    await expect(w).toHaveClass(/front/);
+    const zIndex = await w.evaluate((el) => el.style.zIndex);
+    expect(zIndex).not.toBe('');
+
+    // Symmetric case: minimize once (cleanly), then fire two SAME-direction
+    // RESTORE gestures back-to-back via the same technique. Must wait for
+    // this minimize to be FULLY settled (not just the `.minimized` class,
+    // which genie applies well before its own tween/settleAndReveal
+    // finishes -- see the reversal test above) before firing the double
+    // restore below: starting it mid-tween would legitimately engage the
+    // reverse-from-current-t handoff path instead of the stable
+    // already-minimized-chip scenario this test targets.
+    await w.locator('.button.minimize').click();
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    await noFxGhostOrHiddenCanvas(page);
+
+    await page.evaluate(() => {
+      window.__fxDone = [];
+      const el = document.getElementById('window-resume');
+      el.minimize(false);
+      el.minimize(false);
+    });
+
+    await expect(w).not.toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+    await expect(page.locator('body > #window-resume')).toHaveCount(1);
+    await noFxGhostOrHiddenCanvas(page);
+
+    events = await page.evaluate(() => window.__fxDone);
+    expect(events.map((e) => e.effect)).toEqual(['restore']);
+
+    const finalGeometry = await w.evaluate((el) => ({ width: el.style.width, height: el.style.height, top: el.style.top, left: el.style.left }));
+    expect(finalGeometry).toEqual(beforeGeometry);
+    await expect(w).toHaveClass(/front/);
+    const finalZIndex = await w.evaluate((el) => el.style.zIndex);
+    expect(finalZIndex).not.toBe('');
+  });
 });

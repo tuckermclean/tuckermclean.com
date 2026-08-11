@@ -40,13 +40,28 @@
 // call reuses that texture and continues from the current interpolation
 // parameter (`1 - prior.u`) instead of re-snapshotting or restarting -- true
 // reverse-from-current-t, achieved via a WeakMap handoff, not by changing
-// registerEffect's jump-cut semantics (controller.js is untouched). Every
-// OTHER case (kind mismatch, prior still mid-snapshot, prior already
-// settled) falls back to the plain jump-cut-then-fresh-run path, which is
-// glitch-free by construction: the jump-cut always leaves `el` fully
-// revealed in a consistent state before the new run begins, so there is
-// nothing to visually reconcile. See the task report for the full writeup
-// of which case is which.
+// registerEffect's jump-cut semantics (controller.js is untouched).
+//
+// A SAME-direction re-entrant call (e.g. a fast double-click on the
+// minimize button landing while the first click's `beginEffect()` is still
+// mid-await -- `el` is still fully visible and un-ghosted until that
+// resolves, so a second `iconostat-before-minimize` for the same direction
+// can genuinely land) is coalesced instead: see the `prior.entering ===
+// entering` check at the top of `runMinimizeOrRestore` below. Since that
+// check runs BEFORE `controller.registerEffect()`, the second call never
+// jump-cuts the first, never re-commits the real op, and never re-runs
+// `window.js`'s `saveWindowState()` on an already-target-state `el` (which
+// used to persist empty geometry once `reset()` had already cleared it --
+// see the task-Cfix report). The coalesced call touches nothing (no
+// beginEffect, no registration) and just resolves once the owning instance
+// settles.
+//
+// Every OTHER case (kind mismatch, opposite direction, prior still
+// mid-snapshot, prior already settled) falls back to the plain
+// jump-cut-then-fresh-run path, which is glitch-free by construction: the
+// jump-cut always leaves `el` fully revealed in a consistent state before
+// the new run begins, so there is nothing to visually reconcile. See the
+// task report for the full writeup of which case is which.
 
 import { assessSnapshotRisk } from './snapshot.js';
 
@@ -198,15 +213,31 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
     // the `reversing` flag we set on it here, "soft-stops" instead) whatever
     // is currently registered on `el`.
     const prior = stateMap.get(el);
+
+    // Same-direction re-entrancy (task-Cfix): a second run() for `el`,
+    // SAME direction, arrives while `prior` is still in flight and hasn't
+    // settled or already been claimed by a reversal. This call hasn't
+    // touched anything yet -- no beginEffect, no controller registration --
+    // so there's nothing to unwind; just coalesce onto the owning instance
+    // by resolving once it settles, instead of competing for a second real
+    // commit. See the file banner above and the task-Cfix report for why.
+    if (prior && prior.kind === 'minimize' && prior.entering === entering && !prior.settled && !prior.reversing) {
+        return prior.donePromise;
+    }
+
     const canReverse = !!(prior && prior.kind === 'minimize' && prior.entering !== entering && !prior.settled && prior.texture);
     const handoff = canReverse
         ? { texture: prior.texture, openRect: prior.openRect, chipRect: prior.chipRect, startU: 1 - prior.u }
         : null;
     if (canReverse) prior.reversing = true;
 
+    let resolveDone;
+    const donePromise = new Promise((resolve) => { resolveDone = resolve; });
+
     const myState = {
         kind: 'minimize', entering, settled: false, reversing: false, committed: false,
         u: handoff ? handoff.startU : 0, texture: null, openRect: null, chipRect: null,
+        donePromise,
     };
     stateMap.set(el, myState);
 
@@ -218,6 +249,7 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
         if (stateMap.get(el) === myState) stateMap.delete(el);
         controller.unregisterEffect(el);
         compositor.endEffect(el);
+        resolveDone();
     };
 
     controller.registerEffect(el, effectName, (jumpToEnd) => {
@@ -229,6 +261,7 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
             // own completion is what reveals `el` and dispatches fx-done.
             myState.settled = true;
             if (tween) tween.stop();
+            resolveDone(); // any same-direction call coalesced onto us must not hang forever
             return;
         }
         // Genuine external cancellation (resize/cancelAll/an unrelated
@@ -243,7 +276,14 @@ async function runMinimizeOrRestore(controller, compositor, el, entering) {
         // match Tier 1's/Tier 0's behavior for the same resize-during-
         // minimize gesture -- see fx-tier1.spec.js's matching test).
         if (jumpToEnd && !myState.committed) {
-            el.minimize(entering, { silent: true });
+            // Hardening (task-Cfix): only perform the real op if `el` isn't
+            // ALREADY in the target state -- guards against ever
+            // re-committing (and thus re-running window.js's
+            // saveWindowState()) on an el some other path already settled
+            // into `entering`'s target state.
+            if (el.classList.contains('minimized') !== entering) {
+                el.minimize(entering, { silent: true });
+            }
             myState.committed = true;
         }
         settleAndReveal();
