@@ -93,7 +93,16 @@ describe('FxController tier-2 routing (_runEffect)', () => {
     demoteSpy.mockRestore();
   });
 
-  it('genie.run() throws a NON-SnapshotError -> propagates, does not silently fall back to tier1', async () => {
+  // task-Bfix Finding 2: a plain (non-SnapshotError) throw from the Tier-2
+  // effect module used to propagate uncaught out of `_runEffect`, past the
+  // Tier-1 fallback below it -- since `_onBeforeMinMax` calls `_runEffect`
+  // without awaiting, that dropped the gesture silently (no animation, no
+  // end state, no error surfaced anywhere). Per the graceful-degradation
+  // invariant, ANY thrown error must degrade THIS gesture to Tier 1 instead
+  // -- only a SnapshotError additionally demotes the window session-wide
+  // (that's a distinct, stronger signal: "this window can't be safely
+  // snapshotted", not "something threw once").
+  it('genie.run() throws a NON-SnapshotError -> still falls through to tier1.run (gesture degrades, is not dropped); window is NOT demoted', async () => {
     const fakeCompositor = {};
     const boom = new Error('an unrelated genie.js bug');
     const genieRun = vi.fn().mockRejectedValue(boom);
@@ -101,10 +110,15 @@ describe('FxController tier-2 routing (_runEffect)', () => {
     FxController._loadTier2 = async () => fakeCompositor;
     FxController._loadGenie = async () => ({ run: genieRun });
     FxController._loadTier1 = async () => ({ run: tier1Run });
+    const demoteSpy = vi.spyOn(FxController, 'demote');
 
     const el = makeEl();
-    await expect(FxController._runEffect(el, 'minimize', true)).rejects.toBe(boom);
-    expect(tier1Run).not.toHaveBeenCalled();
+    await FxController._runEffect(el, 'minimize', true);
+
+    expect(tier1Run).toHaveBeenCalledTimes(1);
+    expect(tier1Run).toHaveBeenCalledWith(FxController, el, 'minimize', true);
+    expect(demoteSpy).not.toHaveBeenCalled(); // non-SnapshotError -> this gesture degrades, but the window itself isn't permanently demoted
+    demoteSpy.mockRestore();
   });
 
   it('_loadTier2 demoting the session to Tier 1 (warmup verdict) -> falls through to tier1.run', async () => {
@@ -191,6 +205,26 @@ describe('FxController tier-2 routing (_onDrag)', () => {
 
     expect(demoteSpy).toHaveBeenCalledWith(el, 1);
     expect(tier1DragStart).toHaveBeenCalledWith(FxController, detail);
+    demoteSpy.mockRestore();
+  });
+
+  // task-Bfix Finding 2, drag/wobble side of the same fix.
+  it('wobble[fn] throws a NON-SnapshotError -> still falls through to tier1[fn] for that event; not demoted', async () => {
+    const fakeCompositor = {};
+    const boom = new Error('an unrelated wobble.js bug');
+    const wobbleDragMove = vi.fn().mockRejectedValue(boom);
+    const tier1DragMove = vi.fn();
+    FxController._loadTier2 = async () => fakeCompositor;
+    FxController._loadWobble = async () => ({ dragMove: wobbleDragMove });
+    FxController._loadTier1 = async () => ({ dragMove: tier1DragMove });
+    const demoteSpy = vi.spyOn(FxController, 'demote');
+
+    const el = makeEl();
+    const detail = { el, x: 3, y: 4, left: 5, top: 6 };
+    await FxController._onDrag('dragMove', detail);
+
+    expect(tier1DragMove).toHaveBeenCalledWith(FxController, detail);
+    expect(demoteSpy).not.toHaveBeenCalled();
     demoteSpy.mockRestore();
   });
 

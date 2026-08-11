@@ -96,6 +96,26 @@ function mediaSrcIsCrossOrigin(srcAttr) {
     return url.origin !== window.location.origin;
 }
 
+// A <source> element carries no `crossorigin` attribute/IDL property of its
+// own -- it lives on the parent <video>/<audio> element (a <picture>'s
+// <source> defers to the <picture>'s <img>, which is independently checked
+// as its own `media` entry by `assessSnapshotRisk` below, so no special-
+// casing is needed for that case here). Reading `m.crossOrigin` directly on
+// a <source> is always `undefined` -- falsy -- which is why every
+// cross-origin <source> used to get flagged even when its parent
+// <video>/<audio> correctly set `crossorigin` (over-conservative Tier-1
+// demotion; safe direction, but wrong -- see task-Bfix-brief.md Finding 5).
+// A detached <source> (no parentElement) or a non-media parent stays
+// conservative (flagged), matching the existing "genuine ambiguity ->
+// treat as risky" posture used throughout this file.
+function crossOriginFor(m) {
+    if (m.tagName === 'SOURCE') {
+        const parent = m.parentElement;
+        return parent ? parent.crossOrigin : null;
+    }
+    return m.crossOrigin;
+}
+
 // A <canvas> that's already tainted (e.g. something upstream in the page
 // already drew cross-origin content into it, unrelated to this snapshot)
 // throws on `toDataURL()`/`getImageData()` regardless of context type
@@ -125,7 +145,7 @@ export function assessSnapshotRisk(el) {
     const media = el.querySelectorAll('img, video, audio, source');
     for (const m of media) {
         const src = m.currentSrc || m.getAttribute('src');
-        if (mediaSrcIsCrossOrigin(src) && !m.crossOrigin) {
+        if (mediaSrcIsCrossOrigin(src) && !crossOriginFor(m)) {
             throw new SnapshotError('snapshot: cross-origin media without a `crossorigin` attribute would taint the snapshot');
         }
     }

@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.js';
-import { openApp, win } from './helpers.js';
+import { openApp, openViaMenu, win } from './helpers.js';
 
 // Iconostat FX -- Tier 2 (WebGL2 compositor core: snapshot.js + compositor.js
 // + the controller's tier-2 wiring). See
@@ -287,6 +287,177 @@ test.describe('Tier 2 (forced, no-preference)', () => {
     expect(result.ghostRemaining).toBe(false);
     expect(result.canvasHiddenAfterLoss).toBe(true);
     await expect(w).toBeVisible();
+  });
+
+  // -- task-Bfix Finding 1: a GL-init throw during warmup must degrade, --
+  // -- never poison the session --------------------------------------------
+  //
+  // Injects a REAL shader-compile failure (via WebGL2RenderingContext.
+  // prototype.getShaderParameter, forced to report COMPILE_STATUS failure)
+  // BEFORE compositor.js's initGL() ever runs -- a clean, real-browser way to
+  // reproduce "realistic in the shimmed headless sandbox or on a driver
+  // quirk / context-loss between getContext() and shader compile" per the
+  // brief, without needing to fake WebGL2 entirely (this sandbox's WebGL2 is
+  // otherwise fully real -- see the context-loss test above). Proves the
+  // fix end-to-end: a real user minimize still falls through to Tier 1,
+  // animates, ends correct, session tier demotes -- and critically, a
+  // SECOND gesture also completes normally (the poisoned-cached-promise
+  // failure mode this finding is about would make every gesture AFTER the
+  // first instantly fail with an unhandled rejection, silently, forever).
+  test('Finding 1: a GL-init throw during warmup falls through to Tier 1, ends correct, and does not poison the session (a second gesture still works)', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await page.addInitScript(() => {
+      const proto = WebGL2RenderingContext.prototype;
+      const origGetShaderParameter = proto.getShaderParameter;
+      proto.getShaderParameter = function (shader, pname) {
+        if (pname === this.COMPILE_STATUS) return false; // force every shader compile to "fail"
+        return origGetShaderParameter.call(this, shader, pname);
+      };
+    });
+
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    // First gesture: Tier 2 is selected, but the warmup probe's underlying
+    // ensureCanvas()/initGL() throws internally -- must degrade to Tier 1,
+    // not strand the window, not reject anything visibly.
+    await w.locator('.button.minimize').click();
+    await expect(w).not.toHaveClass(/minimized/); // not instant -- Tier 1's WAAPI animation engaged
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+
+    const tierAfterFirst = await page.evaluate(async () => (await import('/iconostat/fx/controller.js')).FxController.tier);
+    expect(tierAfterFirst).toBe(1); // warmup's 'demote' verdict dropped the session tier
+
+    // Second gesture (restore): the critical anti-poison proof. Before the
+    // fix, `_loadTier2()` would have cached a REJECTED promise the first
+    // time around, and every subsequent `await this._loadTier2()` (this one
+    // included) would re-throw uncaught, past the Tier-1 fallback, as an
+    // unhandled rejection -- silently killing this restore gesture too.
+    await w.click();
+    await expect(w).not.toHaveClass(/minimized/, { timeout: 2000 });
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+
+    // Third gesture for good measure (maximize) -- same session, same
+    // cached (resolved, non-poisoned) `_tier2Promise`.
+    await w.locator('.button.maximize').click();
+    await expect(w).toHaveClass(/maximized/, { timeout: 2000 });
+    await expect(w).toBeVisible();
+  });
+
+  test('Finding 2 (compositor side): beginEffect(el) wraps an ensureCanvas()/initGL() throw as a typed SnapshotError, not a plain Error', async ({ page }) => {
+    await page.addInitScript(() => {
+      const proto = WebGL2RenderingContext.prototype;
+      const origGetShaderParameter = proto.getShaderParameter;
+      proto.getShaderParameter = function (shader, pname) {
+        if (pname === this.COMPILE_STATUS) return false;
+        return origGetShaderParameter.call(this, shader, pname);
+      };
+    });
+    await openApp(page, 'resume');
+
+    const result = await page.evaluate(async () => {
+      const compositor = await import('/iconostat/fx/compositor.js');
+      const el = document.getElementById('window-resume');
+      try {
+        await compositor.beginEffect(el);
+        return { threw: false };
+      } catch (e) {
+        return { threw: true, isSnapshotError: e.name === 'SnapshotError', ghosted: el.classList.contains('fx-ghost') };
+      } finally {
+        el.classList.remove('fx-ghost'); // safety net in case beginEffect somehow left it (shouldn't -- see its own contract)
+      }
+    });
+
+    expect(result.threw).toBe(true);
+    expect(result.isSnapshotError).toBe(true);
+    expect(result.ghosted).toBe(false); // no side effect from the failed beginEffect
+  });
+
+  test('Finding 2 (controller side): a non-SnapshotError thrown by the Tier-2 effect module still falls through to Tier 1 for this gesture (not dropped), and does not demote the window', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+
+    // genie.js doesn't exist yet (Agent C lands it later) -- simulate its
+    // real invocation contract (`run(controller, compositor, el, kind,
+    // entering)`) throwing an UNRELATED plain Error, standing in for "some
+    // bug in the effect module that has nothing to do with snapshotting".
+    await page.evaluate(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      FxController._loadGenie = async () => ({
+        run: async () => { throw new Error('simulated unrelated genie.js bug (not a SnapshotError)'); },
+      });
+    });
+
+    await w.locator('.button.minimize').click();
+    await expect(w).not.toHaveClass(/minimized/); // not instant -- Tier 1 engaged as the fallthrough
+    await expect(w).toHaveClass(/minimized/, { timeout: 2000 }); // still lands correctly, not dropped
+    await expect(w).toBeVisible();
+    await expect(w).not.toHaveClass(/fx-ghost/);
+
+    // A non-SnapshotError is not evidence THIS window can't be safely
+    // snapshotted -- session tier must stay 2 (only a SnapshotError, or a
+    // warmup demote, ever changes tier/tierFor).
+    const tier = await page.evaluate(async () => (await import('/iconostat/fx/controller.js')).FxController.tier);
+    expect(tier).toBe(2);
+  });
+
+  test('Finding 3: a double endEffect(el) does not steal the shared canvas out from under another window\'s still-in-flight effect', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page); // welcome
+    await openViaMenu(page, 'Resume'); // + resume -- two real, concurrently-open windows
+
+    const result = await page.evaluate(async () => {
+      const compositor = await import('/iconostat/fx/compositor.js');
+      const el1 = document.getElementById('window-welcome');
+      const el2 = document.getElementById('window-resume');
+
+      await compositor.beginEffect(el1);
+      await compositor.beginEffect(el2);
+      const canvas = document.getElementById('iconostat-fx-canvas');
+      const visibleAfterBothBegin = canvas.style.display !== 'none';
+
+      // A double-call for el1 -- simulates a defensive double endEffect
+      // (e.g. a normal-completion path and a cancelAll() racing each
+      // other) -- must be a no-op the second time, per the banner's
+      // "idempotent" contract.
+      compositor.endEffect(el1);
+      compositor.endEffect(el1);
+
+      // THE finding-3 assertion: el2's effect is still genuinely in
+      // flight -- the shared canvas must still be visible and el2 must
+      // still be ghosted, i.e. el1's double-end must not have
+      // over-decremented the shared counter and hidden el2's live warp
+      // out from under it.
+      const visibleWhileEl2StillActive = canvas.style.display !== 'none';
+      const el1StillGhosted = el1.classList.contains('fx-ghost');
+      const el2StillGhosted = el2.classList.contains('fx-ghost');
+
+      compositor.endEffect(el2);
+      const hiddenAfterBothProperlyEnded = canvas.style.display === 'none';
+
+      // Safety net in case of an unexpected assertion failure above.
+      el1.classList.remove('fx-ghost');
+      el2.classList.remove('fx-ghost');
+
+      return {
+        visibleAfterBothBegin,
+        visibleWhileEl2StillActive,
+        el1StillGhosted,
+        el2StillGhosted,
+        hiddenAfterBothProperlyEnded,
+      };
+    });
+
+    expect(result.visibleAfterBothBegin).toBe(true);
+    expect(result.el1StillGhosted).toBe(false); // el1's own single real endEffect DID reveal it
+    expect(result.visibleWhileEl2StillActive).toBe(true);
+    expect(result.el2StillGhosted).toBe(true);
+    expect(result.hiddenAfterBothProperlyEnded).toBe(true);
   });
 });
 

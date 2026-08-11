@@ -108,6 +108,16 @@
 //     maximizing, false = restoring/unmaximizing). Mirrors tier1.js's
 //     `run(controller, el, kind, entering)` with `compositor` inserted as the
 //     2nd argument.
+//
+//     YOUR RESPONSIBILITY, NOT THIS MODULE'S: after swap-back (inside the
+//     same `finally` that calls `endEffect(el)`), dispatch the frozen
+//     `iconostat-fx-done` event yourselves --
+//     `document.dispatchEvent(new CustomEvent('iconostat-fx-done', { detail:
+//     { name: el.name, effect: <'minimize'|'restore'|'maximize'|'unmaximize'> } }))`
+//     -- exactly like tier1.js already does at tier1.js:~165/237/295. Nothing
+//     in compositor.js or controller.js fires this for you; skipping it means
+//     any listener wired against the frozen contract (spec's event table)
+//     silently never hears about a Tier-2 gesture completing.
 // `wobble.js` (drag) exports:
 //   export function dragStart(controller, compositor, detail)
 //   export function dragMove(controller, compositor, detail)
@@ -267,8 +277,26 @@ function ensureCanvas() {
         canvas.addEventListener('webglcontextrestored', onContextRestored, false);
     }
     if (!gl) {
-        gl = canvas.getContext('webgl2', { premultipliedAlpha: true, alpha: true, antialias: true });
-        if (gl) initGL();
+        const ctx = canvas.getContext('webgl2', { premultipliedAlpha: true, alpha: true, antialias: true });
+        if (ctx) {
+            gl = ctx;
+            try {
+                initGL();
+            } catch (e) {
+                // Shader compile/link failure (headless sandbox quirk /
+                // driver bug / a context-loss race between getContext() and
+                // shader compile -- see task-Bfix-brief.md Finding 1). Reset
+                // to a clean "no functional GL" state -- gl left non-null
+                // with a null program would make every OTHER caller's
+                // `if (!gl)` check lie about GL being usable -- then rethrow
+                // so callers (runWarmupProbe, beginEffect) can degrade.
+                gl = null;
+                program = null;
+                attribLocations = null;
+                uniformLocations = null;
+                throw e;
+            }
+        }
     }
     return canvas;
 }
@@ -468,10 +496,18 @@ function createProbeTexture() {
 }
 
 async function runWarmupProbe() {
-    ensureCanvas();
-    if (!gl) return 'demote'; // no WebGL2 at all -- shouldn't happen (controller only loads this module after its own probeWebGL2() succeeded), but must still degrade rather than throw
+    // Belt (Finding 1, task-Bfix-brief.md): `ensureCanvas()` used to run
+    // BEFORE this try block -- an `initGL()` throw (shader compile/link
+    // failure, realistic in a shimmed headless sandbox or on a driver quirk)
+    // rejected `runWarmupProbe()`, which `warmup()` cached FOREVER as a
+    // rejected `warmupPromise`, permanently killing Tier 2 session-wide with
+    // no retry. `ensureCanvas()` now runs INSIDE this try -- any throw from
+    // it (or from anything else below) is caught the same way a slow-probe
+    // "demote" verdict is: `warmup()`/`runWarmupProbe()` must NEVER reject.
     let texture;
     try {
+        ensureCanvas();
+        if (!gl) return 'demote'; // no WebGL2 at all -- shouldn't happen (controller only loads this module after its own probeWebGL2() succeeded), but must still degrade rather than throw
         const cols = 8;
         const rows = 40;
         texture = createProbeTexture();
@@ -487,10 +523,22 @@ async function runWarmupProbe() {
         const median = samples[Math.floor(samples.length / 2)];
         return median > 8 ? 'demote' : 'ok';
     } catch (e) {
-        return 'demote'; // a probe failure is itself evidence Tier 2 isn't safe here
+        return 'demote'; // a probe failure (including a GL-init throw) is itself evidence Tier 2 isn't safe here -- never let it become a rejection
     } finally {
-        if (texture) releaseTexture(texture);
-        if (gl) gl.clear(gl.COLOR_BUFFER_BIT); // defense in depth -- the probe canvas stays display:none the whole time regardless, so this is never actually visible
+        // Suspenders on the suspenders: cleanup itself must not throw and
+        // override the try/catch's return value with a rejection.
+        try {
+            if (texture) releaseTexture(texture);
+        } catch (e) {
+            // releaseTexture already swallows its own errors; this is
+            // defense in depth only.
+        }
+        try {
+            if (gl) gl.clear(gl.COLOR_BUFFER_BIT); // defense in depth -- the probe canvas stays display:none the whole time regardless, so this is never actually visible
+        } catch (e) {
+            // Context could have been lost between the try block above and
+            // here -- irrelevant to the verdict already decided.
+        }
     }
 }
 
@@ -523,7 +571,19 @@ export async function beginEffect(el) {
     // Tier-1 path is safe.
     const { canvas: rasterized, width, height } = await snapshot(el, { dprCap: computeDprCap() });
 
-    ensureCanvas();
+    try {
+        ensureCanvas();
+    } catch (e) {
+        // Finding 2 (task-Bfix-brief.md): ensureCanvas()/initGL() can throw a
+        // plain Error here too (recreating `gl` after a context-loss window
+        // hits the same shader compile/link failure warmup can). Surface it
+        // as the SAME typed SnapshotError the swap-protocol contract already
+        // documents for "el can't be safely snapshotted" -- callers that key
+        // demotion off `e.name === 'SnapshotError'` keep working unchanged.
+        // (controller.js additionally treats ANY thrown error, typed or not,
+        // as a this-gesture Tier-1 fallthrough -- belt and suspenders.)
+        throw new SnapshotError('compositor: WebGL2 init failed at beginEffect', { cause: e });
+    }
     if (!gl) {
         // Context lost in the (rare) window between an earlier warmup and
         // this call -- fail exactly like a snapshot failure would, so the
@@ -548,20 +608,32 @@ export async function beginEffect(el) {
 export function endEffect(el) {
     // Reveal FIRST, unconditionally, before any GL cleanup that could
     // theoretically throw -- this is what makes the finally-guaranteed-
-    // reveal invariant hold even if something below misbehaves. Idempotent:
-    // a second call for the same `el` finds nothing left to release/decrement
-    // past zero and is a harmless no-op.
+    // reveal invariant hold even if something below misbehaves.
     try {
         el.classList.remove('fx-ghost');
     } finally {
-        const texture = elTexture.get(el);
-        if (texture) {
+        // Finding 3 (task-Bfix-brief.md): `elTexture` (set only by
+        // `beginEffect`, cleared only here) IS "does `el` currently hold the
+        // shared canvas" -- gating the counter/release/hide on its presence
+        // is what makes this genuinely idempotent, matching the banner's
+        // claim. Previously the decrement ran unconditionally, so a SECOND
+        // `endEffect(el)` call for the same `el` (or any double-call, e.g. a
+        // caller's own cancel-path racing its normal completion path) would
+        // over-decrement `activeEffectCount` and could call `hideCanvas()`
+        // while ANOTHER window's effect is still genuinely in flight --
+        // hiding that other window's live warp until its own `endEffect`
+        // eventually runs.
+        if (elTexture.has(el)) {
+            const texture = elTexture.get(el);
             releaseTexture(texture);
             elTexture.delete(el);
+            activeEffectCount = Math.max(0, activeEffectCount - 1);
+            if (activeEffectCount === 0) {
+                hideCanvas();
+            }
         }
-        activeEffectCount = Math.max(0, activeEffectCount - 1);
-        if (activeEffectCount === 0) {
-            hideCanvas();
-        }
+        // else: `el` doesn't currently hold the canvas (never began, or an
+        // earlier `endEffect(el)` already ran) -- a harmless no-op, per the
+        // banner's "safe to call more than once for the same el" contract.
     }
 }

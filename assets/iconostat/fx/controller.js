@@ -226,19 +226,34 @@ export const FxController = {
     _loadTier2() {
         if (!this._tier2Promise) {
             this._tier2Promise = (async () => {
-                let compositor;
+                // Suspenders (Finding 1, task-Bfix-brief.md): compositor.js's
+                // own `warmup()`/`runWarmupProbe()` is guaranteed to never
+                // reject (any GL-init throw demotes internally, see its own
+                // comments) -- but this single catch-all wrapping BOTH the
+                // `import()` and the `warmup()` await means even a future
+                // compositor.js change that reopens that hole still can't
+                // poison `_tier2Promise` with a rejected promise. A rejected
+                // `_tier2Promise` would be cached forever (this whole
+                // function only runs once per session) and re-thrown on
+                // every future `await this._loadTier2()` in `_runEffect`/
+                // `_onDrag`, which don't wrap that await in their own
+                // try/catch -- i.e. it would propagate as an unhandled
+                // rejection past the Tier-1 fallback and silently kill every
+                // future Tier-2-candidate gesture, session-wide. ANY throw
+                // here -- import failure or warmup somehow rejecting anyway
+                // -- demotes to Tier 1 and resolves (never rejects).
                 try {
-                    compositor = await import('./compositor.js');
+                    const compositor = await import('./compositor.js');
+                    const verdict = await compositor.warmup();
+                    if (verdict === 'demote') {
+                        this.tier = 1;
+                        return null;
+                    }
+                    return compositor;
                 } catch (e) {
                     this.tier = 1;
                     return null;
                 }
-                const verdict = await compositor.warmup();
-                if (verdict === 'demote') {
-                    this.tier = 1;
-                    return null;
-                }
-                return compositor;
             })();
         }
         return this._tier2Promise;
@@ -344,8 +359,21 @@ export const FxController = {
                         await effectMod.run(this, compositor, el, kind, entering);
                         return;
                     } catch (e) {
-                        if (!(e && e.name === 'SnapshotError')) throw e; // an unrelated bug in genie.js must not be silently swallowed as "just fall back to Tier 1"
-                        this.demote(el, 1); // SnapshotError -> per-window demotion: this el skips Tier 2 for the rest of the session
+                        // Finding 2 (task-Bfix-brief.md): ANY thrown error --
+                        // not just SnapshotError -- degrades THIS gesture to
+                        // Tier 1 rather than dropping it (e.g. beginEffect's
+                        // ensureCanvas() hitting a GL-init failure throws a
+                        // plain-Error-wrapped SnapshotError today, but an
+                        // unrelated genie.js bug could throw anything else --
+                        // per the graceful-degradation invariant, a window
+                        // must never be left blank/stranded/no-op just
+                        // because ITS effect module misbehaved this one
+                        // time). SnapshotError additionally demotes the
+                        // window for the rest of the session -- that's
+                        // specifically "this window can't be safely
+                        // snapshotted", a stronger signal than "something
+                        // threw once".
+                        if (e && e.name === 'SnapshotError') this.demote(el, 1);
                         // fall through to Tier 1 below, for this gesture too
                     }
                 }
@@ -378,8 +406,11 @@ export const FxController = {
                         await wobble[fn](this, compositor, detail);
                         return;
                     } catch (e) {
-                        if (!(e && e.name === 'SnapshotError')) throw e;
-                        this.demote(el, 1);
+                        // Finding 2 (task-Bfix-brief.md): see the matching
+                        // comment in `_runEffect` -- ANY thrown error falls
+                        // through to Tier 1 for this event; only SnapshotError
+                        // additionally demotes the window.
+                        if (e && e.name === 'SnapshotError') this.demote(el, 1);
                         // fall through to Tier 1 for this event only -- see
                         // compositor.js's contract comment for why
                         // dragMove/dragEnd must tolerate a mid-gesture switch.

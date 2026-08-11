@@ -166,4 +166,59 @@ describe('assessSnapshotRisk', () => {
     container.appendChild(video);
     expect(() => assessSnapshotRisk(container)).toThrow(SnapshotError);
   });
+
+  // task-Bfix Finding 5: a <source> carries no `crossorigin` attribute of
+  // its own -- it lives on the parent <video>/<audio>. Reading `m.crossOrigin`
+  // directly on a <source> is always undefined/falsy, which over-flagged
+  // every cross-origin <source> even when the parent correctly set
+  // `crossorigin` (safe direction, but wrong -- over-conservative Tier-1
+  // demotion).
+  describe('<source> cross-origin flag reads the PARENT media element\'s crossorigin', () => {
+    it('does not throw for a cross-origin <source> whose parent <video> sets crossorigin', () => {
+      const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
+      const source = document.createElement('source');
+      source.src = 'https://cross-origin.example.test/movie.mp4';
+      video.appendChild(source);
+      container.appendChild(video);
+      expect(() => assessSnapshotRisk(container)).not.toThrow();
+    });
+
+    it('does not throw for a cross-origin <source> whose parent <audio> sets crossorigin', () => {
+      const audio = document.createElement('audio');
+      audio.crossOrigin = 'use-credentials';
+      const source = document.createElement('source');
+      source.src = 'https://cross-origin.example.test/track.mp3';
+      audio.appendChild(source);
+      container.appendChild(audio);
+      expect(() => assessSnapshotRisk(container)).not.toThrow();
+    });
+
+    it('still throws for a cross-origin <source> whose parent does NOT set crossorigin', () => {
+      const video = document.createElement('video');
+      const source = document.createElement('source');
+      source.src = 'https://cross-origin.example.test/movie.mp4';
+      video.appendChild(source);
+      container.appendChild(video);
+      expect(() => assessSnapshotRisk(container)).toThrow(SnapshotError);
+    });
+
+    it('conservatively throws for a detached cross-origin <source> with no parent', () => {
+      const source = document.createElement('source');
+      source.src = 'https://cross-origin.example.test/movie.mp4';
+      // Append the <source> directly under container (no <video>/<audio>
+      // parent) -- genuine ambiguity, must stay conservative.
+      container.appendChild(source);
+      expect(() => assessSnapshotRisk(container)).toThrow(SnapshotError);
+    });
+
+    it('does not throw for a same-origin <source> regardless of parent crossorigin', () => {
+      const video = document.createElement('video');
+      const source = document.createElement('source');
+      source.src = `${window.location.origin}/movie.mp4`;
+      video.appendChild(source);
+      container.appendChild(video);
+      expect(() => assessSnapshotRisk(container)).not.toThrow();
+    });
+  });
 });
