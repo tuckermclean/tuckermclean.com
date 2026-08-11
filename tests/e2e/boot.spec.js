@@ -106,3 +106,18 @@ test('a freshly opened window is revealed (visible, positioned, no leftover buil
   expect(box.width).toBeGreaterThan(0);
   expect(box.height).toBeGreaterThan(0);
 });
+
+test('the loading spinner shows on content-loading events and hides when balanced', async ({ page }) => {
+  await openApp(page);
+  const spinner = page.locator('.iconostat-spinner');
+  await expect(spinner).toHaveCount(1);
+  await expect(spinner).not.toHaveClass(/active/);
+  // two concurrent loads share one indicator
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loading')));
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loading')));
+  await expect(spinner).toHaveClass(/active/);
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loaded')));
+  await expect(spinner).toHaveClass(/active/);   // still one load in flight
+  await page.evaluate(() => document.dispatchEvent(new CustomEvent('iconostat-content-loaded')));
+  await expect(spinner).not.toHaveClass(/active/); // count back to 0
+});

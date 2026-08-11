@@ -15,6 +15,10 @@ export class IconostatDesktop extends HTMLElement {
         this._suppressHistory = this._suppressHistory || false;
         this._installSelection();
         this._installReflow();
+        this._loadingCount = this._loadingCount || 0;
+        this._installSpinner();
+        document.addEventListener('iconostat-content-loading', () => this._loadingStart());
+        document.addEventListener('iconostat-content-loaded',  () => this._loadingEnd());
 
         document.addEventListener('iconostat-focus',    e => this.bringToFront(e.target));
         document.addEventListener('iconostat-close',    e => this.unregister(e.target));
@@ -235,6 +239,42 @@ export class IconostatDesktop extends HTMLElement {
         document.addEventListener('mouseup', endSelect);
         document.addEventListener('keydown', e => { if (e.key === 'Escape') endSelect(); });
         window.addEventListener('blur', endSelect);
+    }
+
+    // Floating loading spinner. The IMAGE is site-supplied via
+    // --iconostat-spinner-image (the library ships no image); if unset the
+    // spinner renders nothing. Follows the cursor on fine-pointer devices,
+    // centers on touch. Shown while >=1 content load is in flight.
+    _installSpinner() {
+        const spinner = document.createElement('div');
+        spinner.className = 'iconostat-spinner';
+        const eye = document.createElement('div');
+        eye.className = 'iconostat-spinner-eye';
+        spinner.appendChild(eye);
+        document.body.appendChild(spinner);
+        this._spinner = spinner;
+        if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+            document.addEventListener('mousemove', e => {
+                spinner.style.left = `${e.clientX}px`;
+                spinner.style.top = `${e.clientY}px`;
+            });
+        } else {
+            spinner.classList.add('centered');
+        }
+    }
+
+    _loadingStart() {
+        this._loadingCount++;
+        this._spinner.classList.add('active');
+        document.body.classList.add('iconostat-loading');
+    }
+
+    _loadingEnd() {
+        this._loadingCount = Math.max(0, this._loadingCount - 1);
+        if (this._loadingCount === 0) {
+            this._spinner.classList.remove('active');
+            document.body.classList.remove('iconostat-loading');
+        }
     }
 
     // Cascade windows after viewport resize or orientation change
