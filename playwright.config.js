@@ -30,6 +30,13 @@ export default defineConfig({
     baseURL: 'http://localhost:1313',
     viewport: { width: 1280, height: 900 },
     trace: 'on-first-retry',
+    // Forces Tier 0 (no-op passthrough) for the whole default suite, on both
+    // projects -- see assets/iconostat/fx/controller.js's tier-selection
+    // contract: prefers-reduced-motion overrides everything unconditionally.
+    // fx never engages, so all pre-existing e2e assertions stay
+    // byte-identical-green. The fx-tier1 spec opts back into effects per
+    // test via `test.use({ reducedMotion: 'no-preference' })`.
+    reducedMotion: 'reduce',
   },
   projects: [
     {

@@ -75,11 +75,52 @@
         <div class="menu-item" onclick="cascadeWindows();">Cascade Windows</div>
         <div class="menu-item" onclick="tileWindows();">Tile Windows</div>
         <div class="menu-item" onclick="minimizeWindows();">Minimize All</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" onclick="setFxTier('auto');">Effects: Full</div>
+        <div class="menu-item" onclick="setFxTier('1');">Effects: Lite</div>
+        <div class="menu-item" onclick="setFxTier('0');">Effects: Off</div>
     </iconostat-menu>
 
     {{ $chatJS := resources.Get "js/chat.js" | js.Build (dict "targetPath" "js/chat.js") }}
     <link rel="modulepreload" href="{{ $chatJS.RelPermalink }}">
-    {{ $jsOpts := dict "minify" true "targetPath" "js/bundle.js" }}
+    {{/* Iconostat FX: each fx/*.js module is built to its OWN fixed,
+         non-fingerprinted served path (mirroring its assets/ location), so
+         main.js's runtime `import('/iconostat/fx/controller.js')` resolves
+         to a real file -- not something esbuild inlined into bundle.js --
+         and controller.js's own relative `import('./tier1.js')` (and its
+         `new URL('./fx.css', import.meta.url)`) resolve against that same
+         served directory. `externals` tells esbuild not to try to
+         resolve/bundle controller.js's dynamic imports of tier1.js or the
+         not-yet-built tier-2 modules (compositor/genie/wobble -- Agents
+         B/C/D land those later; without `externals` the Hugo build would
+         fail today trying to resolve files that don't exist yet). See
+         assets/iconostat/fx/controller.js's file banner for the full
+         rationale. controller.js gets a modulepreload (it must be loaded
+         and listening before the first user gesture); tier1.js and fx.css
+         are published here too (so Hugo copies them to dist/) but WITHOUT
+         an eager fetch -- referencing .RelPermalink inside an HTML comment
+         forces Hugo to publish the resource without the browser requesting
+         it, keeping the "pages that never animate pay zero cost" promise
+         for everything but the small controller. */}}
+    {{ $fxController := resources.Get "iconostat/fx/controller.js" | js.Build (dict "targetPath" "iconostat/fx/controller.js" "format" "esm" "externals" (slice "./tier1.js" "./compositor.js" "./genie.js" "./wobble.js")) }}
+    {{ $fxTier1 := resources.Get "iconostat/fx/tier1.js" | js.Build (dict "targetPath" "iconostat/fx/tier1.js" "format" "esm") }}
+    {{/* Not piped through resources.Minify: Minify renames output to
+         `fx.min.css`, which would break controller.js's
+         `new URL('./fx.css', import.meta.url)` runtime reference -- this
+         file is tiny (one rule) so minification isn't worth the indirection. */}}
+    {{ $fxCss := resources.Get "iconostat/fx/fx.css" }}
+    <link rel="modulepreload" href="{{ $fxController.RelPermalink }}">
+    <!-- fx/tier1.js + fx/fx.css: lazy-loaded by controller.js at runtime; published here without an eager fetch -- {{ $fxTier1.RelPermalink }} {{ $fxCss.RelPermalink }} -->
+    {{/* Critical: main.js's own dynamic `import('../iconostat/fx/controller.js')`
+         (see the FX bootstrap there) must ALSO be marked external here, on
+         bundle.js's own js.Build call -- otherwise esbuild resolves and
+         inlines controller.js's entire chain (tier1.js included) straight
+         into bundle.js, which defeats the whole served-path/lazy-fetch
+         design above (and was confirmed happening before this option was
+         added: `import.meta.url` inside the inlined code pointed at
+         bundle.js itself, not at /iconostat/fx/controller.js, breaking the
+         relative fx.css URL). */}}
+    {{ $jsOpts := dict "minify" true "targetPath" "js/bundle.js" "externals" (slice "../iconostat/fx/controller.js") }}
     {{ if hugo.IsServer }}{{ $jsOpts = merge $jsOpts (dict "sourceMap" "inline") }}{{ end }}
     {{ $js := resources.Get "js/main.js" | js.Build $jsOpts | resources.Fingerprint }}
     <script type="module" src="{{ $js.RelPermalink }}"></script>
