@@ -161,31 +161,30 @@ const MOBILE_BREAKPOINT = 768;
 const FIXED_DT = 1 / 120; // seconds -- "fixed 120Hz step"
 const MAX_STEPS_PER_FRAME = 8; // spiral-of-death guard (backgrounded-tab wakeup, slow device)
 
-// Tuned empirically (see the task report) against the settle+max-duration-cap
-// hard invariant, not lifted directly from the spec's illustrative "damping
-// ~0.93/step": a 6x6 lattice's BULK/low-frequency modes (many points
-// displaced together, e.g. the whole mesh trailing a fast drag) decay far
-// slower in absolute wall-clock time under a fixed per-step velocity
-// multiplier than a single isolated point would -- damping only bites
-// during a mode's "moving" (kinetic) phase, and a slow bulk mode simply
-// completes far fewer such phases per second than a fast one. At
-// DAMPING=0.93 even a drastically stiffened anchor spring still took ~1.6s+
-// (measured) to cross a sane settle threshold for a typical 150px drag --
-// uncomfortably close to (and, for larger/faster drags, past) the 2s cap,
-// meaning most ordinary drags would end up terminating via the hard cap
-// rather than a natural settle. Making the per-point ANCHOR spring
-// dominant over the inter-point STRUCTURAL/SHEAR lattice springs (instead
-// of raising DAMPING further, which barely helped -- see the report) gives
-// each point a high individual natural frequency (so damping "bites" it
-// often) while the comparatively weak lattice springs still produce a
-// clearly visible jelly lag between neighbors during a drag. This
-// combination settles a full-size (150px) drag in ~500ms (~60 fixed
-// steps) -- a comfortable ~4x margin under `SETTLE_MAX_DURATION_MS`,
-// verified in tests/unit/wobble.test.js and tests/e2e/fx-tier2-wobble.spec.js.
-const K_STRUCT = 20; // structural (orthogonal-neighbor) lattice spring constant -- local jelly coupling
-const K_SHEAR = 8; // shear (diagonal-neighbor) lattice spring constant -- local jelly coupling
-const K_ANCHOR = 300; // per-point spring back to the window-rect rest position -- dominant, keeps settle fast
-const DAMPING = 0.8; // flat per-fixed-step velocity multiplier
+// Tunable constants. The wobble is intentionally UNDER-DAMPED so a released
+// window visibly jiggles/bounces a few times (a "jello" wobble) instead of
+// smoothly draping back to rest -- retuned from the original over-damped
+// fast-settle values after user feedback that the window "draped" rather
+// than jiggled.
+//   - DAMPING: per-fixed-step velocity multiplier; closer to 1 == less
+//     damping == more/longer bounce. (The original 0.8 was ~critically
+//     damped -> no overshoot -> "drape".)
+//   - K_ANCHOR: each point's spring back to its window-rect rest position;
+//     sets the wobble's natural frequency (higher == faster jiggle).
+//   - K_STRUCT / K_SHEAR: inter-point lattice springs (orthogonal / diagonal
+//     neighbors) that couple the grid into a jelly sheet -- the surface
+//     ripple / neighbor-drag that reads as "jelly" rather than each point
+//     bouncing independently. Raised (relative to K_ANCHOR) from the old
+//     anchor-dominant balance so the jiggle propagates through the mesh.
+// Balanced so a typical drag still settles naturally (kinetic energy <
+// SETTLE_EPSILON) BEFORE the 2s SETTLE_MAX_DURATION_MS cap -- the cap is the
+// hard "never strand a hidden window" backstop, but ordinary drags reach a
+// natural settle first, so there's no visible pop at reveal. Verified in
+// tests/unit/wobble.test.js (settle-convergence) + fx-tier2-wobble.spec.js.
+const K_STRUCT = 32; // structural (orthogonal-neighbor) lattice spring -- jelly coupling
+const K_SHEAR = 13; // shear (diagonal-neighbor) lattice spring -- jelly coupling
+const K_ANCHOR = 180; // per-point spring back to rest -- sets the wobble frequency
+const DAMPING = 0.925; // per-fixed-step velocity multiplier -- under-damped for a visible jiggle (~1.3s natural settle)
 
 const SETTLE_EPSILON = 30; // kinetic energy (sum of v^2, px/s units) below which the mesh is "at rest"
 const SETTLE_MAX_DURATION_MS = 2000; // hard cap -- see file banner

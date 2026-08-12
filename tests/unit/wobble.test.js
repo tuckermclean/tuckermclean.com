@@ -217,8 +217,11 @@ describe('wobble.stepPhysics (the settle behavior the max-duration cap exists to
             stepPhysics({ simPos: s.simPos, vel: s.vel, restPos: s.restPos, springs: s.springs });
             if (settledAt === -1 && kineticEnergy(s.vel) < 30) settledAt = i; // SETTLE_EPSILON's production value
         }
-        expect(settledAt).toBeGreaterThan(-1); // converged well within the cap window
-        expect(settledAt).toBeLessThan(120); // comfortable ~2x margin under the full 240-step cap
+        expect(settledAt).toBeGreaterThan(-1); // converged NATURALLY (not via the cap)...
+        expect(settledAt).toBeLessThan(220); // ...comfortably before the 240-step (2s) cap. The
+        // wobble is intentionally under-damped (a "jello" jiggle, per user
+        // feedback) so this settles ~1.3s rather than the old over-damped
+        // ~0.5s -- still a natural settle with margin, so no cap-forced pop.
         // And it stays converged (doesn't re-diverge) -- final energy is tiny.
         expect(kineticEnergy(s.vel)).toBeLessThan(30);
         // Every vertex is back at (or very near) its rest position -- "real
