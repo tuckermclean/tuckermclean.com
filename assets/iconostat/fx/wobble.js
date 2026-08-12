@@ -722,22 +722,26 @@ export async function dragStart(controller, compositor, detail) {
 // own `state.compositor` reference from dragStart) but kept as named
 // parameters to match the exact C/D contract signature.
 export function dragMove(controller, compositor, detail) {
-    const { el, x, y, left, top } = detail;
+    const { el, x, y } = detail;
     const state = dragState.get(el);
     if (!state) return; // beginEffect not resolved yet, or refused (genie) -- tolerate, per contract
     state.pointerX = x;
     state.pointerY = y;
-    // Track the real window position (still being written by the library's
-    // own onMove, even though `el` is fx-ghosted) -- "the grid's rest pose
-    // tracks left/top from iconostat-drag-move".
-    if (typeof left === 'number' && typeof top === 'number') {
-        state.restLeft = left;
-        state.restTop = top;
-    } else {
-        const r = rectOf(el);
-        state.restLeft = r.left;
-        state.restTop = r.top;
-    }
+    // Track the real window position from the LIVE viewport rect
+    // (getBoundingClientRect), NOT the event's detail.left/top. The mesh and
+    // the shared canvas live in viewport space (the canvas is position:fixed;
+    // positions are clientX/Y-based), whereas detail.left/top are the
+    // window's offset-parent/document-space `style` coords -- which differ
+    // from viewport space by page scroll and any positioned ancestor. Using
+    // them made the whole mesh render vertically offset (dropped down) during
+    // the drag. The library writes el.style.left/top BEFORE firing
+    // iconostat-drag-move (fx-ghost is visibility:hidden, so layout/rect are
+    // still valid), so rectOf(el) already reflects the new position -- and
+    // this makes dragMove consistent with dragStart and dragEnd, which both
+    // already use rectOf(el).
+    const r = rectOf(el);
+    state.restLeft = r.left;
+    state.restTop = r.top;
     refreshRestPos(state);
 }
 
