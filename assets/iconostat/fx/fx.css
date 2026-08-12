@@ -1,0 +1,16 @@
+/* Iconostat FX -- shared stylesheet.
+ *
+ * Injected by controller.js on init() (only when the session tier > 0), so
+ * pages that never engage fx pay zero cost -- see the CSS/DOM contract in
+ * docs/superpowers/specs/2026-08-11-iconostat-fx-design.md. Native CSS file,
+ * no build step; served as-is by Hugo (see layouts/home.html).
+ */
+
+/* Tier-2 double-buffer class (the compositor snapshots the real element,
+ * shows it on the shared canvas, and hides the real DOM node while it does).
+ * Not used by Tier 1 -- which animates the real element directly, with no
+ * snapshot -- but harmless to ship now: compositor.js will rely on this rule
+ * unchanged when it lands. */
+iconostat-window.fx-ghost {
+    visibility: hidden !important;
+}

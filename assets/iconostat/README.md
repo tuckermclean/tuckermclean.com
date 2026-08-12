@@ -34,9 +34,9 @@ All defined in `assets/iconostat/window.js`:
 | Method | Effect |
 |---|---|
 | `setContent(html)` | Sets the `.window-body` innerHTML. |
-| `bringToFront()` | Dispatches `iconostat-focus` (bubbles) for the desktop to handle. |
-| `minimize(force?)` | Toggles (or forces) minimized state; moves the element between `document.body` and `getDesktop().taskbar`. Dispatches `iconostat-minimize`. |
-| `maximize(force?)` | Toggles (or forces) maximized state. Dispatches `iconostat-maximize`. |
+| `bringToFront(userGesture?)` | Dispatches `iconostat-focus` (bubbles, `detail: { name, userGesture }`) for the desktop to handle. `userGesture` defaults `false`; the direct mousedown/touchstart handlers pass `true` (a real pointer gesture, including a tap on a minimized taskbar chip — the chip IS this element). |
+| `minimize(force?, opts?)` | Toggles (or forces) minimized state; moves the element between `document.body` and `getDesktop().taskbar`. Dispatches a cancelable `iconostat-before-minimize` on `document` first (unless `opts.silent`) — if `preventDefault()`ed, returns without mutating. Otherwise proceeds and dispatches `iconostat-minimize`. See [fx seam events](#fx-seam-events). |
+| `maximize(force?, opts?)` | Toggles (or forces) maximized state. Dispatches a cancelable `iconostat-before-maximize` on `document` first (unless `opts.silent`) — if `preventDefault()`ed, returns without mutating. Otherwise proceeds and dispatches `iconostat-maximize`. See [fx seam events](#fx-seam-events). |
 | `shade(force?)` | Toggles (or forces) shaded (rolled-up) state. Dispatches `iconostat-shade`. |
 | `close()` | Dispatches `iconostat-close`; the element does not remove itself — the desktop unregisters it and site glue is responsible for actually removing it from the DOM (see `assets/js/window.js`'s `iconostat-close` listener). |
 
@@ -64,22 +64,23 @@ All methods below are defined in `assets/iconostat/desktop.js`:
 | `getTop()` | Returns the topmost (highest z-index) registered window, or `undefined` if none. |
 | `register(el)` | Adds a window element to the registry. |
 | `unregister(el)` | Removes a window element from the registry and calls `promoteTop()`. |
-| `bringToFront(el, changeHash = true)` | Raises `el` above all other registered windows. If `changeHash` is `true`, dispatches `iconostat-focused` (for the site-side router to translate into a history transition); pass `false` to suppress that announcement (e.g. image-zoom windows, initial load). |
+| `bringToFront(el, changeHash = true, userGesture = false)` | Raises `el` above all other registered windows. If `changeHash` is `true`, dispatches `iconostat-focused` (for the site-side router to translate into a history transition); pass `false` to suppress that announcement (e.g. image-zoom windows, initial load). If `el` is minimized, un-minimizes it via `el.minimize(false, { userGesture })` — `userGesture` defaults `false` (programmatic: `cascade()`/`tile()`'s own internal calls never pass it); the `iconostat-focus` `document` listener (the desktop's own wiring, see [Events](#events)) is the one caller that threads through the flag it received from the window element's `bringToFront()` call, so a direct chip tap reports `userGesture:true` and every other un-minimize stays `false`. |
 | `promoteTop()` | Re-focuses the current top window (if not minimized) and dispatches `iconostat-promoted` unconditionally, announcing the resulting state. |
 | `windows` (getter) | Returns the live array of registered window elements. |
 | `zIndex` (getter) | Returns the desktop's current top-of-stack z-index counter (the same value `bringToFront()` assigns then increments). Public accessor for `<iconostat-menu>` to raise itself above all windows when opening (`getDesktop().zIndex + 1`) — replaces reaching into the private `_z` field. |
+| `fxSuppressed` (getter) | Returns `true` whenever history/focus announcements are currently suppressed (during `cascade()`, `tile()`, and the debounced resize/orientation reflow). Public accessor so the fx layer can detect bulk-layout operations (which must never animate) without reaching into the private `_suppressHistory` field. |
 | `registerTaskbar(el)` | Registers `el` as the taskbar host; called by `<iconostat-taskbar>` on its own `connectedCallback`. Not normally called by consumers directly. |
 | `taskbar` (getter) | Returns the registered taskbar element (via `registerTaskbar()`), falling back to `document.getElementById('tasks')` if none was registered. `<iconostat-window>.minimize()`/`.reset()` use this to resolve where to relocate a minimized window — see [Taskbar host requirement](#taskbar-host-requirement). |
 
 ### Events
 
-All `iconostat-*` events are `CustomEvent`s carrying `detail: { name }` (the window's `name`), except `iconostat-promoted`, whose detail is `{ empty, minimized }`. The library never touches browser history or does site routing — these events are the entire library→site contract for that.
+All `iconostat-*` events are `CustomEvent`s carrying `detail: { name }` (the window's `name`), except `iconostat-focus` (`{ name, userGesture }`) and `iconostat-promoted` (`{ empty, minimized }`). The library never touches browser history or does site routing — these events are the entire library→site contract for that.
 
 Windows are children of `document.body`, not of `<iconostat-desktop>`; the desktop's own listeners (and any consumer's listeners) must be attached to `document`, not to the `<iconostat-desktop>` element, or they will never fire.
 
 | Event | Dispatched by | Bubbles | `detail` | Meaning |
 |---|---|---|---|---|
-| `iconostat-focus` | `<iconostat-window>` (`bringToFront()`, and internally on mousedown/touchstart) | yes | `{ name }` | A window requests focus. The desktop's `document`-level listener calls its own `bringToFront(el)` in response. |
+| `iconostat-focus` | `<iconostat-window>` (`bringToFront()`, and internally on mousedown/touchstart) | yes | `{ name, userGesture }` | A window requests focus. The desktop's `document`-level listener calls its own `bringToFront(el, true, e.detail.userGesture)` in response — `userGesture` is `true` only for a direct mousedown/touchstart pointer gesture (see `<iconostat-window>` methods above). |
 | `iconostat-focused` | `<iconostat-desktop>` (`bringToFront()`, only when `changeHash` is true) | dispatched directly on `document` | `{ name }` | Focus has changed — for the site-side router to translate into a history transition. |
 | `iconostat-minimize` | `<iconostat-window>` (`minimize()`) | yes | `{ name }` | The window's minimized state changed. Desktop responds with `promoteTop()`. |
 | `iconostat-maximize` | `<iconostat-window>` (`maximize()`) | yes | `{ name }` | The window's maximized state changed. Desktop responds with `promoteTop()`. |
@@ -89,6 +90,53 @@ Windows are children of `document.body`, not of `<iconostat-desktop>`; the deskt
 | `iconostat-menu-open` | `<iconostat-taskbar>` (start-button `click` handler) | dispatched directly on `document` | `{ x, y, offset }` | Requests that `<iconostat-menu>` open at `(x, y)`; `offset` (boolean) tells the menu to shift left by its own width first (used when opening from a button, so the menu doesn't overhang the viewport edge under the button). Consumed by `<iconostat-menu>`'s `document`-level listener. A right-click anywhere outside `.window-body` opens the menu the same way but *without* this event — `<iconostat-menu>` handles `contextmenu` directly and calls its own positioning logic with `offset: false`. |
 | `iconostat-content-loading` | **The host's content loader** (not the library — e.g. `assets/js/window.js`'s `loadHTML()`) | dispatched directly on `document` | none | Announces that a content fetch has started. `<iconostat-desktop>` listens for this on `document` and increments an in-flight load counter, showing its loading spinner while the count is ≥1. |
 | `iconostat-content-loaded` | **The host's content loader** (not the library) | dispatched directly on `document` | none | Announces that a content fetch has reached a terminal outcome (success, retries-exhausted, or fetch failure). `<iconostat-desktop>` decrements the in-flight load counter and hides the spinner once it reaches 0. The host must dispatch exactly one `iconostat-content-loaded` per `iconostat-content-loading` (i.e. balance them across every terminal branch of the load, not just the success path) or the spinner sticks. |
+
+### fx seam events
+
+These events exist so an optional effects layer (loaded separately, e.g.
+`assets/iconostat/fx/`) can intercept and animate minimize/maximize/drag/resize
+without the library depending on it. **With nothing listening, dispatching
+these changes nothing** — they're pure seams. All are dispatched on
+`document` (not on the window element), like the rest of the table above.
+
+| Event | Cancelable | `detail` | Fired |
+|---|---|---|---|
+| `iconostat-before-minimize` | yes | `{ name, el, entering, userGesture }` | In `minimize()`, before any DOM mutation (unless called with `{ silent: true }`). `entering` is `true` when the window is about to become minimized, `false` when it's about to be restored. If a listener calls `preventDefault()`, `minimize()` returns immediately without mutating state or dispatching `iconostat-minimize`. |
+| `iconostat-before-maximize` | yes | `{ name, el, entering, userGesture }` | Same contract as `iconostat-before-minimize`, in `maximize()`, before the `maximized` class is toggled. |
+| `iconostat-drag-start` | no | `{ name, el, x, y }` | In `_startDrag`, before the `move`/`end` listeners attach. `x`/`y` are the pointer's starting client coordinates (mouse and touch paths both fire this). |
+| `iconostat-drag-move` | no | `{ name, el, x, y, left, top }` | On every drag move, after the element's `left`/`top` style has been written for that move. `x`/`y` are the pointer's client coordinates; `left`/`top` are the window's resulting `offsetLeft`/`offsetTop`. |
+| `iconostat-drag-end` | no | `{ name, el }` | When the drag ends (`mouseup`/`touchend`). |
+| `iconostat-resize-start` | no | `{ name, el, x, y }` | In `_startResize`, before the `move`/`end` listeners attach. Mirrors `iconostat-drag-start`. |
+| `iconostat-resize-move` | no | `{ name, el, x, y, width, height }` | On every resize move, after the element's `width`/`height` style has been written. `width`/`height` are the window's resulting `offsetWidth`/`offsetHeight`. |
+| `iconostat-resize-end` | no | `{ name, el }` | When the resize ends. |
+| `iconostat-fx-done` | no | `{ name, effect }` | **Not dispatched by the library.** Reserved for the fx layer itself to announce that an effect (`effect`, e.g. `'genie-minimize'`) has finished and swapped back to the real element. Documented here so both sides agree on the name. |
+
+`userGesture` is `false` whenever the call is programmatic: whenever
+`getDesktop().fxSuppressed` is `true` (i.e. during `cascade()`/`tile()`/the
+resize reflow), or when the call originates from `cascade()`/`tile()`
+un-minimizing a window on the user's behalf (those internal calls pass an
+explicit `{ userGesture: false }` to `minimize()`), or from `bringToFront()`
+un-minimizing a window on any caller's behalf OTHER than a direct pointer
+gesture (`desktop.bringToFront(el, changeHash, userGesture = false)` passes
+`userGesture` straight through to `minimize()`; every caller except the
+`iconostat-focus` `document` listener omits it, defaulting `false`). A direct
+mousedown/touchstart on a window (including a tap on its minimized taskbar
+chip — the chip IS the window element, reparented) is the one path that
+reports `true`: `<iconostat-window>`'s pointer handlers call
+`this.bringToFront(true)`, which reaches the `iconostat-focus` listener's
+`e.detail.userGesture` and from there `desktop.bringToFront()`'s third
+argument. A direct call that bypasses `bringToFront()` entirely — e.g. the
+minimize/maximize header-button click handlers, which call
+`minimize()`/`maximize()` with no options — computes `userGesture` from
+`!getDesktop().fxSuppressed` at call time, which is `true` outside of a bulk
+layout operation.
+
+`minimize(force, opts)` and `maximize(force, opts)` accept an options bag:
+`opts.silent` skips dispatching the before-event entirely (used by an fx
+listener that has already `preventDefault()`ed once and now needs to
+re-invoke the real operation — e.g. `el.minimize(true, { silent: true })` —
+without re-triggering itself and looping forever); `opts.userGesture`
+overrides the default `userGesture` computation described above.
 
 ### Site responsibilities
 

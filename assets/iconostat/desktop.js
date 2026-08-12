@@ -20,7 +20,7 @@ export class IconostatDesktop extends HTMLElement {
         document.addEventListener('iconostat-content-loading', () => this._loadingStart());
         document.addEventListener('iconostat-content-loaded',  () => this._loadingEnd());
 
-        document.addEventListener('iconostat-focus',    e => this.bringToFront(e.target));
+        document.addEventListener('iconostat-focus',    e => this.bringToFront(e.target, true, e.detail.userGesture));
         document.addEventListener('iconostat-close',    e => this.unregister(e.target));
         document.addEventListener('iconostat-minimize', () => this.promoteTop());
         document.addEventListener('iconostat-maximize', () => this.promoteTop());
@@ -30,6 +30,11 @@ export class IconostatDesktop extends HTMLElement {
     get windows() { return this._windows; }
 
     get zIndex() { return this._z; }
+
+    // True during cascade()/tile()/reflow (i.e. whenever history/focus
+    // announcements are suppressed) -- exposed so the fx layer never needs to
+    // poke the private `_suppressHistory` field directly.
+    get fxSuppressed() { return this._suppressHistory; }
 
     registerTaskbar(el) { this._taskbar = el; }
 
@@ -88,13 +93,25 @@ export class IconostatDesktop extends HTMLElement {
         }
     }
 
-    bringToFront(windowElement, changeHash = true) {
+    // `userGesture` defaults false (programmatic) -- callers other than the
+    // `iconostat-focus` listener (cascade()/tile()'s own internal calls,
+    // below) never pass it, so they stay programmatic exactly as before.
+    // The `iconostat-focus` listener above threads through whatever
+    // `bringToFront()` on the window element reported: true for a direct
+    // mousedown/touchstart pointer gesture (including a minimized chip
+    // tap -- the one case that actually un-minimizes here), false for every
+    // internal/programmatic caller (reset(), minimize()'s own restore
+    // branch). This is the single seam that decides whether a chip-tap
+    // restore's `iconostat-before-minimize` reports userGesture:true (so the
+    // fx controller animates it) or false (bulk ops / non-gesture callers,
+    // which must never animate).
+    bringToFront(windowElement, changeHash = true, userGesture = false) {
         if (typeof(windowElement) === 'undefined') return;
         // If window is already visible and up front, stop function
         if (windowElement.classList.contains('front')) return;
         // If window is minimized, un-minimize it
         if (windowElement.classList.contains('minimized')) {
-            windowElement.minimize(false);
+            windowElement.minimize(false, { userGesture });
         }
         this._z++; // Increment global counter
         windowElement.style.zIndex = this._z; // Assign new z-index to the element
@@ -134,7 +151,7 @@ export class IconostatDesktop extends HTMLElement {
                 }
                 // If window is minimized, un-minimize it
                 if (isMinimized) {
-                    windowElement.minimize(false);
+                    windowElement.minimize(false, { userGesture: false });
                 }
                 windowElement.reset();
                 this.bringToFront(windowElement);
@@ -170,7 +187,7 @@ export class IconostatDesktop extends HTMLElement {
             this._windows.forEach((windowElement, index) => {
                 // If window is minimized, un-minimize it
                 if (windowElement.classList.contains('minimized')) {
-                    windowElement.minimize(false);
+                    windowElement.minimize(false, { userGesture: false });
                 }
                 windowElement.classList.remove('maximized', 'shaded');
 
@@ -192,7 +209,11 @@ export class IconostatDesktop extends HTMLElement {
     minimizeAll() {
         this._windows.forEach(windowElement => {
             if (windowElement.classList.contains('minimized')) return;
-            windowElement.minimize();
+            // Bulk op: explicit userGesture:false (mirrors cascade()/tile())
+            // so controller.js's _onBeforeMinMax does not animate a
+            // genie/Tier-1 effect on every open window at once, and
+            // jump-cuts (cancelAll(true)) any in-flight effect instead.
+            windowElement.minimize(undefined, { userGesture: false });
         });
     }
 

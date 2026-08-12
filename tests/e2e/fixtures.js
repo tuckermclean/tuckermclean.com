@@ -23,6 +23,24 @@ export const test = base.extend({
       await mcr.add(jsCoverage);
     }
   }, { auto: true }],
+
+  // Defensive workaround: in this sandbox's Chromium build, the
+  // `reducedMotion` CONTEXT option (playwright.config.js's top-level
+  // `use: { reducedMotion: 'reduce' }`, which forces Tier 0 for the fx
+  // feature -- see assets/iconostat/fx/controller.js) does not reliably
+  // propagate to `matchMedia('(prefers-reduced-motion: reduce)')` at page
+  // load, even though it's the documented, standard way to do this and the
+  // config option is still set correctly for portability. `page.
+  // emulateMedia()` DOES work reliably here. Apply it explicitly, every
+  // test, before navigation -- this makes the "default suite runs Tier 0"
+  // guarantee actually hold in this environment. fx-tier1.spec.js's Tier-1
+  // tests override it back to 'no-preference' via their own
+  // `page.emulateMedia()` call (see that file), which runs after this
+  // auto-fixture and before openApp() navigates.
+  autoReducedMotion: [async ({ page }, use) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await use();
+  }, { auto: true }],
 });
 
 export { expect };
