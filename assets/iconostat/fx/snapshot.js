@@ -197,7 +197,110 @@ function inlineComputedStyles(srcRoot, dstRoot) {
     }
 }
 
-function serializeToDataUrl(el, width, height) {
+// -- Web-font embedding -----------------------------------------------------
+//
+// A foreignObject SVG rasterized via `new Image()` renders in an ISOLATED
+// document context that CANNOT fetch the page's @font-face font files -- so
+// without this every snapshot falls back to system fonts and the window
+// visibly changes typeface the instant an effect starts (user-reported).
+// Fix: read the page's own @font-face rules from the live CSSOM, fetch each
+// font file (same-origin here -- Fira Sans/Code under /fonts/), base64-embed
+// it as a `data:` URI, and inject the rewritten @font-face rules as a <style>
+// INSIDE the foreignObject so the isolated context has the glyphs inline.
+// Cached module-wide: fonts don't change during a session, so the (async)
+// fetch happens at most once, on the first snapshot.
+let embeddedFontCssPromise = null;
+
+// The @font-face descriptors worth preserving when we rewrite `src` -- read
+// via getPropertyValue (robust across engines; avoids relying on indexed
+// CSSFontFaceRule.style enumeration). family/weight/style are what the browser
+// matches the cloned text against; the rest are fidelity.
+const FONT_FACE_DESCRIPTORS = [
+    'font-family', 'font-style', 'font-weight', 'font-stretch', 'font-display',
+    'font-variant', 'font-feature-settings', 'unicode-range',
+    'ascent-override', 'descent-override', 'line-gap-override', 'size-adjust',
+];
+
+function isFontFaceRule(rule) {
+    // CSSRule.FONT_FACE_RULE === 5. Use the numeric type (stable, and avoids
+    // depending on CSSFontFaceRule being defined), with a cssText fallback.
+    return rule.type === 5 || (typeof rule.cssText === 'string' && rule.cssText.trimStart().startsWith('@font-face'));
+}
+
+function arrayBufferToBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    const CHUNK = 0x8000; // chunked to dodge String.fromCharCode.apply arg-count limits on large fonts
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(binary);
+}
+
+// Rewrite ONE @font-face rule's `src` to a single embedded data: URI (prefer
+// woff2), preserving its other descriptors. Returns null (rule skipped -> that
+// face falls back to a system font, i.e. the pre-fix behavior) on ANY failure
+// -- a missing/unfetchable font must never break the snapshot.
+async function embedFontFace(rule) {
+    const src = rule.style && rule.style.getPropertyValue('src');
+    if (!src) return null;
+    const urls = [];
+    const re = /url\((['"]?)([^'")]+)\1\)/g;
+    let m;
+    while ((m = re.exec(src)) !== null) urls.push(m[2]);
+    if (!urls.length) return null;
+    const chosen = urls.find((u) => /\.woff2(\?|#|$)/i.test(u)) || urls[0];
+    let dataUri;
+    try {
+        const resp = await fetch(new URL(chosen, document.baseURI).href, { credentials: 'same-origin' });
+        if (!resp.ok) return null;
+        const b64 = arrayBufferToBase64(await resp.arrayBuffer());
+        const mime = /\.woff2(\?|#|$)/i.test(chosen) ? 'font/woff2'
+            : /\.woff(\?|#|$)/i.test(chosen) ? 'font/woff'
+            : /\.otf(\?|#|$)/i.test(chosen) ? 'font/otf'
+            : /\.ttf(\?|#|$)/i.test(chosen) ? 'font/ttf'
+            : 'application/octet-stream';
+        dataUri = `data:${mime};base64,${b64}`;
+    } catch (e) {
+        return null;
+    }
+    let descriptors = '';
+    for (const prop of FONT_FACE_DESCRIPTORS) {
+        const v = rule.style.getPropertyValue(prop);
+        if (v) descriptors += `${prop}:${v};`;
+    }
+    return `@font-face{${descriptors}src:url(${dataUri});}`;
+}
+
+// Collect + embed every @font-face rule reachable in the live CSSOM. Cached.
+// Cross-origin stylesheets (whose `.cssRules` access throws SecurityError) and
+// any individually-unfetchable face are skipped, never fatal. Exported so an
+// e2e test can verify the fetch+embed pipeline in a real browser (foreignObject
+// raster itself is unverifiable headless -- see the sandbox note above).
+export function getEmbeddedFontCss() {
+    if (embeddedFontCssPromise) return embeddedFontCssPromise;
+    embeddedFontCssPromise = (async () => {
+        const faceRules = [];
+        const sheets = (typeof document !== 'undefined' && document.styleSheets) ? Array.from(document.styleSheets) : [];
+        for (const sheet of sheets) {
+            let rules;
+            try {
+                rules = sheet.cssRules;
+            } catch (e) {
+                continue; // cross-origin stylesheet -- can't read its rules
+            }
+            if (!rules) continue;
+            for (const rule of Array.from(rules)) {
+                if (isFontFaceRule(rule)) faceRules.push(rule);
+            }
+        }
+        const embedded = await Promise.all(faceRules.map((r) => embedFontFace(r).catch(() => null)));
+        return embedded.filter(Boolean).join('');
+    })().catch(() => '');
+    return embeddedFontCssPromise;
+}
+
+async function serializeToDataUrl(el, width, height) {
     const clone = el.cloneNode(true);
     inlineComputedStyles(el, clone);
     // Neutralize anything that would fight the foreignObject's own explicit
@@ -226,6 +329,24 @@ function serializeToDataUrl(el, width, height) {
     wrapper.style.width = `${width}px`;
     wrapper.style.height = `${height}px`;
     wrapper.style.overflow = 'hidden';
+
+    // Embed the page's web fonts INSIDE the foreignObject (see the web-font
+    // embedding section above) so the isolated raster context renders the real
+    // typefaces instead of falling back to system fonts. On any failure this
+    // is simply omitted -- the snapshot still works, just with fallback fonts
+    // (the pre-fix behavior), never a broken/blank render.
+    let fontCss = '';
+    try {
+        fontCss = await getEmbeddedFontCss();
+    } catch (e) {
+        fontCss = '';
+    }
+    if (fontCss) {
+        const styleEl = document.createElementNS(XHTML_NS, 'style');
+        styleEl.textContent = fontCss;
+        wrapper.appendChild(styleEl);
+    }
+
     wrapper.appendChild(clone);
     foreignObject.appendChild(wrapper);
     svg.appendChild(foreignObject);
@@ -242,7 +363,7 @@ function serializeToDataUrl(el, width, height) {
 // instead, which this function can't distinguish from a legitimately
 // simple/empty window, so it is NOT treated as an error case.
 async function rasterizeChrome(el, width, height, dpr) {
-    const dataUrl = serializeToDataUrl(el, width, height);
+    const dataUrl = await serializeToDataUrl(el, width, height);
     const img = new Image();
     const decoded = new Promise((resolve, reject) => {
         img.onload = () => resolve();
