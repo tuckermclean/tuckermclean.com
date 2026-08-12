@@ -279,13 +279,21 @@ export function kineticEnergy(vel) {
 // spring/integration math for it (see file banner). Pure function of its
 // arguments otherwise -- no DOM, no globals -- so it's directly unit
 // testable without jsdom.
-export function stepPhysics({ simPos, vel, restPos, springs, pinnedIndex = -1, pinnedX = 0, pinnedY = 0 }) {
+// `pinnedRest` (or null) is a Set of vertex indices held RIGID at their
+// CURRENT rest position with zero velocity -- used for the grabbed row (the
+// title bar) so it tracks the real window rect exactly instead of flexing
+// under the cursor. `pinnedIndex` (or -1) additionally force-sets one vertex
+// to an explicit (pinnedX, pinnedY) -- retained for the unit tests / any
+// single-point pinning; both kinds of pin skip the spring/integration math
+// for their own vertices.
+export function stepPhysics({ simPos, vel, restPos, springs, pinnedIndex = -1, pinnedX = 0, pinnedY = 0, pinnedRest = null }) {
     const n = simPos.length / 2;
     const fx = new Float64Array(n);
     const fy = new Float64Array(n);
+    const isPinned = (i) => i === pinnedIndex || (pinnedRest !== null && pinnedRest.has(i));
 
     for (let i = 0; i < n; i++) {
-        if (i === pinnedIndex) continue;
+        if (isPinned(i)) continue;
         fx[i] += K_ANCHOR * (restPos[i * 2] - simPos[i * 2]);
         fy[i] += K_ANCHOR * (restPos[i * 2 + 1] - simPos[i * 2 + 1]);
     }
@@ -294,13 +302,26 @@ export function stepPhysics({ simPos, vel, restPos, springs, pinnedIndex = -1, p
     applySpringForces(springs.shear, K_SHEAR, simPos, restPos, fx, fy);
 
     for (let i = 0; i < n; i++) {
-        if (i === pinnedIndex) continue;
+        if (isPinned(i)) continue;
         const vx = (vel[i * 2] + fx[i] * FIXED_DT) * DAMPING;
         const vy = (vel[i * 2 + 1] + fy[i] * FIXED_DT) * DAMPING;
         vel[i * 2] = vx;
         vel[i * 2 + 1] = vy;
         simPos[i * 2] += vx * FIXED_DT;
         simPos[i * 2 + 1] += vy * FIXED_DT;
+    }
+
+    // Rigid rest-pins (the title-bar row during a drag): snap each to its
+    // current rest position with zero velocity. Applied after integration so
+    // the body's spring forces this step still saw the bar's prior position,
+    // then the bar is re-clamped -- a standard hard positional constraint.
+    if (pinnedRest !== null) {
+        pinnedRest.forEach((i) => {
+            simPos[i * 2] = restPos[i * 2];
+            simPos[i * 2 + 1] = restPos[i * 2 + 1];
+            vel[i * 2] = 0;
+            vel[i * 2 + 1] = 0;
+        });
     }
 
     if (pinnedIndex >= 0) {
@@ -402,6 +423,14 @@ function createState({ el, compositor, texture, width, height, rect, pointerX, p
     const simPos = Float32Array.from(restPos);
     const vel = new Float32Array(cols * rows * 2);
     const pinnedIndex = nearestIndex(pointerX, pointerY, rect.left, rect.top, width, height, cols, rows);
+    // The whole TOP ROW (row 0 == the title bar, the only place a drag can
+    // start -- _startDrag is wired to the window header) is held RIGID to the
+    // window rect while dragging: row-0 vertices are indices 0..cols-1 in the
+    // row-major grid. Pinning the entire bar (not just the single nearest
+    // vertex) is what makes the title bar feel solid under the cursor instead
+    // of flexing there; the wobble then lives in the trailing rows below.
+    const topRowPins = new Set();
+    for (let c = 0; c < cols; c++) topRowPins.add(c);
     return {
         el, compositor,
         cols, rows, springs,
@@ -410,7 +439,7 @@ function createState({ el, compositor, texture, width, height, rect, pointerX, p
         restPos, simPos, vel,
         prevPos: Float32Array.from(simPos),
         renderScratch: new Float32Array(simPos.length),
-        pinnedIndex, pointerX, pointerY,
+        pinnedIndex, topRowPins, pointerX, pointerY,
         phase: 'dragging', // 'dragging' | 'settling'
         accumulatorMs: 0,
         lastTickMs: null,
@@ -462,15 +491,18 @@ function tick(state, now) {
     let steps = 0;
     while (state.accumulatorMs >= FIXED_DT * 1000 && steps < MAX_STEPS_PER_FRAME) {
         state.prevPos.set(state.simPos);
-        let pinnedIndex = -1, pinnedX = 0, pinnedY = 0;
+        // While dragging, hold the entire title-bar row rigid to the window
+        // rect (state.restPos, refreshed from left/top each dragMove) so the
+        // bar tracks the cursor solidly and the wobble trails in the rows
+        // below -- rather than pinning a single vertex that then flexes away
+        // from its anchor-held neighbors right under the cursor.
+        let pinnedRest = null;
         if (state.phase === 'dragging' && state.kind === 'drag') {
-            pinnedIndex = state.pinnedIndex;
-            pinnedX = state.pointerX + state.pinOffsetX;
-            pinnedY = state.pointerY + state.pinOffsetY;
+            pinnedRest = state.topRowPins;
         }
         stepPhysics({
             simPos: state.simPos, vel: state.vel, restPos: state.restPos,
-            springs: state.springs, pinnedIndex, pinnedX, pinnedY,
+            springs: state.springs, pinnedRest,
         });
         state.accumulatorMs -= FIXED_DT * 1000;
         steps++;

@@ -170,6 +170,34 @@ describe('wobble.stepPhysics (the settle behavior the max-duration cap exists to
         }
     });
 
+    it('the pinned title-bar row stays rigid at the window rect while the body trails (rigid-bar drag feel)', () => {
+        const s = setup(); // 6x6
+        const topRow = new Set([0, 1, 2, 3, 4, 5]); // row 0 of a 6-wide grid == the title bar
+        // Simulate the window having moved right 100px: rest shifts, sim starts at the OLD rest.
+        const restMoved = Float32Array.from(s.restPos);
+        for (let i = 0; i < restMoved.length; i += 2) restMoved[i] += 100;
+
+        // One step: the whole title-bar row snaps rigidly to the new rect (no flex, zero velocity)...
+        stepPhysics({ simPos: s.simPos, vel: s.vel, restPos: restMoved, springs: s.springs, pinnedRest: topRow });
+        for (const idx of topRow) {
+            expect(s.simPos[idx * 2]).toBeCloseTo(restMoved[idx * 2], 3);       // rigid X
+            expect(s.simPos[idx * 2 + 1]).toBeCloseTo(restMoved[idx * 2 + 1], 3); // rigid Y
+            expect(s.vel[idx * 2]).toBe(0);
+            expect(s.vel[idx * 2 + 1]).toBe(0);
+        }
+        // ...while a bottom-row vertex is still trailing behind the new rect (the wobble lives here, not at the grab).
+        const bottomLeft = (s.rows - 1) * s.cols; // index 30
+        expect(s.simPos[bottomLeft * 2]).toBeGreaterThan(s.restPos[bottomLeft * 2]); // it started moving toward the new rect...
+        expect(s.simPos[bottomLeft * 2]).toBeLessThan(restMoved[bottomLeft * 2]);     // ...but hasn't caught up (lag == wobble)
+
+        // Given enough steps the body catches up to the (rigid) new rect and settles; no blowup.
+        for (let i = 0; i < 300; i++) {
+            stepPhysics({ simPos: s.simPos, vel: s.vel, restPos: restMoved, springs: s.springs, pinnedRest: topRow });
+        }
+        expect(s.simPos[bottomLeft * 2]).toBeCloseTo(restMoved[bottomLeft * 2], 0); // within ~0.5px of rest
+        for (let i = 0; i < s.simPos.length; i++) expect(Number.isFinite(s.simPos[i])).toBe(true);
+    });
+
     it('releasing the pin lets kinetic energy decay toward zero within the ~2s cap window (settle convergence)', () => {
         const s = setup();
         // Drag one corner far away for a bit (builds up real velocity/energy).
