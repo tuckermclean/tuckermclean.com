@@ -487,10 +487,17 @@ export function uploadTexture(source) {
     if (!gl) throw new Error('compositor.uploadTexture: no live WebGL2 context');
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    // FLIP_Y: canvas 2D source has row 0 at the top; WebGL texture space has
-    // row 0 at the bottom. PREMULTIPLY_ALPHA: converts the source's straight
-    // alpha to premultiplied on upload, matching the blend func in initGL().
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    // NO UNPACK_FLIP_Y: the mesh already forms a consistent top-origin
+    // system end-to-end -- the vertex shader maps screen-top to NDC-top
+    // (gl_Position uses -clip.y) and the UVs assign the window's top row
+    // v=0 (uv.v = r/(rows-1)), so an UNFLIPPED texture (canvas source row 0
+    // = the window's visual top) samples upright. Setting UNPACK_FLIP_Y here
+    // would be a SECOND, un-cancelled Y flip and renders every window upside
+    // down (both genie and wobble). This was invisible in the headless test
+    // sandbox because foreignObject rasterizes blank there -- a blank texture
+    // looks identical flipped or not. PREMULTIPLY_ALPHA: converts the
+    // source's straight alpha to premultiplied on upload, matching the blend
+    // func in initGL().
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -498,9 +505,8 @@ export function uploadTexture(source) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    // Restore pixelStorei defaults -- other texImage2D callers (the warmup
-    // probe's throwaway texture) shouldn't silently inherit these.
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    // Restore pixelStorei default -- other texImage2D callers (the warmup
+    // probe's throwaway texture) shouldn't silently inherit PREMULTIPLY.
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     return texture;
 }
