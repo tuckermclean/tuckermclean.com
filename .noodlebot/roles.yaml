@@ -1,0 +1,13 @@
+# Role guard paths. A key given here replaces the guard's default list for that key, so the
+# defaults are repeated. The Iconostat fixture page is test scaffolding outside tests/: a
+# standalone page that tests/e2e/iconostat-fixture.spec.js drives.
+tests:
+  - "**/*.test.sh"
+  - "**/*_test.*"
+  - "**/test_*"
+  - "**/tests/**"
+  - "**/testdata/**"
+  - "**/fixtures/**"
+  - "assets/iconostat-fixture/**"
+  - "content/iconostat-fixture.md"
+  - "layouts/_default/iconostat-fixture.html"
