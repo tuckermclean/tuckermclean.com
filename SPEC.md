@@ -54,6 +54,21 @@ Known stale details, each left for a later hygiene node:
 - `static/src/env.js` is a copy of `assets/js/env.js`; the chat sign-in pages (`static/login.html`,
   `static/callback.html`) load it.
 
+Known flaky end-to-end tests, each left for a later node (see D6):
+
+- The whole suite passed once on this machine (unit 83, end-to-end 138), but CI's end-to-end step is flaky. On the
+  adoption PR's head commit 00893ec, the `tests` run for the pull request (run 44940550691) failed and the run for
+  the push (run 44940521710) passed. In the failed run,
+  `[desktop] › tests/e2e/fx-tier2-genie.spec.js:235:7 › Tier 2 genie (forced, no-preference) › context-loss
+  mid-genie-minimize leaves the window visible (finally-invariant holds even with GL gone)` failed both attempts.
+  It is listed in `gate.known_red`.
+- In the same run, `tests/e2e/boot.spec.js:51:5`, `tests/e2e/boot.spec.js:73:5` (the back/forward history tests)
+  and `tests/e2e/fx-tier1.spec.js:202:7` (a cascade during a Tier-1 minimize) failed once and passed on retry. A
+  flaky test does not fail the gate (D3), so none of them is listed.
+- On the default branch, the `tests` workflow also failed four times on 2026-08-12 (runs 31556771215,
+  31562234332, 31564211355 and 31565200813). The owner's review of the adoption PR reports that the end-to-end step
+  failed in each.
+
 ## 4. Architecture
 
 - **Content and layouts.** `content/` holds the pages (`_index.md`, `intro.md`, `resume.md`, `welcome.md`,
@@ -75,7 +90,9 @@ Known stale details, each left for a later hygiene node:
 - **Tests and tooling**: `package.json` scripts, `vitest.config.js` (jsdom, `tests/unit/**/*.test.js`),
   `playwright.config.js` (runs `hugo server` from `hugo-bin` as its web server), `coverage.config.js` and the e2e
   coverage setup and teardown.
-- **CI and deploy** (`.github/workflows/`): `test.yml` runs the tests on every push and pull request;
+- **CI and deploy** (`.github/workflows/`): `test.yml` runs the tests on every push and pull request, as two
+  steps of one job: `npm run test:unit:cov`, then `npm run test:e2e`. The end-to-end step has no `if: always()`,
+  so CI skips it when the unit step fails (D7);
   `deploy-to-s3.yml` builds with a pinned, checksum-verified Hugo, generates the SBOM, deploys and attests the
   build's provenance.
 
@@ -111,11 +128,23 @@ A node's `deps` lists only what its Gate needs; a Verify that uses another node'
   with the pinned Hugo extended. CI runs Node 22. Default: recorded, not changed.
 - **D5. The fixture page in production.** Default: `/iconostat-fixture/` keeps shipping with the site, out of the
   sitemap.
+- **D6. The flaky genie test.** The Tier 2 context-loss test (§3) can fail both attempts in CI. Default: it is
+  listed in `gate.known_red`. A listed test that passes does not fail the gate, so a node PR whose CI hits the
+  flake is not blocked by it. It stays listed until a node fixes the flake, and that node removes the entry. The
+  three tests that only passed on retry are not listed. Alternative: keep `known_red` empty and rerun CI when the
+  flake hits.
+- **D7. CI skips the end-to-end step after a failing unit step.** `gate.command` runs both halves and fails if
+  either fails. `test.yml` runs them as two steps, and the end-to-end step does not run when the unit step fails.
+  Then CI's run shows no end-to-end result, for instance once a unit test is in `known_red`. Default: until a node
+  in the tooling area makes the end-to-end step always run (for example `if: always()` on that step), a node PR
+  whose CI skipped the end-to-end step records that. It then runs `CI=true npm run test:e2e` locally as the
+  evidence for that half.
 - Any further default a later step needs is added here for the owner to change.
 
 ## 7. Conventions
 
 - Branches: `node/<ID>-<name>` for a node, `spec/<topic>` for a spec change.
 - Sizes: S under a day, M two or three days, L more.
-- A node is done when its Gate's criteria pass, the gate command (`docs/graph.yaml`) passes in CI on the node's
-  PR apart from the failures listed in `known_red`, and the spec checkers print `PROBLEMS 0`.
+- A node is done when its Gate's criteria pass and the spec checkers print `PROBLEMS 0`. The gate
+  (`docs/graph.yaml`) must also pass apart from the failures listed in `known_red`. Its evidence is CI's `tests`
+  run on the node's PR: the unit step and the end-to-end step. If CI skipped the end-to-end step, D7 applies.

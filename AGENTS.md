@@ -16,11 +16,17 @@
   `PROBLEMS 0` before a spec PR is opened.
 - **Setup.** `npm ci`, then `npx playwright install chromium` (CI adds `--with-deps` for the system packages).
   Hugo for the tests comes from the `hugo-bin` package; no other install is needed.
-- **The gate command** (`gate.command` in `docs/graph.yaml`), the whole suite, as CI runs it on the PR:
-  `npm run test:unit:cov; u=$?; npm run test:e2e; e=$?; exit $((u|e))`. Both steps always run. Run it with
-  `CI=true` (CI sets it): Playwright then retries a failing test once, starts its own `hugo server` and rejects
-  `test.only`. The gate's evidence is CI's run of `.github/workflows/test.yml` on the PR; a local run of the
-  whole suite is not required.
+- **The gate command** (`gate.command` in `docs/graph.yaml`) runs the whole suite:
+  `npm run test:unit:cov; u=$?; npm run test:e2e; e=$?; exit $((u|e))`. It always runs both halves and fails if
+  either fails. Run it with `CI=true` (CI sets it): Playwright then retries a failing test once, starts its own
+  `hugo server` and rejects `test.only`.
+- **What CI runs.** CI does not run `gate.command` as one command. `.github/workflows/test.yml` runs its two
+  halves as separate steps of one job, `npm run test:unit:cov` and then `npm run test:e2e`. While the
+  end-to-end step has no `if: always()`, CI skips it whenever the unit step fails (a failing test listed in
+  `known_red` included), and that run has no end-to-end result. A node in the tooling area can make the step
+  always run. The gate's evidence is CI's run of `test.yml` on the PR, and a local run of the whole suite is not
+  required. When CI skipped the end-to-end step, the node's PR says so and follows what `SPEC.md`
+  says for that half.
 - **The quick gate**, which a session runs locally instead: the red targets and the test files of what the
   change touches, through the gate's own runners, with `CI=true`:
   `CI=true npx vitest run <unit test files>; u=$?; CI=true npx playwright test <e2e or mobile spec files>; e=$?;
@@ -34,8 +40,9 @@
   the colour codes (`\x1b\[[0-9;]*m`) and the timestamp prefix are stripped.
 - **known_red.** Each entry is a failing test's name as its failure line prints it: for vitest
   `tests/<file> > <suite> > <test>`, for Playwright `[<project>] › tests/<file>:<line>:<col> › <title>`. A listed
-  failure stays until a node fixes it; that node removes the entry in the same PR. A node that moves a listed
-  Playwright test updates its `<line>:<col>`. A failure not listed fails the gate.
+  failure stays until a node fixes it; that node removes the entry in the same PR. A listed test that passes
+  does not fail the gate, so a flaky test can be listed. A node that moves a listed Playwright test updates its
+  `<line>:<col>`. A failure not listed fails the gate.
 - **Ownership.** A node changes only the files it owns (`owns` in `docs/graph.yaml`) and the files of its direct
   `deps`.
 - **Red target.** A command that exits non-zero before the node's change and 0 after, normally
@@ -53,6 +60,6 @@
 - **Porting rules.** None.
 - **Constraints.** No framework and no runtime dependency; `assets/iconostat/` never imports from the site; effects
   degrade and never strand a window; nodes never change the owner's words in pages and posts (see `SPEC.md`).
-- **CI evidence.** In the node's PR, record the `tests` workflow run on the PR's head commit (its unit and
-  end-to-end steps and their counts), each failing line with the `known_red` entry it matched, and the red
-  target's output before and after.
+- **CI evidence.** In the node's PR, record the `tests` workflow run on the PR's head commit: its unit and
+  end-to-end steps and their counts, or that the end-to-end step was skipped. Also record each failing line
+  with the `known_red` entry it matched, and the red target's output before and after.
