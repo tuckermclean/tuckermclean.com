@@ -20,21 +20,6 @@ out_of_scope:
   - {glob: "qa-resume-compare.js", reason: "the owner's ad-hoc screenshot script, not part of the site or its build"}
 adoption:
   areas:
-    - name: tooling
-      globs:
-        - ".github/"
-        - "package.json"
-        - "package-lock.json"
-        - "vitest.config.js"
-        - "playwright.config.js"
-        - "coverage.config.js"
-        - "tests/e2e/fixtures.js"
-        - "tests/e2e/helpers.js"
-        - "tests/e2e/coverage-setup.js"
-        - "tests/e2e/coverage-teardown.js"
-        - ".gitignore"
-        - ".gitmodules"
-        - "README.md"
     - name: iconostat
       globs:
         - "assets/iconostat/*.js"
@@ -86,4 +71,42 @@ adoption:
         - "tests/e2e/windows.spec.js"
         - "tests/e2e/zorder.spec.js"
         - "tests/mobile/"
-nodes: []
+nodes:
+  - id: T01
+    name: test-harness
+    status: imported
+    track: done
+    deps: []
+    owns:
+      - "package.json"
+      - "package-lock.json"
+      - "vitest.config.js"
+      - "playwright.config.js"
+      - "coverage.config.js"
+      - "tests/e2e/fixtures.js"
+      - "tests/e2e/helpers.js"
+      - "tests/e2e/coverage-setup.js"
+      - "tests/e2e/coverage-teardown.js"
+  - id: T02
+    name: ci-tests
+    status: imported
+    track: done
+    deps: [T01]
+    owns:
+      - ".github/workflows/test.yml"
+  - id: T03
+    name: deploy
+    status: imported
+    track: done
+    deps: []
+    owns:
+      - ".github/workflows/deploy-to-s3.yml"
+  - id: T04
+    name: repo-files
+    status: imported
+    track: done
+    deps: []
+    owns:
+      - "README.md"
+      - ".gitignore"
+      - ".gitmodules"
