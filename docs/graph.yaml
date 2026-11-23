@@ -20,16 +20,6 @@ out_of_scope:
   - {glob: "qa-resume-compare.js", reason: "the owner's ad-hoc screenshot script, not part of the site or its build"}
 adoption:
   areas:
-    - name: iconostat
-      globs:
-        - "assets/iconostat/*.js"
-        - "assets/iconostat/*.css"
-        - "assets/iconostat/README.md"
-        - "assets/iconostat-fixture/"
-        - "content/iconostat-fixture.md"
-        - "layouts/_default/iconostat-fixture.html"
-        - "tests/unit/geometry.test.js"
-        - "tests/e2e/iconostat-fixture.spec.js"
     - name: iconostat-fx
       globs:
         - "assets/iconostat/fx/"
@@ -110,3 +100,34 @@ nodes:
       - "README.md"
       - ".gitignore"
       - ".gitmodules"
+  - id: I01
+    name: geometry
+    status: imported
+    track: done
+    deps: [T01]
+    owns:
+      - "assets/iconostat/geometry.js"
+      - "tests/unit/geometry.test.js"
+  - id: I02
+    name: window-manager
+    status: imported
+    track: done
+    deps: [T01, I01]
+    owns:
+      - "assets/iconostat/index.js"
+      - "assets/iconostat/desktop.js"
+      - "assets/iconostat/window.js"
+      - "assets/iconostat/menu.js"
+      - "assets/iconostat/taskbar.js"
+      - "assets/iconostat/iconostat.css"
+      - "assets/iconostat/README.md"
+  - id: I03
+    name: standalone-fixture
+    status: imported
+    track: done
+    deps: [T01, I02]
+    owns:
+      - "assets/iconostat-fixture/"
+      - "content/iconostat-fixture.md"
+      - "layouts/_default/iconostat-fixture.html"
+      - "tests/e2e/iconostat-fixture.spec.js"
