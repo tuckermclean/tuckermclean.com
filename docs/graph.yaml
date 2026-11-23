@@ -20,16 +20,6 @@ out_of_scope:
   - {glob: "qa-resume-compare.js", reason: "the owner's ad-hoc screenshot script, not part of the site or its build"}
 adoption:
   areas:
-    - name: iconostat-fx
-      globs:
-        - "assets/iconostat/fx/"
-        - "tests/unit/compositor*.test.js"
-        - "tests/unit/fx-*.test.js"
-        - "tests/unit/genie.test.js"
-        - "tests/unit/snapshot.test.js"
-        - "tests/unit/wobble.test.js"
-        - "tests/unit/stubs/"
-        - "tests/e2e/fx-*.spec.js"
     - name: site
       globs:
         - "assets/js/"
@@ -131,3 +121,66 @@ nodes:
       - "content/iconostat-fixture.md"
       - "layouts/_default/iconostat-fixture.html"
       - "tests/e2e/iconostat-fixture.spec.js"
+  - id: F01
+    name: fx-controller
+    status: imported
+    track: done
+    deps: [T01, I02]
+    owns:
+      - "assets/iconostat/fx/controller.js"
+      - "assets/iconostat/fx/tier1.js"
+      - "assets/iconostat/fx/fx.css"
+      - "tests/unit/fx-controller-loadtier2.test.js"
+      - "tests/unit/fx-controller-tier2.test.js"
+      - "tests/unit/stubs/"
+      - "tests/e2e/fx-tier1.spec.js"
+      - "tests/e2e/fx-seams.spec.js"
+  - id: F02
+    name: fx-snapshot
+    status: imported
+    track: done
+    deps: [T01]
+    owns:
+      - "assets/iconostat/fx/snapshot.js"
+      - "tests/unit/snapshot.test.js"
+      - "tests/e2e/fx-tier2-fonts.spec.js"
+  - id: F03
+    name: fx-compositor
+    status: imported
+    track: done
+    deps: [T01, F01, F02]
+    owns:
+      - "assets/iconostat/fx/compositor.js"
+      - "tests/unit/compositor.test.js"
+      - "tests/unit/compositor-warmup-failure.test.js"
+      - "tests/unit/compositor-begin-effect-race.test.js"
+      - "tests/e2e/fx-tier2.spec.js"
+      - "tests/e2e/fx-tier2-orientation.spec.js"
+      - "tests/e2e/fx-perf-budget.spec.js"
+  - id: F04
+    name: fx-genie
+    status: imported
+    track: done
+    deps: [T01, I02, F01, F02, F03]
+    owns:
+      - "assets/iconostat/fx/genie.js"
+      - "tests/unit/genie.test.js"
+      - "tests/unit/fx-supersede-handling.test.js"
+      - "tests/e2e/fx-tier2-genie.spec.js"
+  - id: F05
+    name: fx-wobble
+    status: imported
+    track: done
+    deps: [T01, I02, F01, F02, F03, F04]
+    owns:
+      - "assets/iconostat/fx/wobble.js"
+      - "tests/unit/wobble.test.js"
+      - "tests/e2e/fx-tier2-wobble.spec.js"
+  - id: F06
+    name: fx-cancellation
+    status: imported
+    track: done
+    deps: [T01, I02, F01, F03, F04, F05]
+    owns:
+      - "tests/e2e/fx-cancellation-matrix.spec.js"
+      - "tests/e2e/fx-context-loss-integration.spec.js"
