@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | none | T02 | S |
+| done | none | I01, I02, I03, T02 | S |
 
 **Owns:** `package.json`, `package-lock.json`, `vitest.config.js`, `playwright.config.js`, `coverage.config.js`,
 `tests/e2e/fixtures.js`, `tests/e2e/helpers.js`, `tests/e2e/coverage-setup.js`, `tests/e2e/coverage-teardown.js`
