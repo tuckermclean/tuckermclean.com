@@ -43,8 +43,8 @@ Planned, in this order:
 
 1. Move hosting from AWS S3 to Cloudflare Workers (issue #2, node T05), including switching the deploy workflow's trigger
    from `master` to `main`.
-2. Fix the flaky end-to-end tests (issue #15, node T06): find why five tests fail intermittently in CI and fix
-   the cause without loosening what they check, then take the genie test out of `gate.known_red`.
+2. Fix the flaky end-to-end tests (issue #15, node T06): find why tests fail their first attempt in nearly every
+   CI run and fix the cause without loosening what they check, then take the genie test out of `gate.known_red`.
 3. Nothing else is queued. The owner opens issues for further work.
 
 Known stale details, each left for a later hygiene node:
@@ -67,10 +67,15 @@ Known flaky end-to-end tests, which node T06 fixes (issue #15; see D6):
 - In the same run, `tests/e2e/boot.spec.js:51:5`, `tests/e2e/boot.spec.js:73:5` (the back/forward history tests)
   and `tests/e2e/fx-tier1.spec.js:202:7` (a cascade during a Tier-1 minimize) failed once and passed on retry. A
   flaky test does not fail the gate (D3), so none of them is listed.
-- On PR #13's head commit 8908342, the `tests` run for the pull request (run 45308400320) failed and the run for
-  the push (run 45308393178) passed. The genie test failed both attempts again; the three tests above and
-  `tests/e2e/fx-cancellation-matrix.spec.js:542:7` (a `tile()` during a Tier-1 minimize) failed once and passed
-  on retry.
+- CI reproduces the failures on almost every run. The owner read the job logs of the 28 `tests` runs that still
+  had one (2026-11-21 to the runs of PR #16), and none had zero flaky tests. On the first attempt,
+  `tests/e2e/boot.spec.js:51:5` and the genie test failed in 28 of 28 runs,
+  `tests/e2e/fx-cancellation-matrix.spec.js:542:7` (a `tile()` during a Tier-1 minimize) and
+  `tests/e2e/fx-tier1.spec.js:202:7` in 26, `tests/e2e/boot.spec.js:73:5` in 25,
+  `tests/e2e/fx-context-loss-integration.spec.js:34:3` in 4 and `tests/e2e/fx-tier2-wobble.spec.js:117:3` in 1
+  (run 45251484637). The genie test's retry failed in 6 of the 28; every other retry passed. A passing run passes
+  only because of the retry: on PR #13's head commit 8908342, the push run 45308393178 passed with 5 flaky tests,
+  while the pull-request run 45308400320 failed on the genie test.
 - On the default branch, the `tests` workflow also failed four times on 2026-08-12 (runs 31556771215,
   31562234332, 31564211355 and 31565200813). The owner's review of the adoption PR reports that the end-to-end step
   failed in each.
