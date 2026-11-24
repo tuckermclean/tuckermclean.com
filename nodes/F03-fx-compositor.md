@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, F01, F02 | F04, F05, F06 | L |
+| done | T01, F01, F02 | F04, F05, F06, S02 | L |
 
 **Owns:** `assets/iconostat/fx/compositor.js`, `tests/unit/compositor.test.js`,
 `tests/unit/compositor-warmup-failure.test.js`, `tests/unit/compositor-begin-effect-race.test.js`,
