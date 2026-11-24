@@ -22,12 +22,12 @@ none: imported
 
 ## Gate
 
-- **T03-AC-1** — The workflow runs on pushes to `master` and by hand (`workflow_dispatch`), as one job with the permissions `contents: read`, `id-token: write` and `attestations: write`. *Verify:* unpinned: runs only on the forge.
-- **T03-AC-2** — It installs Hugo extended `0.164.0` (`HUGO_VERSION`) from Hugo's GitHub release and checks the tarball against the release's published SHA-256 checksums; a mismatch fails the job before the build. *Verify:* unpinned: runs only on the forge.
-- **T03-AC-3** — It builds the site with `hugo --minify` into `dist/` and lists the built files. *Verify:* unpinned: runs only on the forge.
-- **T03-AC-4** — It generates an SPDX SBOM of `dist/` (`anchore/sbom-action`), copies it to `dist/.well-known/sbom.spdx.json`, warns when it lists more than 10 packages and uploads it as the artifact `sbom-spdx`; each of these steps has `continue-on-error`, so none fails the job, and without an SBOM the site deploys without it. *Verify:* unpinned: runs only on the forge.
-- **T03-AC-5** — It deploys with `aws s3 sync ./dist s3://<S3_BUCKET_NAME>`, using the secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` and `S3_BUCKET_NAME`. *Verify:* unpinned: runs only on the forge.
-- **T03-AC-6** — Only after the sync, it packs `dist/` as `dist.tgz`, attests its build provenance (`actions/attest-build-provenance`) and uploads it as the artifact `site-dist`. *Verify:* unpinned: runs only on the forge.
+- **T03-AC-1** — The workflow runs on pushes to `master` and by hand (`workflow_dispatch`), as one job with the permissions `contents: read`, `id-token: write` and `attestations: write`. *Verify:* superseded by T05-AC-2.
+- **T03-AC-2** — It installs Hugo extended `0.164.0` (`HUGO_VERSION`) from Hugo's GitHub release and checks the tarball against the release's published SHA-256 checksums; a mismatch fails the job before the build. *Verify:* `CI=true npx vitest run tests/unit/deploy-config.test.js -t "T03-AC-2"`.
+- **T03-AC-3** — It builds the site with `hugo --minify` into `dist/` and lists the built files. *Verify:* `CI=true npx vitest run tests/unit/deploy-config.test.js -t "T03-AC-3"`.
+- **T03-AC-4** — It generates an SPDX SBOM of `dist/` (`anchore/sbom-action`), copies it to `dist/.well-known/sbom.spdx.json`, warns when it lists more than 10 packages and uploads it as the artifact `sbom-spdx`; each of these steps has `continue-on-error`, so none fails the job, and without an SBOM the site deploys without it. *Verify:* `CI=true npx vitest run tests/unit/deploy-config.test.js -t "T03-AC-4"`.
+- **T03-AC-5** — It deploys with `aws s3 sync ./dist s3://<S3_BUCKET_NAME>`, using the secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` and `S3_BUCKET_NAME`. *Verify:* superseded by T05-AC-2.
+- **T03-AC-6** — Only after the sync, it packs `dist/` as `dist.tgz`, attests its build provenance (`actions/attest-build-provenance`) and uploads it as the artifact `site-dist`. *Verify:* superseded by T05-AC-3.
 
 ## Risks
 
