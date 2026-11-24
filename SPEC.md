@@ -67,13 +67,15 @@ Known flaky end-to-end tests, which node T06 fixes (issue #15; see D6):
 - In the same run, `tests/e2e/boot.spec.js:51:5`, `tests/e2e/boot.spec.js:73:5` (the back/forward history tests)
   and `tests/e2e/fx-tier1.spec.js:202:7` (a cascade during a Tier-1 minimize) failed once and passed on retry. A
   flaky test does not fail the gate (D3), so none of them is listed.
-- CI reproduces the failures on almost every run. The owner read the job logs of the 28 `tests` runs that still
-  had one (2026-11-21 to the runs of PR #16), and none had zero flaky tests. On the first attempt,
-  `tests/e2e/boot.spec.js:51:5` and the genie test failed in 28 of 28 runs,
-  `tests/e2e/fx-cancellation-matrix.spec.js:542:7` (a `tile()` during a Tier-1 minimize) and
-  `tests/e2e/fx-tier1.spec.js:202:7` in 26, `tests/e2e/boot.spec.js:73:5` in 25,
-  `tests/e2e/fx-context-loss-integration.spec.js:34:3` in 4 and `tests/e2e/fx-tier2-wobble.spec.js:117:3` in 1
-  (run 45251484637). The genie test's retry failed in 6 of the 28; every other retry passed. A passing run passes
+- CI reproduces the failures on almost every run. The job logs of the 30 `tests` runs that still had one
+  (2026-11-21 to the runs on PR #16's a3e7ba8) have none with zero flaky tests. On the first attempt,
+  `tests/e2e/boot.spec.js:51:5` and the genie test failed in 30 of 30 runs,
+  `tests/e2e/fx-cancellation-matrix.spec.js:542:7` (a `tile()` during a Tier-1 minimize) in 28,
+  `tests/e2e/fx-tier1.spec.js:202:7` and `tests/e2e/boot.spec.js:73:5` in 27,
+  `tests/e2e/fx-context-loss-integration.spec.js:34:3` in 4, `tests/e2e/fx-tier2-wobble.spec.js:117:3` in 1
+  (run 45251484637) and `tests/e2e/fx-tier1.spec.js:258:7` (a viewport resize during a Tier-1 minimize) in 1 of 30
+  (push run 45485108434 on PR #16's a3e7ba8). The genie test's retry failed in 6 of the 30; every other retry
+  passed. A passing run passes
   only because of the retry: on PR #13's head commit 8908342, the push run 45308393178 passed with 5 flaky tests,
   while the pull-request run 45308400320 failed on the genie test.
 - On the default branch, the `tests` workflow also failed four times on 2026-08-12 (runs 31556771215,
