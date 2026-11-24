@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I02, F01, F02, F03, F04, F05, S01 | S03, S04, S05 | L |
+| done | T01, I02, F01, F02, F03, F04, F05, S01 | S03, S04, S05, T05 | L |
 
 **Owns:** `hugo.toml`, `assets/jsconfig.json`, `content/_index.md`, `layouts/home.html`, `assets/js/main.js`,
 `assets/js/window.js`, `assets/css/style.css`, `static/error.html`, `tests/e2e/boot.spec.js`,

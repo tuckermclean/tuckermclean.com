@@ -41,7 +41,7 @@ Done (on the default branch, tested):
 
 Planned, in this order:
 
-1. Move hosting from AWS S3 to Cloudflare Workers (issue #2), including switching the deploy workflow's trigger
+1. Move hosting from AWS S3 to Cloudflare Workers (issue #2, node T05), including switching the deploy workflow's trigger
    from `master` to `main`.
 2. Nothing else is queued. The owner opens issues for further work.
 
