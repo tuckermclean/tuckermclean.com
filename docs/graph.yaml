@@ -224,6 +224,7 @@ nodes:
     deps: [T01, T03, S02]
     owns:
       - "wrangler.jsonc"
+      - "static/_redirects"
       - "static/404.html"
       - "tests/unit/deploy-config.test.js"
       - "tests/e2e/not-found.spec.js"
