@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I01 | F01, F04, F05, F06, I03 | L |
+| done | T01, I01 | F01, F04, F05, F06, I03, S02 | L |
 
 **Owns:** `assets/iconostat/index.js`, `assets/iconostat/desktop.js`, `assets/iconostat/window.js`,
 `assets/iconostat/menu.js`, `assets/iconostat/taskbar.js`, `assets/iconostat/iconostat.css`,

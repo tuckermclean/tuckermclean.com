@@ -19,38 +19,7 @@ out_of_scope:
   - {glob: "commands.txt", reason: "the owner's personal scratch, not part of the site or its build"}
   - {glob: "qa-resume-compare.js", reason: "the owner's ad-hoc screenshot script, not part of the site or its build"}
 adoption:
-  areas:
-    - name: site
-      globs:
-        - "assets/js/"
-        - "assets/css/"
-        - "assets/jsconfig.json"
-        - "hugo.toml"
-        - "layouts/home.html"
-        - "layouts/pages/"
-        - "layouts/partials/"
-        - "layouts/posts/"
-        - "layouts/shortcodes/"
-        - "layouts/writings/"
-        - "content/_index.md"
-        - "content/intro.md"
-        - "content/resume.md"
-        - "content/welcome.md"
-        - "content/writings.md"
-        - "static/*.html"
-        - "static/src/"
-        - "tests/unit/env.test.js"
-        - "tests/e2e/boot.spec.js"
-        - "tests/e2e/chrome.spec.js"
-        - "tests/e2e/desktop.spec.js"
-        - "tests/e2e/dragresize.spec.js"
-        - "tests/e2e/imagezoom.spec.js"
-        - "tests/e2e/reflow.spec.js"
-        - "tests/e2e/selection.spec.js"
-        - "tests/e2e/state.spec.js"
-        - "tests/e2e/windows.spec.js"
-        - "tests/e2e/zorder.spec.js"
-        - "tests/mobile/"
+  areas: []
 nodes:
   - id: T01
     name: test-harness
@@ -184,3 +153,68 @@ nodes:
     owns:
       - "tests/e2e/fx-cancellation-matrix.spec.js"
       - "tests/e2e/fx-context-loss-integration.spec.js"
+  - id: S01
+    name: identity
+    status: imported
+    track: done
+    deps: [T01]
+    owns:
+      - "assets/js/env.js"
+      - "tests/unit/env.test.js"
+  - id: S02
+    name: desktop-page
+    status: imported
+    track: done
+    deps: [T01, I02, F01, F02, F03, F04, F05, S01]
+    owns:
+      - "hugo.toml"
+      - "assets/jsconfig.json"
+      - "content/_index.md"
+      - "layouts/home.html"
+      - "assets/js/main.js"
+      - "assets/js/window.js"
+      - "assets/css/style.css"
+      - "static/error.html"
+      - "tests/e2e/boot.spec.js"
+      - "tests/e2e/chrome.spec.js"
+      - "tests/e2e/desktop.spec.js"
+      - "tests/e2e/windows.spec.js"
+      - "tests/e2e/imagezoom.spec.js"
+      - "tests/e2e/dragresize.spec.js"
+      - "tests/e2e/reflow.spec.js"
+      - "tests/e2e/selection.spec.js"
+      - "tests/e2e/state.spec.js"
+      - "tests/e2e/zorder.spec.js"
+      - "tests/mobile/"
+  - id: S03
+    name: chat
+    status: imported
+    track: done
+    deps: [T01, S01, S02]
+    owns:
+      - "assets/js/chat.js"
+      - "static/chat.html"
+      - "static/login.html"
+      - "static/callback.html"
+      - "static/src/"
+  - id: S04
+    name: pages
+    status: imported
+    track: done
+    deps: [T01, S02]
+    owns:
+      - "layouts/pages/"
+      - "layouts/partials/"
+      - "layouts/shortcodes/"
+      - "content/intro.md"
+      - "content/resume.md"
+      - "content/welcome.md"
+  - id: S05
+    name: writings
+    status: imported
+    track: done
+    deps: [T01, S02]
+    owns:
+      - "layouts/writings/"
+      - "layouts/posts/"
+      - "content/writings.md"

@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I02, F01, F02, F03, F04 | F06 | L |
+| done | T01, I02, F01, F02, F03, F04 | F06, S02 | L |
 
 **Owns:** `assets/iconostat/fx/wobble.js`, `tests/unit/wobble.test.js`, `tests/e2e/fx-tier2-wobble.spec.js`
 
