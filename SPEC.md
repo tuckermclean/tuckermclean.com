@@ -43,7 +43,9 @@ Planned, in this order:
 
 1. Move hosting from AWS S3 to Cloudflare Workers (issue #2, node T05), including switching the deploy workflow's trigger
    from `master` to `main`.
-2. Nothing else is queued. The owner opens issues for further work.
+2. Fix the flaky end-to-end tests (issue #15, node T06): find why five tests fail intermittently in CI and fix
+   the cause without loosening what they check, then take the genie test out of `gate.known_red`.
+3. Nothing else is queued. The owner opens issues for further work.
 
 Known stale details, each left for a later hygiene node:
 
@@ -54,7 +56,7 @@ Known stale details, each left for a later hygiene node:
 - `static/src/env.js` is a copy of `assets/js/env.js`; the chat sign-in pages (`static/login.html`,
   `static/callback.html`) load it.
 
-Known flaky end-to-end tests, each left for a later node (see D6):
+Known flaky end-to-end tests, which node T06 fixes (issue #15; see D6):
 
 - The whole suite passed once on this machine (unit 83, end-to-end 138), but CI's end-to-end step is flaky. On the
   adoption PR's head commit 00893ec, the `tests` run for the pull request (run 44940550691) failed and the run for
@@ -65,6 +67,10 @@ Known flaky end-to-end tests, each left for a later node (see D6):
 - In the same run, `tests/e2e/boot.spec.js:51:5`, `tests/e2e/boot.spec.js:73:5` (the back/forward history tests)
   and `tests/e2e/fx-tier1.spec.js:202:7` (a cascade during a Tier-1 minimize) failed once and passed on retry. A
   flaky test does not fail the gate (D3), so none of them is listed.
+- On PR #13's head commit 8908342, the `tests` run for the pull request (run 45308400320) failed and the run for
+  the push (run 45308393178) passed. The genie test failed both attempts again; the three tests above and
+  `tests/e2e/fx-cancellation-matrix.spec.js:542:7` (a `tile()` during a Tier-1 minimize) failed once and passed
+  on retry.
 - On the default branch, the `tests` workflow also failed four times on 2026-08-12 (runs 31556771215,
   31562234332, 31564211355 and 31565200813). The owner's review of the adoption PR reports that the end-to-end step
   failed in each.
@@ -130,8 +136,8 @@ A node's `deps` lists only what its Gate needs; a Verify that uses another node'
   sitemap.
 - **D6. The flaky genie test.** The Tier 2 context-loss test (§3) can fail both attempts in CI. Default: it is
   listed in `gate.known_red`. A listed test that passes does not fail the gate, so a node PR whose CI hits the
-  flake is not blocked by it. It stays listed until a node fixes the flake, and that node removes the entry. The
-  three tests that only passed on retry are not listed. Alternative: keep `known_red` empty and rerun CI when the
+  flake is not blocked by it. It stays listed until node T06 fixes the flake and removes the entry. The tests that
+  only passed on retry are not listed. Alternative: keep `known_red` empty and rerun CI when the
   flake hits.
 - **D7. CI skips the end-to-end step after a failing unit step.** `gate.command` runs both halves and fails if
   either fails. `test.yml` runs them as two steps, and the end-to-end step does not run when the unit step fails.

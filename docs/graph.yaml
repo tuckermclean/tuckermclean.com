@@ -228,3 +228,9 @@ nodes:
       - "static/404.html"
       - "tests/unit/deploy-config.test.js"
       - "tests/e2e/not-found.spec.js"
+  - id: T06
+    name: flaky-e2e
+    track: now
+    status: planned
+    summary: Find and fix why five end-to-end tests fail intermittently in CI, without loosening what they check, so the whole suite passes loaded runs and CI with no retry and the genie test leaves known_red.
+    deps: [T01, I02, F01, F03, F04, F06, S02]

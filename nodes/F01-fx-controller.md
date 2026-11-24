@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I02 | F03, F04, F05, F06, S02 | L |
+| done | T01, I02 | F03, F04, F05, F06, S02, T06 | L |
 
 **Owns:** `assets/iconostat/fx/controller.js`, `assets/iconostat/fx/tier1.js`, `assets/iconostat/fx/fx.css`,
 `tests/unit/fx-controller-loadtier2.test.js`, `tests/unit/fx-controller-tier2.test.js`, `tests/unit/stubs/`,

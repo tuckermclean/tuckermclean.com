@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I02, F01, F03, F04, F05 | none | M |
+| done | T01, I02, F01, F03, F04, F05 | T06 | M |
 
 **Owns:** `tests/e2e/fx-cancellation-matrix.spec.js`, `tests/e2e/fx-context-loss-integration.spec.js`
 
