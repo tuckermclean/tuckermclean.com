@@ -228,3 +228,11 @@ nodes:
       - "static/404.html"
       - "tests/unit/deploy-config.test.js"
       - "tests/e2e/not-found.spec.js"
+  - id: T07
+    name: pin-actions
+    track: now
+    status: planned
+    summary: Pin every GitHub Action in both workflows to a full commit SHA with its version as a comment, guard that with a unit test, and stop actions/checkout from keeping the token.
+    deps: [T01, T02, T03, T05]
+    owns:
+      - "tests/unit/workflow-pins.test.js"

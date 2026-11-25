@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | none | F01, F02, F03, F04, F05, F06, I01, I02, I03, S01, S02, S03, S04, S05, T02, T05 | S |
+| done | none | F01, F02, F03, F04, F05, F06, I01, I02, I03, S01, S02, S03, S04, S05, T02, T05, T07 | S |
 
 **Owns:** `package.json`, `package-lock.json`, `vitest.config.js`, `playwright.config.js`, `coverage.config.js`,
 `tests/e2e/fixtures.js`, `tests/e2e/helpers.js`, `tests/e2e/coverage-setup.js`, `tests/e2e/coverage-teardown.js`
