@@ -84,10 +84,18 @@ jobs:
         name: sbom-spdx
         path: sbom.spdx.json
 
-    # Step 4: Deploy ./dist to Cloudflare Workers static assets (see wrangler.jsonc)
+    # Step 4: Node 22 for Wrangler 4 (needs Node >= 22.12)
+    - name: Set up Node.js 22 for Wrangler
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    # Step 5: Deploy ./dist to Cloudflare Workers static assets (see wrangler.jsonc)
     - name: Deploy to Cloudflare Workers
       uses: cloudflare/wrangler-action@v3
       with:
+        # v3's default Wrangler (3.90.0) cannot read wrangler.jsonc
+        wranglerVersion: '4.168.0'
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         command: deploy
