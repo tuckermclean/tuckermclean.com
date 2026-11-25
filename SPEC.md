@@ -43,7 +43,9 @@ Planned, in this order:
 
 1. Move hosting from AWS S3 to Cloudflare Workers (issue #2, node T05), including switching the deploy workflow's trigger
    from `master` to `main`.
-2. Nothing else is queued. The owner opens issues for further work.
+2. Keep `AGENTS.md` a spec file (issue #21, node T08): add it to the **Spec files:** line, so the role guard and
+   `check-spec-diff.py` keep treating it as one under noodlebot R03, and change nothing else in it.
+3. Nothing else is queued. The owner opens issues for further work.
 
 Known stale details, each left for a later hygiene node:
 
