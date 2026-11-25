@@ -196,3 +196,32 @@ describe('T05 deploy workflow (Cloudflare)', () => {
     expect(perm).toMatch(/^\s+attestations:\s*write\s*$/m);
   });
 });
+
+describe('T05 deploy workflow pins a Wrangler that reads wrangler.jsonc', () => {
+  const wf2 = () => {
+    const t = readRoot('.github/workflows/deploy-to-s3.yml');
+    return t.split(/^(?=    - name:)/m).slice(1);
+  };
+
+  it('T05-AC-2: the deploy step pins wranglerVersion to an exact version >= 3.91.0, which reads wrangler.jsonc', () => {
+    const st = wf2();
+    const i = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@v3\b/.test(s));
+    expect(i).toBeGreaterThan(-1);
+    const m = st[i].match(/^\s+wranglerVersion:\s*["']?(\d+)\.(\d+)\.(\d+)["']?\s*(#.*)?$/m);
+    expect(m).not.toBeNull();
+    const [maj, min] = [Number(m[1]), Number(m[2])];
+    expect(maj > 3 || (maj === 3 && min >= 91)).toBe(true);
+  });
+
+  it('T05-AC-2: an actions/setup-node step with Node >= 22 runs before the deploy step', () => {
+    const st = wf2();
+    const deploy = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@v3\b/.test(s));
+    expect(deploy).toBeGreaterThan(-1);
+    const node = st.findIndex((s) => /uses:\s*actions\/setup-node@v\d+/.test(s));
+    expect(node).toBeGreaterThan(-1);
+    expect(node).toBeLessThan(deploy);
+    const m = st[node].match(/^\s+node-version:\s*["']?v?(\d+)/m);
+    expect(m).not.toBeNull();
+    expect(Number(m[1])).toBeGreaterThanOrEqual(22);
+  });
+});
