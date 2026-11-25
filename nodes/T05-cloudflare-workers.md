@@ -55,8 +55,9 @@ node's.
    page for missing paths and no custom domain, and `static/_redirects` with the single rule
    `/ /index.html 200`. Deep links are left to `static/404.html`, not to `_redirects`. *T05-AC-1.*
 2. In `.github/workflows/deploy-to-s3.yml`, replace the AWS credential and `aws s3 sync` steps with
-   `cloudflare/wrangler-action@v3` running `wrangler deploy`, keep the other steps, and move the push trigger to
-   `main`. *T05-AC-2, T05-AC-3.*
+   `cloudflare/wrangler-action@v3` running `wrangler deploy`, with `wranglerVersion` pinned to a Wrangler that
+   reads `wrangler.jsonc` (3.91.0 or later) and, before it, `actions/setup-node` with the Node that Wrangler needs
+   (22 or later), keep the other steps, and move the push trigger to `main`. *T05-AC-2, T05-AC-3.*
 3. Add `static/404.html`, which sends a missing path to the desktop's hash route on the same origin.
    *T05-AC-4, T05-AC-5.*
 4. Check how the Worker answers each path locally, on the built site with Wrangler's local server, and record the
@@ -99,6 +100,10 @@ node's.
   `CLOUDFLARE_ACCOUNT_ID` are set: the owner adds the secrets before the node's PR merges.
 - `wrangler.jsonc` is JSON with comments; the unit test must read it without a JSONC parser dependency (for
   example a file with no comments, or comments stripped before `JSON.parse`).
+- Without a `wranglerVersion` input, `cloudflare/wrangler-action@v3` installs Wrangler 3.90.0 (its
+  `DEFAULT_WRANGLER_VERSION`), which does not read `wrangler.jsonc` (JSON configuration came in 3.91.0): its
+  `wrangler deploy` stops with "Missing entry-point". The action runs the Wrangler it installs on the runner's Node,
+  and Wrangler 4 needs Node 22.12 or later.
 - `npx --yes wrangler dev` downloads Wrangler for the check and writes a `.wrangler/` folder; neither is added to
   `package.json` or committed (no runtime dependency, `SPEC.md` principle 1).
 - On the `workers.dev` address the hostname-derived identity (S01) gives the domain `workers.dev` (S02's Risks)
