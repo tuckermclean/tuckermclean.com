@@ -11,9 +11,10 @@
 <script>
 (function () {
   var p = location.pathname;
-  var target = (p === '/' || p === '') ? location.origin + '/' : location.origin + '/#' + p;
+  var atRoot = (p === '/' || p === '');
+  var target = atRoot ? location.origin + '/' : location.origin + '/#' + p;
   document.getElementById('go').href = target;
-  location.replace(target);
+  if (!atRoot) location.replace(target);
 })();
 </script>
 </body>
