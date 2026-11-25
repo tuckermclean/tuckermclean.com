@@ -43,7 +43,7 @@ nodes:
       - ".github/workflows/test.yml"
   - id: T03
     name: deploy
-    status: imported
+    status: pinned
     track: done
     deps: []
     owns:

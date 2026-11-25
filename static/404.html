@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirecting…</title>
+</head>
+<body>
+<p id="msg">Redirecting… If nothing happens, <a id="go" href="/">open the desktop</a>.</p>
+<noscript><p>JavaScript is needed to open this page on the desktop. <a href="/">Go to the home page</a>.</p></noscript>
+<script>
+(function () {
+  var p = location.pathname;
+  var atRoot = (p === '/' || p === '');
+  var target = atRoot ? location.origin + '/' : location.origin + '/#' + p;
+  document.getElementById('go').href = target;
+  if (!atRoot) location.replace(target);
+})();
+</script>
+</body>
+</html>
