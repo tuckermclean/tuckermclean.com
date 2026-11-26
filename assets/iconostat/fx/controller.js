@@ -318,26 +318,55 @@ export const FxController = {
     // Make a just-accepted gesture cancellable during the module-load gap.
     // Same semantics as a Tier-1 effect's own cancel: a controller cancel
     // with jumpToEnd, when nothing else touched `el`, commits the real
-    // operation at once; any other class/style mutation of `el` (tile(),
-    // cascade() on an open window) means someone else decided the end state,
+    // operation at once; any other layout change of `el` (tile(),
+    // cascade() on an open window; not focus bookkeeping) means someone else decided the end state,
     // so abandon.
     _beginPending(el, kind, entering) {
         const prior = this._pending.get(el);
         if (prior) {
             // A second gesture on the same window while the first is still
-            // loading: the effect module coalesces/reverses them (genie's
-            // stateMap), so drop the earlier placeholder WITHOUT committing
-            // it -- the newer gesture carries the intent.
+            // loading: the newer gesture replaces the earlier placeholder,
+            // which is dropped WITHOUT committing -- the newer gesture carries
+            // the intent and itself commits or animates (for the same kind
+            // the effect module's own stateMap may later coalesce/reverse).
             this._pending.delete(el);
             prior.cancel(false);
         }
-        const observer = new MutationObserver(() => {
+        // Only a LAYOUT change counts as interference (tile()/cascade() writing
+        // geometry, removing maximized/shaded). Focus bookkeeping -- the
+        // `front` class token and z-index -- never decides the end state, so
+        // it is ignored; so is anything while a drag on `el` is refused (see
+        // `_onDrag`), which moves left/top but must not drop the gesture.
+        const interference = (records) => {
+            if (pending.dragging || records.length === 0) return false;
+            const norm = {
+                class: (v) => (v || '').split(/\s+/).filter((t) => t && t !== 'front').sort().join(' '),
+                style: (v) =>
+                    (v || '')
+                        .split(';')
+                        .map((d) => d.trim())
+                        .filter((d) => d && !/^z-index\s*:/i.test(d))
+                        .sort()
+                        .join(';'),
+            };
+            for (const name of ['class', 'style']) {
+                const rs = records.filter((r) => r.attributeName === name);
+                if (!rs.length) continue;
+                const seq = rs.map((r) => r.oldValue).concat([el.getAttribute(name)]);
+                for (let i = 0; i + 1 < seq.length; i++) {
+                    if (norm[name](seq[i]) !== norm[name](seq[i + 1])) return true;
+                }
+            }
+            return false;
+        };
+        const observer = new MutationObserver((records) => {
             if (pending.cancelled || !armed) return;
+            if (!interference(records)) return;
             pending.cancelled = true;
             observer.disconnect();
             if (this._pending.get(el) === pending) this._pending.delete(el);
         });
-        observer.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+        observer.observe(el, { attributes: true, attributeOldValue: true, attributeFilter: ['class', 'style'] });
         // The gesture's own synchronous aftermath (focus/bringToFront class
         // changes in the same call stack as the before-event) is not
         // interference: discard those records once the stack unwinds. Queued
@@ -349,10 +378,11 @@ export const FxController = {
         });
         const pending = {
             cancelled: false,
+            dragging: false,
             cancel: (jumpToEnd) => {
                 if (pending.cancelled) return;
                 pending.cancelled = true;
-                const interfered = observer.takeRecords().length > 0 && armed;
+                const interfered = armed && interference(observer.takeRecords());
                 observer.disconnect();
                 if (this._pending.get(el) === pending) this._pending.delete(el);
                 if (jumpToEnd && !interfered) {
@@ -524,7 +554,22 @@ export const FxController = {
                 // of returning with nothing rendered.
             }
         }
-        const tier1 = await this._loadTier1();
+        let tier1;
+        try {
+            tier1 = await this._loadTier1();
+        } catch (e) {
+            // tier1.js failed to load: never strand -- commit the real
+            // operation at once, as Tier 0 would, and clear the placeholder.
+            if (pending) pending.cancel(true);
+            else {
+                try {
+                    el[kind](entering, { silent: true });
+                } catch (err) {
+                    // nothing more to do
+                }
+            }
+            return;
+        }
         if (pending) {
             if (pending.cancelled) return;
             pending.release();
@@ -543,6 +588,16 @@ export const FxController = {
     async _onDrag(fn, detail) {
         const el = detail.el;
         if (this.tierFor(el) === 0) return;
+        // A minimize/maximize still loading its effect module owns `el`: a
+        // drag on it is refused like genie refuses one (F05-AC-8) -- the drag
+        // itself proceeds unanimated and must neither ghost the window nor
+        // drop the pending gesture.
+        const held = this._pending.get(el);
+        if (held) {
+            if (fn === 'dragStart') held.dragging = true;
+            else if (fn === 'dragEnd') held.dragging = false;
+            return;
+        }
         if (this.tierFor(el) === 2) {
             const compositor = await this._loadTier2();
             if (compositor && this.tierFor(el) === 2) {
