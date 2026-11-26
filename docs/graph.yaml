@@ -242,3 +242,11 @@ nodes:
     deps: [T01, T02, T03, T05]
     owns:
       - "tests/unit/workflow-pins.test.js"
+  - id: T08
+    name: agents-spec-files
+    track: now
+    status: planned
+    summary: AGENTS.md joins the Spec files line, so it stays a spec file for the role guard and check-spec-diff.py once noodlebot R03 lands, and later changes to it go through spec PRs; nothing else in AGENTS.md changes.
+    deps: [T01]
+    owns:
+      - "tests/unit/agents-doc.test.js"

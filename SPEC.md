@@ -47,7 +47,9 @@ Planned, in this order:
    CI run and fix the cause without loosening what they check, then take the genie test out of `gate.known_red`.
 3. Pin every GitHub Action in both workflows to a full commit SHA, with a unit test that rejects any other ref,
    and set `persist-credentials: false` on the checkout steps (issue #18, node T07).
-4. Nothing else is queued. The owner opens issues for further work.
+4. Keep `AGENTS.md` a spec file (issue #21, node T08): add it to the **Spec files:** line, so the role guard and
+   `check-spec-diff.py` keep treating it as one under noodlebot R03, and change nothing else in it.
+5. Nothing else is queued. The owner opens issues for further work.
 
 Known stale details, each left for a later hygiene node:
 
