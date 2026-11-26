@@ -770,3 +770,96 @@ test.describe('T06 forced controller gap (Tier 1 and Tier 2, no-preference)', ()
     });
   }
 });
+
+// T06 (second RED): gestures the base completed must not be dropped by the
+// controller's pending placeholder (focus bookkeeping, a drag) during the gap.
+const T06_registry = (page) => page.evaluate(async () => {
+  const { FxController } = await import('/iconostat/fx/controller.js');
+  return Array.from(FxController._inFlight.values()).map((h) => h.name);
+});
+
+test.describe('T06 forced controller gap, foreign input during a Tier 2 minimize (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F04-AC-1: focusing another window during a Tier 2 minimize while compositor.js loads still minimizes (forced)', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page, 'resume');
+    await openViaMenu(page, 'Intro');
+    const w = win(page, 'resume');
+    const other = win(page, 'intro');
+    await expect(other).toBeVisible();
+    await page.evaluate(() => document.querySelector('iconostat-desktop').bringToFront(document.getElementById('window-resume')));
+    await expect(w).toHaveClass(/front/);
+    await expect(other).not.toHaveClass(/front/);
+
+    // A point of the other window that no other window covers.
+    const pt = await page.evaluate(() => {
+      const o = document.getElementById('window-intro');
+      const r = o.getBoundingClientRect();
+      for (let y = r.top + 4; y < r.bottom - 2; y += 8) {
+        for (let x = r.left + 4; x < r.right - 2; x += 8) {
+          const hit = document.elementFromPoint(x, y);
+          if (hit && (hit === o || o.contains(hit) || (hit.getRootNode() instanceof ShadowRoot && o.contains(hit.getRootNode().host)))) return { x, y };
+        }
+      }
+      return null;
+    });
+    expect(pt).not.toBeNull();
+
+    const hold = await holdModule(page, '**/iconostat/fx/compositor.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+      await page.mouse.click(pt.x, pt.y);
+    } finally {
+      hold.release();
+    }
+    await T06_releaseAndSettle(page, hold, 'compositor.js');
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(w).toBeVisible();
+    const st = await T06_openState(w);
+    expect(st.ghost).toBe(false);
+    // Only Resume's registry entry: the click itself may start a drag effect on the other window.
+    expect(await page.evaluate(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      return FxController._inFlight.has(document.getElementById('window-resume'));
+    })).toBe(false);
+    await expect(other).toHaveClass(/front/);
+  });
+
+  test('F05-AC-8: a drag on a window during its Tier 2 minimize while compositor.js loads leaves the minimize correct (forced)', async ({ page }) => {
+    await forceFxTier(page, '2');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    const box = await w.locator('.title').boundingBox();
+    const cx = box.x + Math.min(box.width / 2, 60);
+    const cy = box.y + box.height / 2;
+
+    const hold = await holdModule(page, '**/iconostat/fx/compositor.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+      await page.mouse.move(cx, cy);
+      await page.mouse.down();
+      await page.mouse.move(cx + 40, cy + 30, { steps: 6 });
+      await page.mouse.up();
+    } finally {
+      hold.release();
+    }
+    await T06_releaseAndSettle(page, hold, 'compositor.js');
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(w).toBeVisible();
+    const st = await T06_openState(w);
+    expect(st.ghost).toBe(false);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_registry(page)).toEqual([]);
+  });
+});

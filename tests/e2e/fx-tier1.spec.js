@@ -477,3 +477,45 @@ test.describe('T06 forced controller gap (Tier 1, no-preference)', () => {
     await noFxGhostOrCanvas(page);
   });
 });
+
+// T06 (second RED): an effect module that fails to load degrades, never strands.
+test.describe('T06 forced controller gap, failed module load (Tier 1, no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F01-AC-22: a Tier 1 minimize commits at once when tier1.js fails to load, and a later resize changes nothing (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    await page.route('**/iconostat/fx/tier1.js', (r) => r.abort());
+
+    const failed = page.waitForEvent('requestfailed', (req) => req.url().endsWith('tier1.js'));
+    await w.locator('.button.minimize').click();
+    await failed;
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    let st = await T06_openState(w);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+    const pending = () => page.evaluate(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      return FxController._pending ? FxController._pending.size : 0;
+    });
+    expect(await pending()).toBe(0);
+
+    await page.setViewportSize({ width: 1000, height: 800 });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await expect(w).toHaveClass(/minimized/);
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    st = await T06_openState(w);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+    expect(await pending()).toBe(0);
+  });
+});
