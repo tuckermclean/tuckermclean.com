@@ -311,6 +311,21 @@ export const FxController = {
         // someone else already decided its end state, and forcing our own
         // completion on top of that would be a second, conflicting write.
 
+        // A bulk layout (cascade()/tile()) decides every open window's
+        // geometry. A gesture still pending on an open window is abandoned,
+        // as a running Tier 1 effect abandons on that layout's writes --
+        // even when the layout rewrites the very same geometry, which no
+        // MutationObserver sees. A pending chip restore (window still
+        // minimized) is left to the layout's own un-minimize, see
+        // `_onBeforeMinMax`.
+        document.addEventListener('iconostat-before-layout', () => {
+            Array.from(this._pending.entries()).forEach(([el, p]) => {
+                if (el.classList.contains('minimized')) return;
+                this._pending.delete(el);
+                p.cancel(false);
+            });
+        });
+
         window.addEventListener('resize', () => this.cancelAll(true));
         window.addEventListener('orientationchange', () => this.cancelAll(true));
     },
@@ -382,6 +397,7 @@ export const FxController = {
             armed = true;
         });
         const pending = {
+            kind,
             cancelled: false,
             dragging: false,
             dragged: false,
@@ -432,6 +448,20 @@ export const FxController = {
             // bulk ops never animate -- never preventDefault, let it run
             // instantly. Also treat it as the fxSuppressed-transition signal
             // described above.
+            //
+            // A gesture of the same kind still pending on `el` itself (e.g. a
+            // chip restore waiting for its module when tile()/cascade()
+            // restores that window): the programmatic operation now decides
+            // `el`'s state and the library has already computed `entering`
+            // from it, so the pending gesture is dropped, not committed --
+            // committing it here would change `el` under the library's feet
+            // (a restored window restored again throws). As an effect already
+            // running would have, that window ends as the bulk op leaves it.
+            const own = this._pending.get(el);
+            if (own && own.kind === kind) {
+                this._pending.delete(el);
+                own.cancel(false);
+            }
             if (this._inFlight.size > 0 || this._pending.size > 0) this.cancelAll(true);
             return;
         }
