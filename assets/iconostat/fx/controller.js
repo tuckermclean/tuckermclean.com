@@ -340,12 +340,17 @@ export const FxController = {
         const interference = (records) => {
             if (pending.dragging || records.length === 0) return false;
             const norm = {
-                class: (v) => (v || '').split(/\s+/).filter((t) => t && t !== 'front').sort().join(' '),
+                class: (v) =>
+                    (v || '')
+                        .split(/\s+/)
+                        .filter((t) => t === 'minimized' || t === 'maximized' || t === 'shaded')
+                        .sort()
+                        .join(' '),
                 style: (v) =>
                     (v || '')
                         .split(';')
                         .map((d) => d.trim())
-                        .filter((d) => d && !/^z-index\s*:/i.test(d))
+                        .filter((d) => /^(width|height|top|left|position)\s*:/i.test(d))
                         .sort()
                         .join(';'),
             };
@@ -379,6 +384,7 @@ export const FxController = {
         const pending = {
             cancelled: false,
             dragging: false,
+            dragged: false,
             cancel: (jumpToEnd) => {
                 if (pending.cancelled) return;
                 pending.cancelled = true;
@@ -572,6 +578,13 @@ export const FxController = {
         }
         if (pending) {
             if (pending.cancelled) return;
+            // A drag ran during the gap (the library moved left/top, which the
+            // effect's interference watcher would read as someone else's
+            // decision): commit at once, as the base's jump-cut did.
+            if (pending.dragged) {
+                pending.cancel(true);
+                return;
+            }
             pending.release();
         }
         tier1.run(this, el, kind, entering);
@@ -594,7 +607,7 @@ export const FxController = {
         // drop the pending gesture.
         const held = this._pending.get(el);
         if (held) {
-            if (fn === 'dragStart') held.dragging = true;
+            if (fn === 'dragStart') held.dragging = held.dragged = true;
             else if (fn === 'dragEnd') held.dragging = false;
             return;
         }
