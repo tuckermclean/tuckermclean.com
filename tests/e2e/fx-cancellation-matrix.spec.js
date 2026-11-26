@@ -905,3 +905,115 @@ test.describe('T06 forced controller gap, rubber-band selection during a minimiz
     });
   }
 });
+
+// T06 (fourth RED): a bulk layout during the module gap of a chip restore or of
+// a minimize decides the window's state (F06-AC-8, F01-AC-21; SPEC principle 4).
+const T06_allOpen = (page) => page.evaluate(() => Array.from(document.querySelectorAll('iconostat-window, .window')).filter((el) => el.id && el.id.startsWith('window-')).map((el) => ({
+  id: el.id,
+  minimized: el.classList.contains('minimized'),
+  inBody: el.parentElement === document.body,
+  inTasks: !!el.closest('#tasks'),
+  transform: el.style.transform,
+  opacity: el.style.opacity,
+  ghost: el.classList.contains('fx-ghost'),
+  anims: el.getAnimations().length,
+})));
+
+test.describe('T06 forced controller gap, bulk layout during a chip restore (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  for (const [tier, file] of [['1', 'tier1.js'], ['2', 'compositor.js']]) {
+    for (const op of ['tile', 'cascade']) {
+      test(`F06-AC-8: ${op}() while a Tier ${tier} chip restore waits for ${file} leaves every window open (forced)`, async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (e) => errors.push(String(e)));
+        await forceFxTier(page, tier);
+        await openApp(page, 'resume');
+        await openViaMenu(page, 'Intro');
+        const w = win(page, 'resume');
+        await page.evaluate(() => document.querySelector('iconostat-desktop').minimizeAll());
+        await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+        await expect(page.locator('#tasks #window-intro')).toHaveCount(1);
+
+        const hold = await holdModule(page, `**/iconostat/fx/${file}`);
+        try {
+          await page.locator('#tasks #window-resume').click();
+          await hold.seen;
+
+          const thrown = await page.evaluate((o) => {
+            try { document.querySelector('iconostat-desktop')[o](); return null; } catch (e) { return String(e); }
+          }, op);
+          expect(thrown).toBeNull();
+
+          const states = await T06_allOpen(page);
+          expect(states.length).toBeGreaterThanOrEqual(2);
+          for (const s of states) {
+            expect(s.minimized, s.id).toBe(false);
+            expect(s.inBody, s.id).toBe(true);
+            expect(s.inTasks, s.id).toBe(false);
+            expect(s.transform, s.id).toBe('');
+            expect(s.opacity, s.id).toBe('');
+            expect(s.ghost, s.id).toBe(false);
+          }
+          expect(errors).toEqual([]);
+        } finally {
+          hold.release();
+        }
+
+        await T06_releaseAndSettle(page, hold, file);
+
+        const after = await T06_allOpen(page);
+        for (const s of after) {
+          expect(s.minimized, s.id).toBe(false);
+          expect(s.inTasks, s.id).toBe(false);
+          expect(s.anims, s.id).toBe(0);
+          expect(s.transform, s.id).toBe('');
+          expect(s.opacity, s.id).toBe('');
+        }
+        expect(await T06_registry(page)).toEqual([]);
+        expect(errors).toEqual([]);
+        await noFxGhostOrHiddenCanvas(page);
+      });
+    }
+  }
+});
+
+test.describe('T06 forced controller gap, a re-tile with the same geometry during a minimize (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  for (const [tier, file] of [['1', 'tier1.js'], ['2', 'compositor.js']]) {
+    test(`F06-AC-8: a second tile() writing the same geometry during a Tier ${tier} minimize while ${file} loads leaves the window open (forced)`, async ({ page }) => {
+      await forceFxTier(page, tier);
+      await openApp(page, 'resume');
+      const w = win(page, 'resume');
+      await page.evaluate(() => document.querySelector('iconostat-desktop').tile());
+      await expect(w).not.toHaveClass(/minimized/);
+
+      const hold = await holdModule(page, `**/iconostat/fx/${file}`);
+      try {
+        await w.locator('.button.minimize').click();
+        await hold.seen;
+        await page.evaluate(() => document.querySelector('iconostat-desktop').tile());
+      } finally {
+        hold.release();
+      }
+      await T06_releaseAndSettle(page, hold, file);
+
+      await expect(w).not.toHaveClass(/minimized/);
+      const st = await T06_openState(w);
+      expect(st.minimized).toBe(false);
+      expect(st.ghost).toBe(false);
+      expect(st.transform).toBe('');
+      expect(st.opacity).toBe('');
+      expect(st.anims).toBe(0);
+      expect(await T06_registry(page)).toEqual([]);
+      await noFxGhostOrHiddenCanvas(page);
+    });
+  }
+});
