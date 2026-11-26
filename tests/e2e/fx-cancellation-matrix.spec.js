@@ -685,3 +685,88 @@ async function noFxGhostOrHiddenCanvasBool(page) {
     return false;
   }
 }
+
+// T06: hold a lazily imported effect module so the controller gap (the time
+// between the minimize click and the module's load) is forced on every run.
+async function holdModule(page, glob) {
+  let release;
+  let requested;
+  const gate = new Promise((r) => { release = r; });
+  const seen = new Promise((r) => { requested = r; });
+  await page.route(glob, async (route) => {
+    requested();
+    await gate;
+    await route.continue();
+  });
+  return { seen, release };
+}
+
+const T06_inFlight = (page) => page.evaluate(async () => {
+  const { FxController } = await import('/iconostat/fx/controller.js');
+  return Array.from(FxController._inFlight.values()).map((h) => h.name);
+});
+
+const T06_openState = (w) => w.evaluate((el) => ({
+  minimized: el.classList.contains('minimized'),
+  ghost: el.classList.contains('fx-ghost'),
+  transform: el.style.transform,
+  opacity: el.style.opacity,
+  anims: el.getAnimations().length,
+}));
+
+// Let the held module finish loading and the controller's continuation run.
+async function T06_releaseAndSettle(page, hold, file) {
+  const loaded = page.waitForResponse((r) => r.url().endsWith(file));
+  hold.release();
+  await loaded;
+  await page.evaluate(async (f) => {
+    await import(f);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }, '/iconostat/fx/' + file);
+}
+
+test.describe('T06 forced controller gap (Tier 1 and Tier 2, no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  for (const [tier, file] of [['1', 'tier1.js'], ['2', 'compositor.js']]) {
+    test(`F06-AC-8: tile() during a Tier ${tier} minimize leaves the window open while ${file} is still loading (forced)`, async ({ page }) => {
+      await forceFxTier(page, tier);
+      await openApp(page, 'resume');
+      const w = win(page, 'resume');
+      const hold = await holdModule(page, `**/iconostat/fx/${file}`);
+      try {
+        await w.locator('.button.minimize').click();
+        await hold.seen;
+
+        await page.evaluate(() => document.querySelector('iconostat-desktop').tile());
+
+        await expect(w).not.toHaveClass(/minimized/);
+        await expect(w).toBeVisible();
+        let st = await T06_openState(w);
+        expect(st.transform).toBe('');
+        expect(st.opacity).toBe('');
+        expect(st.ghost).toBe(false);
+        expect(await T06_inFlight(page)).toEqual([]);
+      } finally {
+        hold.release();
+      }
+
+      await T06_releaseAndSettle(page, hold, file);
+
+      await expect(w).not.toHaveClass(/minimized/);
+      const st = await T06_openState(w);
+      expect(st.minimized).toBe(false);
+      expect(st.anims).toBe(0);
+      expect(st.transform).toBe('');
+      expect(st.opacity).toBe('');
+      expect(await T06_inFlight(page)).toEqual([]);
+      await noFxGhostOrHiddenCanvas(page);
+
+      await w.locator('.button.minimize').click();
+      await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    });
+  }
+});
