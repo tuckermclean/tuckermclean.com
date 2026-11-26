@@ -863,3 +863,45 @@ test.describe('T06 forced controller gap, foreign input during a Tier 2 minimize
     expect(await T06_registry(page)).toEqual([]);
   });
 });
+
+// T06 (third RED): a rubber-band selection over the pending window must not
+// drop the minimize (it only toggles desktop-selected on the window).
+test.describe('T06 forced controller gap, rubber-band selection during a minimize (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  for (const [tier, file] of [['1', 'tier1.js'], ['2', 'compositor.js']]) {
+    test(`F01-AC-22: a rubber-band selection over a window during its Tier ${tier} minimize while ${file} loads still minimizes (forced)`, async ({ page }) => {
+      await forceFxTier(page, tier);
+      await openApp(page, 'resume');
+      const w = win(page, 'resume');
+      const box = await w.boundingBox();
+      const cy = box.y + box.height / 2;
+
+      const hold = await holdModule(page, `**/iconostat/fx/${file}`);
+      try {
+        await w.locator('.button.minimize').click();
+        await hold.seen;
+        await page.mouse.move(2, cy);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width / 2, cy, { steps: 8 });
+        await page.mouse.up();
+      } finally {
+        hold.release();
+      }
+      await T06_releaseAndSettle(page, hold, file);
+
+      await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+      await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+      await expect(w).toBeVisible();
+      const st = await T06_openState(w);
+      expect(st.ghost).toBe(false);
+      expect(st.transform).toBe('');
+      expect(st.opacity).toBe('');
+      expect(await T06_registry(page)).toEqual([]);
+      await noFxGhostOrHiddenCanvas(page);
+    });
+  }
+});

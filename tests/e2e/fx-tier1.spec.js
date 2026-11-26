@@ -519,3 +519,44 @@ test.describe('T06 forced controller gap, failed module load (Tier 1, no-prefere
     expect(await pending()).toBe(0);
   });
 });
+
+// T06 (third RED): a drag accepted during the module load is never dropped.
+test.describe('T06 forced controller gap, drag during a Tier 1 minimize (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F01-AC-22: a drag begun while tier1.js loads and continued after it loads still commits the minimize (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    const box = await w.locator('.title').boundingBox();
+    const cx = box.x + Math.min(box.width / 2, 60);
+    const cy = box.y + box.height / 2;
+
+    const hold = await holdModule(page, '**/iconostat/fx/tier1.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+      await page.mouse.move(cx, cy);
+      await page.mouse.down();
+      await page.mouse.move(cx + 20, cy + 15, { steps: 4 });
+    } finally {
+      hold.release();
+    }
+    await T06_releaseAndSettle(page, hold, 'tier1.js');
+    await page.mouse.move(cx + 60, cy + 40, { steps: 5 });
+    await page.mouse.up();
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(w).toBeVisible();
+    const st = await T06_openState(w);
+    expect(st.ghost).toBe(false);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+  });
+});
