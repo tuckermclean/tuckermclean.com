@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01, I02, F01, F02, F03 | F05, F06, S02 | L |
+| done | T01, I02, F01, F02, F03 | F05, F06, S02, T06 | L |
 
 **Owns:** `assets/iconostat/fx/genie.js`, `tests/unit/genie.test.js`, `tests/unit/fx-supersede-handling.test.js`,
 `tests/e2e/fx-tier2-genie.spec.js`

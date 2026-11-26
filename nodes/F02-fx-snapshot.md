@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| done | T01 | F03, F04, F05, S02 | M |
+| done | T01 | F03, F04, F05, S02, T06 | M |
 
 **Owns:** `assets/iconostat/fx/snapshot.js`, `tests/unit/snapshot.test.js`, `tests/e2e/fx-tier2-fonts.spec.js`
 
