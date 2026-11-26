@@ -94,6 +94,12 @@ export const FxController = {
     // el -> { name, cancel(jumpToEnd) }. Every currently-running fx effect,
     // regardless of tier, registers itself here so cancelAll() can reach it.
     _inFlight: new Map(),
+    // el -> pending gesture { cancelled, cancel(jumpToEnd), release() }. A
+    // gesture accepted by `_onBeforeMinMax` (default prevented) but whose
+    // effect has not yet registered in `_inFlight` because `_runEffect` is
+    // still awaiting a lazy module load. Kept apart from `_inFlight` so
+    // genie/wobble, which read `_inFlight.get(el).name`, never see it.
+    _pending: new Map(),
     // Per-window tier ceiling (SnapshotError demotions -- see `_runEffect`/
     // `_onDrag` below, which call `demote()` after catching a SnapshotError
     // thrown by genie.js/wobble.js's own `compositor.beginEffect()` call).
@@ -131,6 +137,9 @@ export const FxController = {
     },
 
     cancelAll(jumpToEnd = true) {
+        const pending = Array.from(this._pending.values());
+        this._pending.clear();
+        pending.forEach((p) => p.cancel(jumpToEnd));
         const handles = Array.from(this._inFlight.values());
         this._inFlight.clear();
         handles.forEach((handle) => {
@@ -306,7 +315,70 @@ export const FxController = {
         window.addEventListener('orientationchange', () => this.cancelAll(true));
     },
 
+    // Make a just-accepted gesture cancellable during the module-load gap.
+    // Same semantics as a Tier-1 effect's own cancel: a controller cancel
+    // with jumpToEnd, when nothing else touched `el`, commits the real
+    // operation at once; any other class/style mutation of `el` (tile(),
+    // cascade() on an open window) means someone else decided the end state,
+    // so abandon.
+    _beginPending(el, kind, entering) {
+        const prior = this._pending.get(el);
+        if (prior) {
+            // A second gesture on the same window while the first is still
+            // loading: the effect module coalesces/reverses them (genie's
+            // stateMap), so drop the earlier placeholder WITHOUT committing
+            // it -- the newer gesture carries the intent.
+            this._pending.delete(el);
+            prior.cancel(false);
+        }
+        const observer = new MutationObserver(() => {
+            if (pending.cancelled || !armed) return;
+            pending.cancelled = true;
+            observer.disconnect();
+            if (this._pending.get(el) === pending) this._pending.delete(el);
+        });
+        observer.observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+        // The gesture's own synchronous aftermath (focus/bringToFront class
+        // changes in the same call stack as the before-event) is not
+        // interference: discard those records once the stack unwinds. Queued
+        // before any such mutation, so it runs before the observer callback.
+        let armed = false;
+        queueMicrotask(() => {
+            observer.takeRecords();
+            armed = true;
+        });
+        const pending = {
+            cancelled: false,
+            cancel: (jumpToEnd) => {
+                if (pending.cancelled) return;
+                pending.cancelled = true;
+                const interfered = observer.takeRecords().length > 0 && armed;
+                observer.disconnect();
+                if (this._pending.get(el) === pending) this._pending.delete(el);
+                if (jumpToEnd && !interfered) {
+                    try {
+                        el[kind](entering, { silent: true });
+                    } catch (e) {
+                        // never strand: nothing more to do
+                    }
+                }
+            },
+            // Hand over to the real effect (about to registerEffect itself).
+            release: () => {
+                observer.disconnect();
+                if (this._pending.get(el) === pending) this._pending.delete(el);
+            },
+        };
+        this._pending.set(el, pending);
+        return pending;
+    },
+
     _cancelFor(el) {
+        const pending = this._pending.get(el);
+        if (pending) {
+            this._pending.delete(el);
+            pending.cancel(true);
+        }
         const handle = this._inFlight.get(el);
         if (!handle) return;
         this._inFlight.delete(el);
@@ -324,13 +396,13 @@ export const FxController = {
             // bulk ops never animate -- never preventDefault, let it run
             // instantly. Also treat it as the fxSuppressed-transition signal
             // described above.
-            if (this._inFlight.size > 0) this.cancelAll(true);
+            if (this._inFlight.size > 0 || this._pending.size > 0) this.cancelAll(true);
             return;
         }
         if (this.tierFor(el) === 0) return; // shouldn't happen (init() never
         // wires listeners at tier 0), but keep this path inert regardless.
         e.preventDefault();
-        this._runEffect(el, kind, entering);
+        this._runEffect(el, kind, entering, this._beginPending(el, kind, entering));
     },
 
     // THE REGRESSION TRAP (see docs/superpowers/specs/.../task-B-brief.md):
@@ -342,9 +414,10 @@ export const FxController = {
     // the current post-B/pre-C-D state) or a `SnapshotError` from it always
     // falls through to the existing Tier-1 effect, so a real gesture's
     // user-visible result is unchanged from before this file existed.
-    async _runEffect(el, kind, entering) {
+    async _runEffect(el, kind, entering, pending) {
         if (this.tierFor(el) === 2) {
             const compositor = await this._loadTier2();
+            if (pending && pending.cancelled) return;
             // Re-check tierFor() AFTER the await, not just before it:
             // `_loadTier2()`'s warmup probe (first call only) or a
             // SnapshotError-driven per-window demote that raced in while we
@@ -354,6 +427,7 @@ export const FxController = {
             // slip through to the tier-2 branch below anyway.
             if (compositor && this.tierFor(el) === 2) {
                 const effectMod = await this._loadGenie();
+                if (pending && pending.cancelled) return;
                 if (effectMod) {
                     if (kind === 'maximize') {
                         // Open item (impact-wobble warm-load, see progress.md
@@ -422,6 +496,7 @@ export const FxController = {
                             if (wobble && typeof wobble.primeCompositor === 'function') wobble.primeCompositor(compositor);
                         });
                     }
+                    if (pending) pending.release();
                     try {
                         await effectMod.run(this, compositor, el, kind, entering);
                         return;
@@ -450,6 +525,10 @@ export const FxController = {
             }
         }
         const tier1 = await this._loadTier1();
+        if (pending) {
+            if (pending.cancelled) return;
+            pending.release();
+        }
         tier1.run(this, el, kind, entering);
     },
 
