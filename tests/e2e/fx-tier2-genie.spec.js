@@ -239,6 +239,11 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
 
     await w.locator('.button.minimize').click();
     await expect(w).not.toHaveClass(/minimized/); // effect in flight, fx-ghosted
+    await page.waitForFunction(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      const el = document.getElementById('window-resume');
+      return !!document.getElementById('iconostat-fx-canvas') && FxController._inFlight.get(el)?.name === 'minimize';
+    });
 
     const lost = await page.evaluate(async () => {
       const canvas = document.getElementById('iconostat-fx-canvas');

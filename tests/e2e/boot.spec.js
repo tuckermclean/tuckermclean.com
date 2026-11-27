@@ -52,6 +52,7 @@ test('back/forward navigates between open windows without dropping any', async (
   await openApp(page);                 // welcome
   await openViaMenu(page, 'Resume');   // resume
   await openViaMenu(page, 'Intro');    // intro
+  await expect(page).toHaveURL(/#\/intro$/);
   await expect(page.locator('.window')).toHaveCount(3);
 
   // popstate's navigateToPage() now brings an already-open target window to
@@ -74,6 +75,7 @@ test('a resize->cascade does not corrupt back/forward history', async ({ page })
   await openApp(page);                 // welcome, url '/'
   await openViaMenu(page, 'Resume');   // #/resume
   await openViaMenu(page, 'Intro');    // #/intro  (3 windows)
+  await expect(page).toHaveURL(/#\/intro$/);
   await expect(page.locator('.window')).toHaveCount(3);
 
   await page.goBack();

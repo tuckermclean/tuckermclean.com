@@ -788,6 +788,7 @@ test.describe('T06 forced controller gap, foreign input during a Tier 2 minimize
     await forceFxTier(page, '2');
     await openApp(page, 'resume');
     await openViaMenu(page, 'Intro');
+    await expect(page).toHaveURL(/#\/intro$/);
     const w = win(page, 'resume');
     const other = win(page, 'intro');
     await expect(other).toBeVisible();
@@ -933,6 +934,7 @@ test.describe('T06 forced controller gap, bulk layout during a chip restore (no-
         await forceFxTier(page, tier);
         await openApp(page, 'resume');
         await openViaMenu(page, 'Intro');
+        await expect(page).toHaveURL(/#\/intro$/);
         const w = win(page, 'resume');
         await page.evaluate(() => document.querySelector('iconostat-desktop').minimizeAll());
         await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
