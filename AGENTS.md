@@ -56,7 +56,7 @@
   End-to-end tests assert what is observable in the DOM and the URL.
 - **Other commands.** `npm run build` (`hugo --minify`, needs a Hugo on the path; CI's deploy uses the pinned
   Hugo extended), `npm run dev` (`hugo server --buildDrafts --disableFastRender`). There is no linter.
-- **Spec files:** `SPEC.md`, `docs/graph.yaml`, `nodes/` (a trailing slash marks a folder); spec PRs change only these.
+- **Spec files:** `SPEC.md`, `docs/graph.yaml`, `nodes/`, `AGENTS.md` (a trailing slash marks a folder); spec PRs change only these.
 - **Porting rules.** None.
 - **Constraints.** No framework and no runtime dependency; `assets/iconostat/` never imports from the site; effects
   degrade and never strand a window; nodes never change the owner's words in pages and posts (see `SPEC.md`).

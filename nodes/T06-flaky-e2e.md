@@ -84,13 +84,17 @@ Two leads from the owner, not diagnoses:
   `--trace on`, locally or in a temporary commit on the node branch (in T01's `playwright.config.js` or
   `package.json`, reverted before the final head); the record notes that tracing may itself hide the failure. CI
   on the node branch is a ready reproducer: every push runs `tests`, in about 3 minutes.
-- **A loaded run** is a Playwright run with `CI=true`, `--retries=0` and `--workers=1` (as in CI) under one of
-  these loads, recorded with the machine's CPU count and the exact commands: Chromium's CPU throttling at rate 4
-  (CDP `Emulation.setCPUThrottlingRate`) on every page, or a CPU hog on every core (one busy process per core
-  `nproc` reports). A fixture that applies the throttling only when an environment variable is set may stay in
-  `tests/e2e/fixtures.js`; its lines are listed under T06-AC-3. More workers than CPUs adds contention on the
-  one `hugo server` that CI never has (see the comment in `playwright.config.js`), so it may only be added on top of
-  one of the two loads. T06-AC-2 and T06-AC-5 use the same load.
+- **A loaded run** is a Playwright run with `CI=true`, `--retries=0` and `--workers=1` (as in CI) under the
+  recorded load, recorded with the machine's CPU count and the exact commands. The recorded load is Chromium's CPU
+  throttling at rate 2 (CDP `Emulation.setCPUThrottlingRate`) on every page; T06-AC-2 and T06-AC-5 both use it.
+  Rate 4 and a CPU hog on every core (one busy process per core `nproc` reports) were tried on a 4-core machine:
+  both made about 16–21 tests overrun bounds that T06-AC-3 keeps fixed (the 2 s assertion bounds, the perf
+  budget's 3 s, the 30 s test timeout), none of which has failed in CI, so T06-AC-5 could not pass under them
+  without loosening what those tests check. A run under either of them still counts as a loaded run for
+  T06-AC-1's record and a fix's red half. A fixture that applies the throttling only when an environment variable
+  is set may stay in `tests/e2e/fixtures.js`; its lines are listed under T06-AC-3. More workers than CPUs adds
+  contention on the one `hugo server` that CI never has (see the comment in `playwright.config.js`), so it may
+  only be added on top of the recorded load.
 - **A forced run** makes a race happen on every run instead of under load: for example a test case that holds
   back `assets/iconostat/fx/tier1.js` with `page.route` and calls `cascade()` while it is held.
 - **How a fix gets through the roles.** Only the tester writes under `tests/`, and the implementer never does.
