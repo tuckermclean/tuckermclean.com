@@ -233,6 +233,14 @@ nodes:
     status: planned
     summary: Find and fix why end-to-end tests fail their first attempt in nearly every CI run, without loosening what they check, so the whole suite passes loaded runs and CI with no flaky test and the genie test leaves known_red.
     deps: [T01, I02, F01, F02, F03, F04, F05, F06, S02]
+  - id: T07
+    name: pin-actions
+    track: now
+    status: planned
+    summary: Pin every GitHub Action in both workflows to a full commit SHA with its version as a comment, guard that with a unit test, and stop actions/checkout from keeping the token.
+    deps: [T01, T02, T03, T05]
+    owns:
+      - "tests/unit/workflow-pins.test.js"
   - id: T08
     name: agents-spec-files
     track: now

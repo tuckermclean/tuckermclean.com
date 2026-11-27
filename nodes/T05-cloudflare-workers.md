@@ -2,7 +2,7 @@
 
 | Track | Deps | Unlocks | Size |
 |---|---|---|---|
-| now | T01, T03, S02 | none | M |
+| now | T01, T03, S02 | T07 | M |
 
 **Owns:** `wrangler.jsonc`, `static/_redirects`, `static/404.html`, `tests/unit/deploy-config.test.js`, `tests/e2e/not-found.spec.js`
 
