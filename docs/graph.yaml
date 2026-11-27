@@ -2,8 +2,7 @@ template: {headings: [Purpose, Tests, Changes, Gate, Risks]}
 gate:
   command: 'npm run test:unit:cov; u=$?; npm run test:e2e; e=$?; exit $((u|e))'
   fail_pattern: '^\s*FAIL\s+tests/\S+|^\s*✘\s+\d+ \[(desktop|mobile)\] › tests/\S+ › .* \(retry #1\)'
-  known_red:
-    - '[desktop] › tests/e2e/fx-tier2-genie.spec.js:235:7 › Tier 2 genie (forced, no-preference) › context-loss mid-genie-minimize leaves the window visible (finally-invariant holds even with GL gone)'
+  known_red: []
 out_of_scope:
   - {glob: "content/posts/", reason: "the owner's writing; nodes never change the owner's words"}
   - {glob: "static/fonts/", reason: "vendored Fira Code and Fira Sans web fonts"}
