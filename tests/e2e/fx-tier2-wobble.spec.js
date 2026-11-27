@@ -627,6 +627,12 @@ test.describe('T06 forced drag gap (Tier 2, no-preference)', () => {
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       }, held);
 
+      // Wait until the drag's effect has resolved (no wobble left in the registry).
+      await expect.poll(async () => page.evaluate(async () => {
+        const { FxController } = await import('/iconostat/fx/controller.js');
+        return Array.from(FxController._inFlight.values()).map((h) => h.name);
+      }), { timeout: 10000 }).not.toContain('wobble');
+
       await expect(w).not.toHaveClass(/fx-ghost/, { timeout: 10000 });
       await expect(w).toBeVisible();
       const canvas = page.locator('canvas#iconostat-fx-canvas');
