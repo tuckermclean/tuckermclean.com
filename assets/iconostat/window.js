@@ -243,7 +243,10 @@ export class IconostatWindow extends HTMLElement {
             this.style.height = this.lastHeight;
             this.style.top = this.lastTop;
             this.style.left = this.lastLeft;
-            this.style.zIndex = this.lastZIndex;
+            // A window that never had a z-index saved "" (created without bringToFront);
+            // don't let that blank out a z-index it was given since (a restore that
+            // commits after bringToFront), or it loses its place in the stack.
+            if (this.lastZIndex !== '') this.style.zIndex = this.lastZIndex;
             if (this.maximized) { this.classList.add('maximized') } else { this.classList.remove('maximized') };
             if (this.minimized) { this.classList.add('minimized') } else { this.classList.remove('minimized') };
             if (this.shaded) { this.classList.add('shaded') } else { this.classList.remove('shaded') };

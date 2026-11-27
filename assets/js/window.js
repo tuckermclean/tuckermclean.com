@@ -273,7 +273,9 @@ function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
         windowElement.querySelector('.window-title').textContent = niceName;
         windowElement.querySelector('.window-icon').textContent = icon;
         loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
-            if (typeof(windowElement) !== 'undefined') {
+            // A load that finishes after the window was minimized (Minimize All)
+            // must not un-minimize it or push its hash.
+            if (typeof(windowElement) !== 'undefined' && !windowElement.classList.contains('minimized')) {
                 windowElement.classList.remove('front');
                 getDesktop().bringToFront(windowElement);
             }
