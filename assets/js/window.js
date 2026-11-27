@@ -299,7 +299,9 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
             if (typeof(windowElement) !== 'undefined') {
                 if (minimize) {
                     windowElement.minimize();
-                } else {
+                } else if (!windowElement.classList.contains('minimized')) {
+                    // A load that finishes after the window was minimized (Minimize All)
+                    // must not un-minimize it or push its hash.
                     getDesktop().bringToFront(windowElement, changeHash);
                 }
             }
