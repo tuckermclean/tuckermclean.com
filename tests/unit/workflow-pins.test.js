@@ -137,4 +137,70 @@ describe('T07 workflow action pins', () => {
       }
     });
   }
+
+  for (const [file, expected] of Object.entries(EXPECTED)) {
+    it(`T07-AC-1: every uses: line in ${file} is an expected action at its expected major`, () => {
+      const lines = usesLines(workflows[file]);
+      expect(lines.length).toBeGreaterThan(0);
+      for (const { line, n } of lines) {
+        const r = checkUses(line);
+        const where = `${file}:${n}: ${line.trim()}`;
+        expect(r.ok, where).toBe(true);
+        expect(Object.keys(expected), where).toContain(r.action);
+        expect(r.major, where).toBe(expected[r.action]);
+      }
+    });
+  }
+
+  // The lines of a step's `with:` block: those after the `with:` line that are
+  // indented deeper than it, up to the first non-blank line that is not.
+  function withBlock(step) {
+    const lines = step.split('\n');
+    const at = lines.findIndex((l) => /^\s*with:\s*$/.test(l));
+    if (at < 0) return [];
+    const indent = /^(\s*)/.exec(lines[at])[1].length;
+    const out = [];
+    for (const l of lines.slice(at + 1)) {
+      if (l.trim() === '') continue;
+      if (/^(\s*)/.exec(l)[1].length <= indent) break;
+      out.push(l);
+    }
+    return out;
+  }
+
+  for (const file of Object.keys(EXPECTED)) {
+    it(`T07-AC-5: persist-credentials: false is inside the with: block of every actions/checkout step in ${file}`, () => {
+      const checkouts = steps(workflows[file]).filter((s) =>
+        /^\s*(?:- )?uses:\s*actions\/checkout@/m.test(s),
+      );
+      expect(checkouts.length).toBeGreaterThan(0);
+      for (const s of checkouts) {
+        const block = withBlock(s);
+        expect(
+          block.some((l) => /^\s*persist-credentials:\s*false\s*(?:#.*)?$/.test(l)),
+          `${file}: ${s.split('\n')[0].trim()}`,
+        ).toBe(true);
+      }
+    });
+  }
+
+  const GIT_NET = /\bgit\b.*\b(push|fetch|pull|clone|ls-remote|submodule)\b/;
+
+  it('T07-AC-5: the git command regex matches git with options before the subcommand', () => {
+    for (const l of ['git push', 'git -C . push origin HEAD', 'git -c k=v fetch']) {
+      expect(GIT_NET.test(l), l).toBe(true);
+    }
+    expect(GIT_NET.test('hugo --minify')).toBe(false);
+  });
+
+  for (const file of Object.keys(EXPECTED)) {
+    it(`T07-AC-5: no step in ${file} runs git push, fetch, pull, clone, ls-remote or submodule, with or without options`, () => {
+      for (const s of steps(workflows[file])) {
+        for (const l of s.split('\n')) {
+          if (/^\s*#/.test(l)) continue;
+          expect(GIT_NET.test(l), `${file}: ${l.trim()}`).toBe(false);
+        }
+      }
+    });
+  }
 });
