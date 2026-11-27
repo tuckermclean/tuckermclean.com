@@ -20,7 +20,9 @@ jobs:
     steps:
     # Step 1: Checkout the repository
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      with:
+        persist-credentials: false
 
     # Step 2: Install Hugo (pinned, checksum-verified)
     - name: Install Hugo (pinned + checksum-verified)
@@ -52,7 +54,7 @@ jobs:
     - name: Generate SBOM (SPDX) of dist/
       id: sbom
       continue-on-error: true
-      uses: anchore/sbom-action@v0.24.0
+      uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
       with:
         path: ./dist
         format: spdx-json
@@ -79,20 +81,20 @@ jobs:
     # Step 3.8: Upload the SBOM as a build artifact
     - name: Upload SBOM artifact
       continue-on-error: true
-      uses: actions/upload-artifact@v7.0.1
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: sbom-spdx
         path: sbom.spdx.json
 
     # Step 4: Node 22 for Wrangler 4 (needs Node >= 22.12)
     - name: Set up Node.js 22 for Wrangler
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version: '22'
 
     # Step 5: Deploy ./dist to Cloudflare Workers static assets (see wrangler.jsonc)
     - name: Deploy to Cloudflare Workers
-      uses: cloudflare/wrangler-action@v3
+      uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
       with:
         # v3's default Wrangler (3.90.0) cannot read wrangler.jsonc
         wranglerVersion: '4.168.0'
@@ -107,12 +109,12 @@ jobs:
       run: tar -czf dist.tgz -C dist .
 
     - name: Attest build provenance
-      uses: actions/attest-build-provenance@v4.1.1
+      uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
       with:
         subject-path: dist.tgz
 
     - name: Upload built artifact
-      uses: actions/upload-artifact@v7.0.1
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: site-dist
         path: dist.tgz
