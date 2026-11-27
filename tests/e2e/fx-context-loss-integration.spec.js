@@ -54,7 +54,7 @@ test.describe('Context-loss integration (forced Tier 2, no-preference)', () => {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     await page.mouse.move(box.x + box.width / 2 + 90, box.y + box.height / 2 + 60, { steps: 8 });
-    await expect(dragging).toHaveClass(/fx-ghost/);
+    await expect(dragging).toHaveClass(/fx-ghost/, { timeout: 2000 });
 
     // Simulate context loss (WEBGL_lose_context) -- compositor.js's own
     // `webglcontextlost` listener calls `FxController.cancelAll(true)`,
