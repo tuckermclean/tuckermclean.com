@@ -150,7 +150,7 @@ describe('T05 deploy workflow (Cloudflare)', () => {
 
   it('T05-AC-2: deploys with cloudflare/wrangler-action@v3, command deploy, token and account from secrets', () => {
     const { st } = wf();
-    const i = idx(st, /uses:\s*cloudflare\/wrangler-action@v3\b/);
+    const i = idx(st, /uses:\s*cloudflare\/wrangler-action@[0-9a-f]{40}\s+#\s*v3(?:\.\d+\.\d+)?\s*$/m);
     expect(i).toBeGreaterThan(-1);
     expect(st[i]).toMatch(/^\s+command:\s*deploy\s*$/m);
     expect(st[i]).toMatch(/^\s+apiToken:\s*\$\{\{\s*secrets\.CLOUDFLARE_API_TOKEN\s*\}\}\s*$/m);
@@ -174,7 +174,7 @@ describe('T05 deploy workflow (Cloudflare)', () => {
     const gen = idx(st, /anchore\/sbom-action@/);
     const pub = idx(st, /dist\/\.well-known\/sbom\.spdx\.json/);
     const up = idx(st, /name: sbom-spdx/);
-    const deploy = idx(st, /cloudflare\/wrangler-action@v3/);
+    const deploy = idx(st, /uses:\s*cloudflare\/wrangler-action@[0-9a-f]{40}\s+#\s*v3(?:\.\d+\.\d+)?\s*$/m);
     const pack = idx(st, /tar -czf dist\.tgz/);
     const attest = idx(st, /actions\/attest-build-provenance@/);
     const site = idx(st, /name: site-dist/);
@@ -205,7 +205,7 @@ describe('T05 deploy workflow pins a Wrangler that reads wrangler.jsonc', () => 
 
   it('T05-AC-2: the deploy step pins wranglerVersion to an exact version >= 3.91.0, which reads wrangler.jsonc', () => {
     const st = wf2();
-    const i = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@v3\b/.test(s));
+    const i = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@[0-9a-f]{40}\s+#\s*v3(?:\.\d+\.\d+)?\s*$/m.test(s));
     expect(i).toBeGreaterThan(-1);
     const m = st[i].match(/^\s+wranglerVersion:\s*["']?(\d+)\.(\d+)\.(\d+)["']?\s*(#.*)?$/m);
     expect(m).not.toBeNull();
@@ -215,9 +215,9 @@ describe('T05 deploy workflow pins a Wrangler that reads wrangler.jsonc', () => 
 
   it('T05-AC-2: an actions/setup-node step with Node >= 22 runs before the deploy step', () => {
     const st = wf2();
-    const deploy = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@v3\b/.test(s));
+    const deploy = st.findIndex((s) => /uses:\s*cloudflare\/wrangler-action@[0-9a-f]{40}\s+#\s*v3(?:\.\d+\.\d+)?\s*$/m.test(s));
     expect(deploy).toBeGreaterThan(-1);
-    const node = st.findIndex((s) => /uses:\s*actions\/setup-node@v\d+/.test(s));
+    const node = st.findIndex((s) => /uses:\s*actions\/setup-node@[0-9a-f]{40}\b/.test(s));
     expect(node).toBeGreaterThan(-1);
     expect(node).toBeLessThan(deploy);
     const m = st[node].match(/^\s+node-version:\s*["']?v?(\d+)/m);
