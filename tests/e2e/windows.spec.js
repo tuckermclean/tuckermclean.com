@@ -218,3 +218,61 @@ for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) 
     });
   });
 }
+
+// T06-AC-4 / T06-AC-2: Back onto a window minimized before the navigation, then the
+// user minimizes (again) while the page load is held: the late load must not
+// un-minimize it, whatever the window's state was when the navigation started.
+async function T06_backWithHeldWritings(page) {
+  await openApp(page, 'writings');
+  await expect(page).toHaveURL(/#\/writings$/);
+  await win(page, 'writings').locator('.writings-list a[href="#/posts/my-cloud-journey"]').click();
+  await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+  await expect(page.locator('[id="posts/my-cloud-journey-container"] > *').first()).toBeAttached();
+  await openViaMenu(page, 'Minimize All');
+  await expect(page.locator('#tasks [id="window-posts/my-cloud-journey"]')).toHaveCount(1);
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  await page.route('**/writings.html', async (route) => { await gate; await route.continue(); });
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/writings$/);
+  await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+  return release;
+}
+
+for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) {
+  test.describe(`T06 Back onto a minimized window, user minimizes during the load (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4 T06-AC-2: restored then minimized again while the Back load is held stays minimized (${label}, forced)`, async ({ page }) => {
+      const release = await T06_backWithHeldWritings(page);
+      await page.locator('#tasks #window-writings').click();
+      await expect(win(page, 'writings')).not.toHaveClass(/minimized/);
+      await expect(page.locator('body > #window-writings')).toBeVisible();
+      await win(page, 'writings').locator('.button.minimize').click();
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+
+      release();
+      await expect(page.locator('[id="writings-container"] > *').first()).toBeAttached();
+
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+    });
+
+    test(`T06-AC-4 T06-AC-2: Minimize All while the Back load is held (already minimized) stays minimized (${label}, forced)`, async ({ page }) => {
+      const release = await T06_backWithHeldWritings(page);
+      await openViaMenu(page, 'Minimize All');
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+
+      release();
+      await expect(page.locator('[id="writings-container"] > *').first()).toBeAttached();
+
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+    });
+  });
+}
