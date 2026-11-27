@@ -580,3 +580,66 @@ test.describe('Tier 2 wobble (forced, no-preference)', () => {
     await noFxGhostOrHiddenCanvas(page);
   });
 });
+
+// T06 (Cause G): a quick drag whose mouse-up lands before the wobble's modules
+// have loaded must not strand the window (F05-AC-6, SPEC principle 4).
+test.describe('T06 forced drag gap (Tier 2, no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  for (const held of ['wobble.js', 'compositor.js']) {
+    test(`a quick drag that ends while ${held} is held ends revealed, at the mouse-up position, with no stranded wobble (forced)`, async ({ page }) => {
+      await forceFxTier(page, '2');
+      await openApp(page, 'resume');
+      const w = win(page, 'resume');
+      await page.evaluate(() => {
+        window.__fxDone = [];
+        document.addEventListener('iconostat-fx-done', (e) => window.__fxDone.push(e.detail));
+      });
+
+      let release;
+      const gate = new Promise((r) => { release = r; });
+      let requested;
+      const requestSeen = new Promise((r) => { requested = r; });
+      await page.route(`**/iconostat/fx/${held}`, async (route) => {
+        requested();
+        await gate;
+        await route.continue();
+      });
+
+      const box = await w.locator('.window-header').boundingBox();
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + 15, y + 10, { steps: 3 });
+      await requestSeen;
+      await page.mouse.up();
+      const atMouseUp = await w.evaluate((el) => ({ left: el.style.left, top: el.style.top }));
+
+      const response = page.waitForResponse((r) => r.url().endsWith(`/iconostat/fx/${held}`));
+      release();
+      await response;
+      await page.evaluate(async (name) => {
+        await import(`/iconostat/fx/${name}`);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }, held);
+
+      await expect(w).not.toHaveClass(/fx-ghost/, { timeout: 10000 });
+      await expect(w).toBeVisible();
+      const canvas = page.locator('canvas#iconostat-fx-canvas');
+      if (await canvas.count() > 0) await expect(canvas).toBeHidden({ timeout: 10000 });
+      const inFlight = await page.evaluate(async () => {
+        const { FxController } = await import('/iconostat/fx/controller.js');
+        return Array.from(FxController._inFlight.values()).map((h) => h.name);
+      });
+      expect(inFlight).not.toContain('wobble');
+      expect(await w.evaluate((el) => ({ left: el.style.left, top: el.style.top }))).toEqual(atMouseUp);
+      const events = await page.evaluate(() => window.__fxDone);
+      expect(events.length).toBeLessThanOrEqual(1);
+      for (const e of events) expect(e).toEqual({ name: 'resume', effect: 'wobble' });
+    });
+  }
+});
