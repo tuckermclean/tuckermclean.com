@@ -88,6 +88,14 @@ describe('T07 workflow action pins', () => {
     });
   }
 
+  it('T07-AC-3: every uses: in every .yml/.yaml file in .github/workflows/ is pinned', () => {
+    for (const file of files) {
+      for (const { line, n } of usesLines(workflows[file])) {
+        expect(checkUses(line).ok, `${file}:${n}: ${line.trim()}`).toBe(true);
+      }
+    }
+  });
+
   it('T07-AC-3: the checker rejects tags, branches, short SHAs and a SHA without a comment', () => {
     for (const line of [
       '      - uses: actions/checkout@v4',
