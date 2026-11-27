@@ -45,9 +45,11 @@ Planned, in this order:
    from `master` to `main`.
 2. Fix the flaky end-to-end tests (issue #15, node T06): find why tests fail their first attempt in nearly every
    CI run and fix the cause without loosening what they check, then take the genie test out of `gate.known_red`.
-3. Keep `AGENTS.md` a spec file (issue #21, node T08): add it to the **Spec files:** line, so the role guard and
+3. Pin every GitHub Action in both workflows to a full commit SHA, with a unit test that rejects any other ref,
+   and set `persist-credentials: false` on the checkout steps (issue #18, node T07).
+4. Keep `AGENTS.md` a spec file (issue #21, node T08): add it to the **Spec files:** line, so the role guard and
    `check-spec-diff.py` keep treating it as one under noodlebot R03, and change nothing else in it.
-4. Nothing else is queued. The owner opens issues for further work.
+5. Nothing else is queued. The owner opens issues for further work.
 
 Known stale details, each left for a later hygiene node:
 
