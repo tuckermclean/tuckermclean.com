@@ -195,4 +195,26 @@ for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) 
       await expect(page).not.toHaveURL(/#\/posts\//);
     });
   });
+
+  test.describe(`T06 Back reopens a window minimized before the navigation (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4 S02-AC-22: Back to a window minimized before the navigation brings it to the front (${label}, forced)`, async ({ page }) => {
+      await openApp(page, 'writings');
+      await expect(page).toHaveURL(/#\/writings$/);
+      await win(page, 'writings').locator('.writings-list a[href="#/posts/my-cloud-journey"]').click();
+      await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+      await expect(page.locator('[id="posts/my-cloud-journey-container"] > *').first()).toBeAttached();
+      await openViaMenu(page, 'Minimize All');
+      await expect(page.locator('#tasks #window-writings, #tasks [id="window-posts/my-cloud-journey"]')).toHaveCount(1);
+      await page.goBack();
+      await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+      await page.goBack();
+      await expect(page).toHaveURL(/#\/writings$/);
+      await expect(win(page, 'writings')).toHaveClass(/front/);
+      await expect(win(page, 'writings')).not.toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings.minimized')).toHaveCount(0);
+    });
+  });
 }
