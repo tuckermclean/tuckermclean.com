@@ -62,10 +62,10 @@ none: imported
 - **F05-AC-12** — When `beginEffect()` rejects with `EffectSupersededError`, `dragStart()` resolves without calling `endEffect()` or unregistering the window's effect. *Verify:* `CI=true npx vitest run tests/unit/fx-supersede-handling.test.js`.
 - **F05-AC-13** — A Tier 2 maximize before any drag loads `wobble.js` and primes its compositor (`__testHasCachedCompositor()` is true). *Verify:* `CI=true npx playwright test tests/e2e/fx-tier2-wobble.spec.js:528`.
 - **F05-AC-14** — After a maximize ends, the impact jiggle ghosts the window again and settles within its 900 ms cap, and it is skipped on a viewport 768 wide or less. *Verify:* unpinned: `tests/e2e/fx-tier2-wobble.spec.js:497` and `:528` only check that the window ends revealed.
-- **F05-AC-15** — During a drag of a window holding a `<video>`, the texture is re-snapshotted at most every 250 ms. *Verify:* unpinned: `tests/e2e/fx-tier2-wobble.spec.js:418` accepts any number of uploads.
+- **F05-AC-15** — During a drag of a window holding a `<video>`, the texture is re-snapshotted at most every 250 ms. *Verify:* `CI=true npx vitest run tests/unit/wobble.test.js -t "T06 pin: F05-AC-15"`.
 - **F05-AC-16** — The mesh's rest box follows the window's live viewport box on each move and at release. *Verify:* unpinned: the end-to-end tests cannot read the drawn mesh.
-- **F05-AC-17** — A cancel that lands while `dragStart()` still waits for its snapshot reveals the window once the snapshot resolves, unless another effect has claimed it. *Verify:* unpinned: F06's `tests/e2e/fx-cancellation-matrix.spec.js:448` aims at that moment but cannot tell whether it hit it.
-- **F05-AC-18** — `wobble.js` imports only `./snapshot.js` and `./controller.js`. *Verify:* unpinned: no test checks the imports.
+- **F05-AC-17** — A cancel that lands while `dragStart()` still waits for its snapshot reveals the window once the snapshot resolves, unless another effect has claimed it. *Verify:* `CI=true npx vitest run tests/unit/wobble.test.js -t "T06 pin: F05-AC-17"`.
+- **F05-AC-18** — `wobble.js` imports only `./snapshot.js` and `./controller.js`. *Verify:* `CI=true npx vitest run tests/unit/wobble.test.js -t "T06 pin: F05-AC-18"`.
 
 ## Risks
 

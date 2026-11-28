@@ -98,8 +98,8 @@ none: imported
 - **I02-AC-50** — `iconostat.css` makes a shaded window 2.5rem high. *Verify:* `CI=true npx playwright test tests/e2e/windows.spec.js:58 tests/e2e/state.spec.js:70`.
 - **I02-AC-51** — At a viewport 768 wide or less, `iconostat.css` makes a window `100vw - 1.5rem` wide, so it fits the viewport. *Verify:* `CI=true npx playwright test tests/mobile/mobile.spec.js:4`.
 - **I02-AC-52** — `iconostat.css` makes a maximized window fill the viewport, hides a minimized window's body, status bar and buttons and shows it as a 5rem chip in the taskbar, hides a window while it has the `building` class, styles every colour of the window chrome through a `--iconostat-*` property that falls back to the site's variable, and has print rules. *Verify:* unpinned: the whole desktop suite passes with the maximized, minimized-hiding and `building` rules each removed, and no test reads the colours or prints.
-- **I02-AC-53** — The library imports nothing outside `assets/iconostat/`. *Verify:* unpinned: no test checks the imports (I03's fixture page shows only that the library runs with none of the site's code on the page).
-- **I02-AC-54** — `README.md` documents the elements, the window and desktop methods, the events and seam events, the site's responsibilities, the taskbar requirement, the theming properties and the build entry rule. *Verify:* unpinned: documentation.
+- **I02-AC-53** — The library imports nothing outside `assets/iconostat/`. *Verify:* `CI=true npx vitest run tests/unit/iconostat-library.test.js -t "T06 pin: I02-AC-53"`.
+- **I02-AC-54** — `README.md` documents the elements, the window and desktop methods, the events and seam events, the site's responsibilities, the taskbar requirement, the theming properties and the build entry rule. *Verify:* `CI=true npx vitest run tests/unit/iconostat-library.test.js -t "T06 pin: I02-AC-54"`.
 
 ## Risks
 
