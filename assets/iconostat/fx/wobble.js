@@ -537,11 +537,14 @@ function tick(state, now) {
 function maybeRefreshVideoTexture(state, now) {
     if (!state.videoEl || state.videoSnapshotInFlight) return;
     if (now - state.lastVideoSnapshotMs < VIDEO_THROTTLE_MS) return;
-    state.lastVideoSnapshotMs = now;
+    // The throttle is counted from the previous re-snapshot's COMPLETION
+    // (resolve or reject), not its start, so a slow re-snapshot is always
+    // followed by at least VIDEO_THROTTLE_MS of quiet (F05-AC-15).
     state.videoSnapshotInFlight = true;
     snapshot(state.el, { dprCap: undefined })
         .then(({ canvas }) => {
             state.videoSnapshotInFlight = false;
+            state.lastVideoSnapshotMs = performance.now();
             if (dragState.get(state.el) !== state) return; // superseded mid-snapshot
             const fresh = state.compositor.uploadTexture(canvas);
             if (state.texture !== state.originalTexture) state.compositor.releaseTexture(state.texture);
@@ -553,6 +556,7 @@ function maybeRefreshVideoTexture(state, now) {
             // good frame; never lets this decorative throttle break the main
             // wobble's finally-guaranteed reveal.
             state.videoSnapshotInFlight = false;
+            state.lastVideoSnapshotMs = performance.now();
         });
 }
 
