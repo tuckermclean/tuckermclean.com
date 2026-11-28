@@ -5,7 +5,8 @@
 | now | T01, I02, F01, F02, F03, F04, F05, F06, S02 | none | L |
 
 **Owns:** `tests/unit/iconostat-library.test.js` (the pin of I02-AC-53 and I02-AC-54, which have no test file of their
-own). It also changes files its deps own: the end-to-end test files below (S02, F01, F04, F05,
+own) and, while it exists, `.github/workflows/t06-loaded.yml` (a temporary workflow that makes T06-AC-5's ten
+loaded runs on GitHub's runners, removed again before the node's PR head). It also changes files its deps own: the end-to-end test files below (S02, F01, F04, F05,
 F06), T01's `tests/e2e/fixtures.js`, `tests/e2e/helpers.js`, `playwright.config.js` and `package.json` within
 T06-AC-3's limits, and the site code where a race lies (I02's `assets/iconostat/`, F01's
 `assets/iconostat/fx/controller.js` and `tier1.js`, F02's `snapshot.js`, F03's `compositor.js`, F04's `genie.js`,
