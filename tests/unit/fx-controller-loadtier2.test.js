@@ -57,3 +57,25 @@ describe('FxController._loadTier2 (real implementation; compositor.warmup() mock
     expect(FxController.tier).toBe(1);
   });
 });
+
+// T06 pin (F01-AC-18): a missing genie or wobble module resolves to null.
+// vitest.config.js aliases './genie.js' and './wobble.js' to the inert stub;
+// making that stub fail to load stands in for the 404 of a missing module.
+vi.mock('./stubs/empty-fx-module.js', () => {
+  throw new Error('simulated: module missing (404)');
+});
+
+describe('T06 pin: F01-AC-18 a missing genie or wobble module resolves to null', () => {
+  beforeEach(() => {
+    FxController._geniePromise = null;
+    FxController._wobblePromise = null;
+  });
+
+  it('F01-AC-18 (genie missing): _loadGenie() resolves to null when the module cannot be loaded', async () => {
+    await expect(FxController._loadGenie()).resolves.toBeNull();
+  });
+
+  it('F01-AC-18 (wobble missing): _loadWobble() resolves to null when the module cannot be loaded', async () => {
+    await expect(FxController._loadWobble()).resolves.toBeNull();
+  });
+});
