@@ -1,0 +1,57 @@
+name: t06-loaded
+
+# Temporary, for node T06 (flaky-e2e) only: T06-AC-5's ten consecutive loaded runs of
+# the whole end-to-end suite, both projects, on GitHub's runners, which no other
+# session shares. The recorded load is CDP CPU throttling at rate 2 on every page
+# (T06_CPU_THROTTLE=2, the auto fixture in tests/e2e/fixtures.js). The job stops at
+# the first failed run. This file is removed again before the node's PR head.
+
+on:
+  push:
+    branches: [node/T06-flaky-e2e]
+
+permissions:
+  contents: read
+
+jobs:
+  loaded:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Ten loaded runs (T06_CPU_THROTTLE=2, CI=true, --retries=0 --workers=1)
+        shell: bash
+        env:
+          CI: 'true'
+          T06_CPU_THROTTLE: '2'
+        run: |
+          set -u -o pipefail
+          echo "T06-AC-5 nproc $(nproc) commit ${GITHUB_SHA}"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            echo "T06-AC-5 run ${i}/10 start $(date -u +%Y-%m-%dT%H:%M:%SZ) loadavg $(cut -d' ' -f1-3 /proc/loadavg)"
+            rc=0
+            npx playwright test --retries=0 --workers=1 2>&1 | tee "t06-run-${i}.log" || rc=$?
+            summary=$(sed -e 's/\x1b\[[0-9;]*m//g' "t06-run-${i}.log" \
+              | grep -E '^ +[0-9]+ (passed|failed|flaky|skipped|did not run|interrupted)' \
+              | sed -e 's/^ *//' | tr '\n' ';')
+            echo "T06-AC-5 SUMMARY run ${i}/10 exit ${rc} end $(date -u +%Y-%m-%dT%H:%M:%SZ) loadavg $(cut -d' ' -f1-3 /proc/loadavg): ${summary}"
+            if [ "${rc}" -ne 0 ]; then
+              echo "T06-AC-5 STOP at run ${i}/10 (exit ${rc})"
+              exit 1
+            fi
+          done
+          echo "T06-AC-5 DONE: ten consecutive runs, each exit 0"
