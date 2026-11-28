@@ -342,3 +342,116 @@ describe('T06 wobble live-video re-snapshot throttle (counted from completion)',
         });
     }
 });
+
+// -- T06 pin: F05-AC-15, F05-AC-17, F05-AC-18 (behaviour kept at wobble.js HEAD) --
+import { readFileSync as T06readFileSync } from 'node:fs';
+import { resolve as T06resolve } from 'node:path';
+
+describe('T06 pin: F05-AC-15 video re-snapshot throttle', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    it('T06 pin F05-AC-15: instantly-resolving re-snapshots during a 1 s drag start at most every 250 ms, and do recur', async () => {
+        const { snapshot } = await import('../../assets/iconostat/fx/snapshot.js');
+        const { dragStart } = await import('../../assets/iconostat/fx/wobble.js');
+        let clock = 1000;
+        vi.spyOn(performance, 'now').mockImplementation(() => clock);
+        let cb = null;
+        vi.stubGlobal('requestAnimationFrame', (f) => { cb = f; return 1; });
+        vi.stubGlobal('cancelAnimationFrame', () => { cb = null; });
+        const el = document.createElement('div');
+        el.name = 'T06-pin-video-window';
+        el.appendChild(document.createElement('video'));
+        document.body.appendChild(el);
+        el.getBoundingClientRect = () => ({ left: 10, top: 10, width: 200, height: 150 });
+        const compositor = {
+            beginEffect: async () => ({ texture: { id: 'orig' }, width: 200, height: 150 }),
+            drawMesh() {}, uploadTexture: (c) => ({ id: 'fresh', c }), releaseTexture() {}, endEffect() {},
+        };
+        const controller = {
+            _inFlight: new Map(),
+            registerEffect(e, name, cancel) { const h = { name, cancel }; this._inFlight.set(e, h); return h; },
+            unregisterEffect(e) { this._inFlight.delete(e); },
+        };
+        const starts = [];
+        snapshot.mockReset();
+        snapshot.mockImplementation(() => { starts.push(clock); return Promise.resolve({ canvas: document.createElement('canvas') }); });
+        try {
+            await dragStart(controller, compositor, { el, x: 20, y: 20 });
+            for (let t = 1000; t < 2000; t += 10) {
+                clock = t;
+                const f = cb;
+                expect(f).toBeTypeOf('function');
+                f(t);
+                for (let i = 0; i < 5; i++) await Promise.resolve(); // let the snapshot settle at once
+            }
+            expect(starts.length).toBeGreaterThanOrEqual(3); // it does re-snapshot repeatedly
+            expect(starts.length).toBeLessThanOrEqual(4 + 1); // 1 s / 250 ms, plus the first
+            for (let i = 1; i < starts.length; i++) expect(starts[i] - starts[i - 1]).toBeGreaterThanOrEqual(250);
+        } finally {
+            cb = null;
+            el.remove();
+        }
+    });
+});
+
+describe('T06 pin: F05-AC-17 cancel while dragStart waits for its snapshot', () => {
+    async function run({ claimedBy }) {
+        const { dragStart } = await import('../../assets/iconostat/fx/wobble.js');
+        const el = document.createElement('div');
+        el.name = 'T06-pin-cancel-window';
+        document.body.appendChild(el);
+        el.getBoundingClientRect = () => ({ left: 10, top: 10, width: 200, height: 150 });
+        let resolveBegin;
+        const ended = [];
+        const compositor = {
+            beginEffect: () => new Promise((r) => { resolveBegin = r; }),
+            drawMesh() {}, uploadTexture: (c) => ({ id: 'fresh', c }), releaseTexture() {},
+            endEffect(e) { ended.push(e); },
+        };
+        const controller = {
+            _inFlight: new Map(),
+            registerEffect(e, name, cancel) { const h = { name, cancel }; this._inFlight.set(e, h); return h; },
+            unregisterEffect(e) { this._inFlight.delete(e); },
+        };
+        const started = dragStart(controller, compositor, { el, x: 20, y: 20 });
+        // The cancel lands now, while the snapshot is still pending: the jump-cut
+        // the controller performs (calling the registered cancel, then dropping it).
+        controller._inFlight.get(el).cancel(true);
+        controller._inFlight.delete(el);
+        if (claimedBy) controller._inFlight.set(el, { name: claimedBy, cancel() {} });
+        expect(ended.length).toBe(0); // not revealed before the snapshot resolves
+        resolveBegin({ texture: { id: 'orig' }, width: 200, height: 150 });
+        await started;
+        el.remove();
+        return ended;
+    }
+
+    it('T06 pin F05-AC-17: a cancel during the snapshot reveals the window once the snapshot resolves', async () => {
+        const ended = await run({ claimedBy: null });
+        expect(ended.length).toBe(1);
+    });
+
+    it('T06 pin F05-AC-17: no reveal when another effect has claimed the window meanwhile', async () => {
+        const ended = await run({ claimedBy: 'genie' });
+        expect(ended.length).toBe(0);
+    });
+});
+
+describe('T06 pin: F05-AC-18 wobble.js imports', () => {
+    it('T06 pin F05-AC-18: wobble.js imports only ./snapshot.js and ./controller.js', () => {
+        const src = T06readFileSync(T06resolve(process.cwd(), 'assets/iconostat/fx/wobble.js'), 'utf8');
+        const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([;{}),])\s*\/\/.*$/gm, '$1');
+        const specs = [];
+        for (const m of code.matchAll(/\b(?:import|export)\s*(?:[\w*${}\s,]*?\bfrom\s*)?(['"])([^'"]+)\1/g)) specs.push(m[2]);
+        const literalDynamic = [...code.matchAll(/\bimport\s*\(\s*(['"])([^'"]+)\1\s*\)/g)];
+        for (const m of literalDynamic) specs.push(m[2]);
+        const allDynamic = [...code.matchAll(/\bimport\s*\(/g)];
+        expect(allDynamic.length).toBe(literalDynamic.length); // no computed dynamic import
+        expect(specs.length).toBeGreaterThan(0);
+        for (const s of specs) expect(['./snapshot.js', './controller.js']).toContain(s);
+        expect(new Set(specs)).toEqual(new Set(['./snapshot.js', './controller.js']));
+    });
+});
