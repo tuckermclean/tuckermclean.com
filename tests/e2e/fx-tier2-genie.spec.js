@@ -239,6 +239,11 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
 
     await w.locator('.button.minimize').click();
     await expect(w).not.toHaveClass(/minimized/); // effect in flight, fx-ghosted
+    await expect.poll(() => page.evaluate(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      const el = document.getElementById('window-resume');
+      return !!document.getElementById('iconostat-fx-canvas') && FxController._inFlight.get(el)?.name === 'minimize';
+    })).toBe(true);
 
     const lost = await page.evaluate(async () => {
       const canvas = document.getElementById('iconostat-fx-canvas');
@@ -317,10 +322,21 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
     // calling minimize(false) any earlier (before the real commit) would
     // itself compute `entering: true` inside window.js's own `minimize()`
     // (nothing to restore FROM yet), which is correctly NOT a reversal.
-    await page.waitForFunction(() => {
+    // Observe and reverse in ONE in-page step (rAF polling; like the old wait, bounded only by the test timeout):
+    // two page round trips (observe, then reverse) let the 400 ms tween end in
+    // between, so the reversal landed after the minimize finished.
+    await page.evaluate(() => new Promise((resolve) => {
       const el = document.getElementById('window-resume');
-      return el.classList.contains('minimized') && el.classList.contains('fx-ghost');
-    }, { timeout: 2000 });
+      const poll = () => {
+        if (el.classList.contains('minimized') && el.classList.contains('fx-ghost')) {
+          el.minimize(false);
+          resolve();
+          return;
+        }
+        requestAnimationFrame(poll);
+      };
+      poll();
+    }));
 
     // "Click the chip" while still mid-minimize: genie applies `fx-ghost`
     // (visibility:hidden) for the ENTIRE choreography and the overlay
@@ -332,9 +348,6 @@ test.describe('Tier 2 genie (forced, no-preference)', () => {
     // a taskbar/menu affordance calling the public API directly): call
     // `minimize(false)` on the real element, which dispatches the exact
     // same cancelable `iconostat-before-minimize` event a real click would.
-    await page.evaluate(() => {
-      document.getElementById('window-resume').minimize(false);
-    });
 
     // Must still land in a fully correct, non-stranded end state either way
     // (true reversal or the documented jump-cut-then-fresh-run fallback --

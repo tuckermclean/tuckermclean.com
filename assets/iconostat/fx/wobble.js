@@ -383,6 +383,10 @@ function currentImpactMax() { return impactMaxDurationOverride === null ? IMPACT
 // closure below follows.
 const dragState = new WeakMap();
 
+// el -> { ended } for a dragStart still awaiting its snapshot (no dragState
+// yet). dragEnd marks it, so dragStart can tell its drag already finished.
+const starting = new WeakMap();
+
 let cachedCompositor = null; // see file banner's "Impact wobble: compositor caching" section
 
 // Open item #1 (task-F-brief.md, "impact-wobble warm-load"): lets
@@ -533,11 +537,14 @@ function tick(state, now) {
 function maybeRefreshVideoTexture(state, now) {
     if (!state.videoEl || state.videoSnapshotInFlight) return;
     if (now - state.lastVideoSnapshotMs < VIDEO_THROTTLE_MS) return;
-    state.lastVideoSnapshotMs = now;
+    // The throttle is counted from the previous re-snapshot's COMPLETION
+    // (resolve or reject), not its start, so a slow re-snapshot is always
+    // followed by at least VIDEO_THROTTLE_MS of quiet (F05-AC-15).
     state.videoSnapshotInFlight = true;
     snapshot(state.el, { dprCap: undefined })
         .then(({ canvas }) => {
             state.videoSnapshotInFlight = false;
+            state.lastVideoSnapshotMs = performance.now();
             if (dragState.get(state.el) !== state) return; // superseded mid-snapshot
             const fresh = state.compositor.uploadTexture(canvas);
             if (state.texture !== state.originalTexture) state.compositor.releaseTexture(state.texture);
@@ -549,6 +556,7 @@ function maybeRefreshVideoTexture(state, now) {
             // good frame; never lets this decorative throttle break the main
             // wobble's finally-guaranteed reveal.
             state.videoSnapshotInFlight = false;
+            state.lastVideoSnapshotMs = performance.now();
         });
 }
 
@@ -614,7 +622,9 @@ export async function dragStart(controller, compositor, detail) {
     // via controller._inFlight, even though `dragState` isn't populated yet.
     let settledEarly = false;
     const placeholderCancel = () => { settledEarly = true; };
-    controller.registerEffect(el, 'wobble', placeholderCancel);
+    const placeholder = controller.registerEffect(el, 'wobble', placeholderCancel);
+    const startRec = { ended: false };
+    starting.set(el, startRec);
 
     let texture, width, height;
     try {
@@ -704,6 +714,17 @@ export async function dragStart(controller, compositor, detail) {
         return;
     }
 
+    // The drag already ended (dragEnd found no state and only marked this
+    // record): nothing will ever settle a wobble started now, so never start
+    // it -- reveal `el` and release our registration.
+    if (startRec.ended) {
+        if (starting.get(el) === startRec) starting.delete(el);
+        if (controller._inFlight.get(el) === placeholder) controller.unregisterEffect(el);
+        compositor.endEffect(el);
+        return;
+    }
+    if (starting.get(el) === startRec) starting.delete(el);
+
     const state = createState({ el, compositor, texture, width, height, rect, pointerX: x, pointerY: y });
     state.pinOffsetX = state.simPos[state.pinnedIndex * 2] - x;
     state.pinOffsetY = state.simPos[state.pinnedIndex * 2 + 1] - y;
@@ -747,7 +768,12 @@ export function dragMove(controller, compositor, detail) {
 export function dragEnd(controller, compositor, detail) {
     const { el } = detail;
     const state = dragState.get(el);
-    if (!state) return; // tolerate, per contract
+    if (!state) {
+        // dragStart may still be awaiting its snapshot: tell it the drag is over.
+        const rec = starting.get(el);
+        if (rec) rec.ended = true;
+        return; // tolerate, per contract
+    }
 
     // Final rest position: prefer the live rect (authoritative -- the
     // library's onMove has already finished writing left/top by the time

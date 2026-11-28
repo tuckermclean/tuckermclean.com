@@ -241,3 +241,285 @@ describe('FxController tier-2 routing (_onDrag)', () => {
     expect(loadTier2).not.toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// T06 pins: behaviour of controller.js/tier1.js/fx.css at the node's head that
+// the node keeps (F01-AC-9, -11, -12, -16, -18, -28). Each pass today.
+// ---------------------------------------------------------------------------
+import { readFileSync } from 'node:fs';
+import { resolve as t06Resolve, dirname as t06Dirname } from 'node:path';
+
+function t06Reset() {
+  resetController();
+  FxController._inFlight.clear();
+  FxController._pending.clear();
+}
+
+function t06Wire() {
+  if (!FxController._listenersWired) FxController._wireEvents();
+}
+
+describe('T06 pin: F01-AC-9 programmatic before-event cancels every running effect', () => {
+  beforeEach(() => {
+    t06Reset();
+    t06Wire();
+  });
+
+  it('F01-AC-9: a programmatic before-minimize while effects run cancels every running effect with jumpToEnd=true', () => {
+    const cancelA = vi.fn();
+    const cancelB = vi.fn();
+    const a = makeEl();
+    const b = makeEl();
+    FxController.registerEffect(a, 'genie', cancelA);
+    FxController.registerEffect(b, 'genie', cancelB);
+
+    const ev = new CustomEvent('iconostat-before-minimize', {
+      detail: { el: makeEl(), entering: true, userGesture: false },
+      cancelable: true,
+    });
+    document.dispatchEvent(ev);
+
+    expect(cancelA).toHaveBeenCalledTimes(1);
+    expect(cancelA).toHaveBeenCalledWith(true);
+    expect(cancelB).toHaveBeenCalledTimes(1);
+    expect(cancelB).toHaveBeenCalledWith(true);
+    expect(FxController._inFlight.size).toBe(0);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+});
+
+describe('T06 pin: F01-AC-11 orientationchange, resize-start and a throwing cancel', () => {
+  beforeEach(() => {
+    t06Reset();
+    t06Wire();
+  });
+
+  it('F01-AC-11 (orientationchange): cancels every running effect with jumpToEnd=true', () => {
+    const cancelA = vi.fn();
+    const cancelB = vi.fn();
+    FxController.registerEffect(makeEl(), 'genie', cancelA);
+    FxController.registerEffect(makeEl(), 'wobble', cancelB);
+
+    window.dispatchEvent(new Event('orientationchange'));
+
+    expect(cancelA).toHaveBeenCalledWith(true);
+    expect(cancelB).toHaveBeenCalledWith(true);
+    expect(FxController._inFlight.size).toBe(0);
+  });
+
+  it('F01-AC-11 (resize-start): cancels the effect on that window only, with jumpToEnd=true', () => {
+    const cancelA = vi.fn();
+    const cancelB = vi.fn();
+    const a = makeEl();
+    const b = makeEl();
+    FxController.registerEffect(a, 'genie', cancelA);
+    FxController.registerEffect(b, 'genie', cancelB);
+
+    document.dispatchEvent(new CustomEvent('iconostat-resize-start', { detail: { el: a } }));
+
+    expect(cancelA).toHaveBeenCalledTimes(1);
+    expect(cancelA).toHaveBeenCalledWith(true);
+    expect(cancelB).not.toHaveBeenCalled();
+    expect(FxController._inFlight.has(a)).toBe(false);
+    expect(FxController._inFlight.has(b)).toBe(true);
+  });
+
+  it('F01-AC-11 (throwing cancel): cancelAll() still cancels the rest when one cancel function throws', () => {
+    const cancelFirst = vi.fn(() => {
+      throw new Error('cancel blew up');
+    });
+    const cancelRest = vi.fn();
+    const cancelLast = vi.fn();
+    FxController.registerEffect(makeEl(), 'genie', cancelFirst);
+    FxController.registerEffect(makeEl(), 'genie', cancelRest);
+    FxController.registerEffect(makeEl(), 'wobble', cancelLast);
+
+    expect(() => FxController.cancelAll(true)).not.toThrow();
+
+    expect(cancelFirst).toHaveBeenCalledTimes(1);
+    expect(cancelRest).toHaveBeenCalledWith(true);
+    expect(cancelLast).toHaveBeenCalledWith(true);
+    expect(FxController._inFlight.size).toBe(0);
+  });
+});
+
+describe('T06 pin: F01-AC-12 registerEffect cancels an effect already on the window', () => {
+  beforeEach(() => {
+    t06Reset();
+  });
+
+  it('F01-AC-12: registering a second effect on el first cancels the earlier one with jumpToEnd=true, so effects never stack', () => {
+    const el = makeEl();
+    const other = makeEl();
+    const cancelOld = vi.fn();
+    const cancelOther = vi.fn();
+    const cancelNew = vi.fn();
+    FxController.registerEffect(el, 'genie', cancelOld);
+    FxController.registerEffect(other, 'genie', cancelOther);
+
+    const handle = FxController.registerEffect(el, 'wobble', cancelNew);
+
+    expect(cancelOld).toHaveBeenCalledTimes(1);
+    expect(cancelOld).toHaveBeenCalledWith(true);
+    expect(cancelOther).not.toHaveBeenCalled();
+    expect(cancelNew).not.toHaveBeenCalled();
+    expect(FxController._inFlight.get(el)).toBe(handle);
+    expect(handle.name).toBe('wobble');
+  });
+});
+
+describe('T06 pin: F01-AC-16 tierFor(el) is read again after the compositor loads', () => {
+  beforeEach(() => {
+    t06Reset();
+  });
+
+  it('F01-AC-16 (_runEffect): a demotion landing while the compositor loads sends the gesture to Tier 1, genie not loaded', async () => {
+    const el = makeEl();
+    const tier1Run = vi.fn();
+    const loadGenie = vi.fn(async () => ({ run: vi.fn() }));
+    FxController._loadTier2 = async () => {
+      FxController.demote(el, 1); // lands while the compositor is loading
+      return {};
+    };
+    FxController._loadGenie = loadGenie;
+    FxController._loadTier1 = async () => ({ run: tier1Run });
+
+    await FxController._runEffect(el, 'minimize', true);
+
+    expect(loadGenie).not.toHaveBeenCalled();
+    expect(tier1Run).toHaveBeenCalledTimes(1);
+    expect(tier1Run).toHaveBeenCalledWith(FxController, el, 'minimize', true);
+  });
+
+  it('F01-AC-16 (_onDrag): a demotion landing while the compositor loads sends the drag event to Tier 1, wobble not loaded', async () => {
+    const el = makeEl();
+    const tier1DragMove = vi.fn();
+    const loadWobble = vi.fn(async () => ({ dragMove: vi.fn() }));
+    FxController._loadTier2 = async () => {
+      FxController.demote(el, 1);
+      return {};
+    };
+    FxController._loadWobble = loadWobble;
+    FxController._loadTier1 = async () => ({ dragMove: tier1DragMove });
+
+    const detail = { el, x: 1, y: 2, left: 3, top: 4 };
+    await FxController._onDrag('dragMove', detail);
+
+    expect(loadWobble).not.toHaveBeenCalled();
+    expect(tier1DragMove).toHaveBeenCalledWith(FxController, detail);
+  });
+});
+
+describe('T06 pin: F01-AC-18 a Tier 2 maximize warms wobble.js and primes its compositor', () => {
+  beforeEach(() => {
+    t06Reset();
+  });
+
+  it('F01-AC-18 (warm load, no wait): a Tier 2 maximize starts _loadWobble() and runs genie without waiting for it', async () => {
+    const compositor = { id: 'c' };
+    let resolveWobble;
+    const wobblePromise = new Promise((r) => { resolveWobble = r; });
+    const loadWobble = vi.fn(() => wobblePromise);
+    const genieRun = vi.fn().mockResolvedValue(undefined);
+    FxController._loadTier2 = async () => compositor;
+    FxController._loadGenie = async () => ({ run: genieRun });
+    FxController._loadWobble = loadWobble;
+    FxController._loadTier1 = async () => ({ run: vi.fn() });
+
+    const el = makeEl();
+    await FxController._runEffect(el, 'maximize', true); // resolves although wobble never has
+
+    expect(loadWobble).toHaveBeenCalledTimes(1);
+    expect(genieRun).toHaveBeenCalledWith(FxController, compositor, el, 'maximize', true);
+    resolveWobble(null);
+  });
+
+  it('F01-AC-18 (primeCompositor): wobble.primeCompositor() is handed the compositor once wobble loads', async () => {
+    const compositor = { id: 'c' };
+    const primeCompositor = vi.fn();
+    FxController._loadTier2 = async () => compositor;
+    FxController._loadGenie = async () => ({ run: vi.fn().mockResolvedValue(undefined) });
+    FxController._loadWobble = async () => ({ primeCompositor });
+    FxController._loadTier1 = async () => ({ run: vi.fn() });
+
+    await FxController._runEffect(makeEl(), 'maximize', true);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(primeCompositor).toHaveBeenCalledTimes(1);
+    expect(primeCompositor).toHaveBeenCalledWith(compositor);
+  });
+
+  it('F01-AC-18 (wobble missing): a null wobble module is tolerated, the maximize still runs genie', async () => {
+    const genieRun = vi.fn().mockResolvedValue(undefined);
+    FxController._loadTier2 = async () => ({});
+    FxController._loadGenie = async () => ({ run: genieRun });
+    FxController._loadWobble = async () => null;
+    FxController._loadTier1 = async () => ({ run: vi.fn() });
+
+    await FxController._runEffect(makeEl(), 'maximize', true);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(genieRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('F01-AC-18 (minimize): a Tier 2 minimize does not load wobble', async () => {
+    const loadWobble = vi.fn(async () => ({ primeCompositor: vi.fn() }));
+    FxController._loadTier2 = async () => ({});
+    FxController._loadGenie = async () => ({ run: vi.fn().mockResolvedValue(undefined) });
+    FxController._loadWobble = loadWobble;
+    FxController._loadTier1 = async () => ({ run: vi.fn() });
+
+    await FxController._runEffect(makeEl(), 'minimize', true);
+
+    expect(loadWobble).not.toHaveBeenCalled();
+  });
+});
+
+describe('T06 pin: F01-AC-28 fx/controller.js, tier1.js and fx.css import nothing from the site or the library', () => {
+  const fxDir = t06Resolve(__dirname, '../../assets/iconostat/fx');
+
+  function stripJsComments(src) {
+    return src
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split('\n')
+      .filter((l) => !/^\s*\/\//.test(l))
+      .map((l) => l.replace(/\s\/\/.*$/, ''))
+      .join('\n');
+  }
+
+  function specifiers(src) {
+    const code = stripJsComments(src);
+    const found = [];
+    const patterns = [
+      /\bimport\s*\(\s*['"`]([^'"`]+)['"`]/g, // dynamic
+      /\bfrom\s*['"`]([^'"`]+)['"`]/g, // static import ... from / export ... from
+      /(?:^|[;\s])import\s*['"`]([^'"`]+)['"`]/g, // bare import 'x'
+    ];
+    for (const re of patterns) {
+      let m;
+      while ((m = re.exec(code))) found.push(m[1]);
+    }
+    return found;
+  }
+
+  for (const name of ['controller.js', 'tier1.js']) {
+    it(`F01-AC-28: ${name} imports only relative modules that resolve inside assets/iconostat/fx/`, () => {
+      const src = readFileSync(t06Resolve(fxDir, name), 'utf8');
+      const specs = specifiers(src);
+      for (const s of specs) {
+        expect(s.startsWith('./') || s.startsWith('../'), `${name}: ${s} is not relative`).toBe(true);
+        const target = t06Resolve(fxDir, s);
+        expect(t06Dirname(target), `${name}: ${s} leaves fx/`).toBe(fxDir);
+      }
+      if (name === 'controller.js') {
+        expect(specs.sort()).toEqual(['./compositor.js', './genie.js', './tier1.js', './wobble.js']);
+      }
+    });
+  }
+
+  it('F01-AC-28: fx.css has no @import and no url() reaching outside fx/', () => {
+    const css = readFileSync(t06Resolve(fxDir, 'fx.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).not.toMatch(/@import/);
+    expect(css).not.toMatch(/url\(\s*['"]?(\.\.\/|\/)/);
+  });
+});

@@ -52,6 +52,7 @@ test('back/forward navigates between open windows without dropping any', async (
   await openApp(page);                 // welcome
   await openViaMenu(page, 'Resume');   // resume
   await openViaMenu(page, 'Intro');    // intro
+  await expect(page).toHaveURL(/#\/intro$/);
   await expect(page.locator('.window')).toHaveCount(3);
 
   // popstate's navigateToPage() now brings an already-open target window to
@@ -74,6 +75,7 @@ test('a resize->cascade does not corrupt back/forward history', async ({ page })
   await openApp(page);                 // welcome, url '/'
   await openViaMenu(page, 'Resume');   // #/resume
   await openViaMenu(page, 'Intro');    // #/intro  (3 windows)
+  await expect(page).toHaveURL(/#\/intro$/);
   await expect(page.locator('.window')).toHaveCount(3);
 
   await page.goBack();
@@ -143,4 +145,51 @@ test('the start button image is site-supplied via --iconostat-start-button-image
   await openApp(page);
   const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.start-button')).backgroundImage);
   expect(bg).toContain('start-button');  // still shows the eye, resolved through the var
+});
+
+// T06 pins: S02-AC-25, the loader's content-loading / content-loaded events.
+// The loader is module-private, so each case drives it through openPage().
+async function t06Recorder(page) {
+  await page.addInitScript(() => {
+    window.T06log = [];
+    document.addEventListener('iconostat-content-loading', () => window.T06log.push('loading'));
+    document.addEventListener('iconostat-content-loaded', () => window.T06log.push('loaded'));
+    const realFetch = window.fetch;
+    window.fetch = function (url, ...rest) {
+      if (String(url).includes('resume.html')) window.T06log.push('fetch');
+      return realFetch.call(this, url, ...rest);
+    };
+  });
+  await openApp(page);
+  await expect(page.locator('.iconostat-spinner')).not.toHaveClass(/active/);
+  await page.evaluate(() => { window.T06log.length = 0; });
+}
+
+test.describe('T06 pin: S02-AC-25 loader events', () => {
+  test('S02-AC-25: content-loading is dispatched before the first fetch', async ({ page }) => {
+    await t06Recorder(page);
+    await page.evaluate(() => openPage('resume', 'Resume', '📜'));
+    await expect(page.locator('#resume-container')).not.toBeEmpty();
+    expect(await page.evaluate(() => window.T06log.join(','))).toBe('loading,fetch,loaded');
+  });
+
+  test('S02-AC-25: content-loaded is also dispatched on a failed fetch', async ({ page }) => {
+    await page.route('**/resume.html', r => r.fulfill({ status: 500, body: 'no' }));
+    await t06Recorder(page);
+    await page.evaluate(() => openPage('resume', 'Resume', '📜'));
+    await expect.poll(() => page.evaluate(() => window.T06log.join(','))).toBe('loading,fetch,loaded');
+  });
+
+  test('S02-AC-25: content-loaded is also dispatched after five retries when the target element is missing', async ({ page }) => {
+    // The target container is removed from the page before each fetch is answered.
+    await page.route('**/resume.html', async r => {
+      await page.evaluate(() => document.getElementById('resume-container')?.remove());
+      await r.fulfill({ status: 200, contentType: 'text/html', body: '<p>T06</p>' });
+    });
+    await t06Recorder(page);
+    await page.evaluate(() => openPage('resume', 'Resume', '📜'));
+    await expect.poll(() => page.evaluate(() => window.T06log.at(-1))).toBe('loaded');
+    expect(await page.evaluate(() => window.T06log.join(',')))
+      .toBe('loading,fetch,fetch,fetch,fetch,fetch,fetch,loaded');
+  });
 });

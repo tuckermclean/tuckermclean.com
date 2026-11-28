@@ -368,3 +368,195 @@ test.describe('Tier 1 (forced, no-preference)', () => {
     expect(wobbleEvents).toEqual([]);
   });
 });
+
+// T06: hold a lazily imported effect module so the controller gap (the time
+// between the minimize click and the module's load) is forced on every run.
+async function holdModule(page, glob) {
+  let release;
+  let requested;
+  const gate = new Promise((r) => { release = r; });
+  const seen = new Promise((r) => { requested = r; });
+  await page.route(glob, async (route) => {
+    requested();
+    await gate;
+    await route.continue();
+  });
+  return { seen, release };
+}
+
+const T06_inFlight = (page) => page.evaluate(async () => {
+  const { FxController } = await import('/iconostat/fx/controller.js');
+  return Array.from(FxController._inFlight.values()).map((h) => h.name);
+});
+
+const T06_openState = (w) => w.evaluate((el) => ({
+  minimized: el.classList.contains('minimized'),
+  ghost: el.classList.contains('fx-ghost'),
+  transform: el.style.transform,
+  opacity: el.style.opacity,
+  anims: el.getAnimations().length,
+}));
+
+// Let the held module finish loading and the controller's continuation run.
+async function T06_releaseAndSettle(page, hold, file) {
+  const loaded = page.waitForResponse((r) => r.url().endsWith(file));
+  hold.release();
+  await loaded;
+  await page.evaluate(async (f) => {
+    await import(f);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }, '/iconostat/fx/' + file);
+}
+
+test.describe('T06 forced controller gap (Tier 1, no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F01-AC-21: cascade() during a Tier 1 minimize leaves the window open while tier1.js is still loading (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    const hold = await holdModule(page, '**/iconostat/fx/tier1.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+
+      await page.evaluate(() => document.querySelector('iconostat-desktop').cascade());
+
+      await expect(w).not.toHaveClass(/minimized/);
+      await expect(w).toBeVisible();
+      const st = await T06_openState(w);
+      expect(st.transform).toBe('');
+      expect(st.opacity).toBe('');
+      expect(await T06_inFlight(page)).toEqual([]);
+    } finally {
+      hold.release();
+    }
+
+    await T06_releaseAndSettle(page, hold, 'tier1.js');
+
+    await expect(w).not.toHaveClass(/minimized/);
+    const st = await T06_openState(w);
+    expect(st.minimized).toBe(false);
+    expect(st.anims).toBe(0);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+
+    await w.locator('.button.minimize').click();
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+  });
+
+  test('F01-AC-22: a viewport resize during a Tier 1 minimize commits it at once while tier1.js is still loading (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    const hold = await holdModule(page, '**/iconostat/fx/tier1.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+
+      await page.setViewportSize({ width: 1000, height: 800 });
+
+      // Committed while the module is still held: it must not wait for it.
+      await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+      await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    } finally {
+      hold.release();
+    }
+
+    await T06_releaseAndSettle(page, hold, 'tier1.js');
+
+    await expect(w).toHaveClass(/minimized/);
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    const st = await T06_openState(w);
+    expect(st.anims).toBe(0);
+    expect(await T06_inFlight(page)).toEqual([]);
+    await noFxGhostOrCanvas(page);
+  });
+});
+
+// T06 (second RED): an effect module that fails to load degrades, never strands.
+test.describe('T06 forced controller gap, failed module load (Tier 1, no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F01-AC-22: a Tier 1 minimize commits at once when tier1.js fails to load, and a later resize changes nothing (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    await page.route('**/iconostat/fx/tier1.js', (r) => r.abort());
+
+    const failed = page.waitForEvent('requestfailed', (req) => req.url().endsWith('tier1.js'));
+    await w.locator('.button.minimize').click();
+    await failed;
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    let st = await T06_openState(w);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+    const pending = () => page.evaluate(async () => {
+      const { FxController } = await import('/iconostat/fx/controller.js');
+      return FxController._pending ? FxController._pending.size : 0;
+    });
+    expect(await pending()).toBe(0);
+
+    await page.setViewportSize({ width: 1000, height: 800 });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await expect(w).toHaveClass(/minimized/);
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    st = await T06_openState(w);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+    expect(await pending()).toBe(0);
+  });
+});
+
+// T06 (third RED): a drag accepted during the module load is never dropped.
+test.describe('T06 forced controller gap, drag during a Tier 1 minimize (no-preference)', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('F01-AC-22: a drag begun while tier1.js loads and continued after it loads still commits the minimize (forced)', async ({ page }) => {
+    await forceFxTier(page, '1');
+    await openApp(page, 'resume');
+    const w = win(page, 'resume');
+    const box = await w.locator('.title').boundingBox();
+    const cx = box.x + Math.min(box.width / 2, 60);
+    const cy = box.y + box.height / 2;
+
+    const hold = await holdModule(page, '**/iconostat/fx/tier1.js');
+    try {
+      await w.locator('.button.minimize').click();
+      await hold.seen;
+      await page.mouse.move(cx, cy);
+      await page.mouse.down();
+      await page.mouse.move(cx + 20, cy + 15, { steps: 4 });
+    } finally {
+      hold.release();
+    }
+    await T06_releaseAndSettle(page, hold, 'tier1.js');
+    await page.mouse.move(cx + 60, cy + 40, { steps: 5 });
+    await page.mouse.up();
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+    await expect(w).toHaveClass(/minimized/, { timeout: 5000 });
+    await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    await expect(w).toBeVisible();
+    const st = await T06_openState(w);
+    expect(st.ghost).toBe(false);
+    expect(st.transform).toBe('');
+    expect(st.opacity).toBe('');
+    expect(await T06_inFlight(page)).toEqual([]);
+  });
+});

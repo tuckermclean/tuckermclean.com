@@ -109,6 +109,7 @@ these changes nothing** — they're pure seams. All are dispatched on
 | `iconostat-resize-start` | no | `{ name, el, x, y }` | In `_startResize`, before the `move`/`end` listeners attach. Mirrors `iconostat-drag-start`. |
 | `iconostat-resize-move` | no | `{ name, el, x, y, width, height }` | On every resize move, after the element's `width`/`height` style has been written. `width`/`height` are the window's resulting `offsetWidth`/`offsetHeight`. |
 | `iconostat-resize-end` | no | `{ name, el }` | When the resize ends. |
+| `iconostat-before-layout` | no | `{ op }` | At the start of `cascade()` (`op: 'cascade'`, the resize reflow included) and `tile()` (`op: 'tile'`), before any window is touched. An open window gets no `iconostat-before-*` event from these, and rewriting a window's geometry with the same values mutates nothing an observer can see, so this is how the fx layer learns that the layout, not a pending effect, decides the open windows' state. |
 | `iconostat-fx-done` | no | `{ name, effect }` | **Not dispatched by the library.** Reserved for the fx layer itself to announce that an effect (`effect`, e.g. `'genie-minimize'`) has finished and swapped back to the real element. Documented here so both sides agree on the name. |
 
 `userGesture` is `false` whenever the call is programmatic: whenever

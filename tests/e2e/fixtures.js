@@ -41,6 +41,18 @@ export const test = base.extend({
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await use();
   }, { auto: true }],
+
+  // Exists for T06's loaded runs (`T06_CPU_THROTTLE=4`): when that variable is
+  // a number > 1, throttle the page's CPU by that rate before the test body.
+  // Otherwise it does nothing.
+  autoThrottle: [async ({ page }, use) => {
+    const rate = Number(process.env.T06_CPU_THROTTLE || 0);
+    if (rate > 1) {
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate });
+    }
+    await use();
+  }, { auto: true }],
 });
 
 export { expect };

@@ -42,6 +42,8 @@ test.describe('Context-loss integration (forced Tier 2, no-preference)', () => {
     // 400ms desktop tween) -- leave it in flight.
     await minimizing.locator('.button.minimize').click();
     await expect(minimizing).not.toHaveClass(/minimized/); // in flight, fx-ghosted
+    // Resume is in front and covers Intro's header until genie ghosts it; wait for that.
+    await expect(minimizing).toHaveClass(/fx-ghost|minimized/);
 
     // Window B: start a wobble drag (mouse held down) at the same time --
     // two DIFFERENT effect kinds genuinely concurrent, both feeding the ONE
@@ -127,6 +129,7 @@ test.describe('Context-loss integration (forced Tier 2, no-preference)', () => {
     await expect(dragging).toBeVisible();
     await expect(dragging).not.toHaveClass(/fx-ghost/);
 
+    await expect(page.locator('.fx-ghost')).toHaveCount(0);
     await noFxGhostOrHiddenCanvas(page);
   });
 });

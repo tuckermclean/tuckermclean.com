@@ -18,9 +18,20 @@ function createWindow(name, title, content, icon = '⚙️', bringToFront_ = tru
 // Export functions and variables
 export { createWindow, openPage, goTo, toggleMode, cascadeWindows, tileWindows, minimizeWindows };
 
+// Minimize requests, so a late page load can tell whether its window was
+// minimized while the page loaded: each Minimize All (which leaves an
+// already-minimized window untouched, so no event marks it) and each
+// window's own minimize (counted when requested, before any effect runs).
+let minimizeAllRequests = 0;
+const minimizeRequests = new WeakMap();
+document.addEventListener('iconostat-before-minimize', e => {
+    if (e.detail.entering) minimizeRequests.set(e.detail.el, (minimizeRequests.get(e.detail.el) || 0) + 1);
+});
+function minimizeRequestCount(el) { return minimizeAllRequests + (minimizeRequests.get(el) || 0); }
+
 // Thin delegators onto <iconostat-desktop>, which owns the window registry,
 // z-order, focus, rubber-band selection, and resize reflow.
-function minimizeWindows() { getDesktop().minimizeAll(); }
+function minimizeWindows() { minimizeAllRequests++; getDesktop().minimizeAll(); }
 function cascadeWindows() { getDesktop().cascade(); }
 function tileWindows() { getDesktop().tile(); }
 
@@ -272,8 +283,16 @@ function navigateToPage(targetWindowId, name, niceName, icon = '⚙️') {
         windowElement.querySelector('.window-body').innerHTML = `<div id="${name}-container"></div>`;
         windowElement.querySelector('.window-title').textContent = niceName;
         windowElement.querySelector('.window-icon').textContent = icon;
+        // Back onto a window that was already minimized brings it to the front.
+        const wasMinimized = windowElement.classList.contains('minimized');
+        const minimizeCount = minimizeRequestCount(windowElement);
         loadHTML(`${name}.html`, `${name}-container`, (windowEl) => {
-            if (typeof(windowElement) !== 'undefined') {
+            // A load that finishes after the window was minimized (its own
+            // minimize or Minimize All, made while the page loaded) must not
+            // un-minimize it or push its hash.
+            const minimizedSince = minimizeRequestCount(windowElement) !== minimizeCount;
+            const minimized = windowElement.classList.contains('minimized');
+            if (typeof(windowElement) !== 'undefined' && (!minimized || (wasMinimized && !minimizedSince))) {
                 windowElement.classList.remove('front');
                 getDesktop().bringToFront(windowElement);
             }
@@ -299,7 +318,9 @@ function openPage(name, niceName, icon = '⚙️', event = undefined, minimize =
             if (typeof(windowElement) !== 'undefined') {
                 if (minimize) {
                     windowElement.minimize();
-                } else {
+                } else if (!windowElement.classList.contains('minimized')) {
+                    // A load that finishes after the window was minimized (Minimize All)
+                    // must not un-minimize it or push its hash.
                     getDesktop().bringToFront(windowElement, changeHash);
                 }
             }

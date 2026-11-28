@@ -137,6 +137,7 @@ export class IconostatDesktop extends HTMLElement {
         // window to front must not push a browser history entry per
         // window. Suppress iconostat-focused/iconostat-promoted for the
         // duration (see bringToFront()/promoteTop()).
+        this._beforeLayout('cascade');
         this._suppressHistory = true;
         try {
             this._windows.forEach((windowElement, i) => {
@@ -181,6 +182,7 @@ export class IconostatDesktop extends HTMLElement {
         // window to front must not push a browser history entry per
         // window. Suppress iconostat-focused/iconostat-promoted for the
         // duration (see bringToFront()/promoteTop()).
+        this._beforeLayout('tile');
         this._suppressHistory = true;
         try {
             // Position each window in the grid
@@ -204,6 +206,14 @@ export class IconostatDesktop extends HTMLElement {
         } finally {
             this._suppressHistory = false;
         }
+    }
+
+    // fx seam: a bulk layout is about to decide every open window's geometry
+    // (an open window gets no iconostat-before-* event from cascade()/tile(),
+    // and rewriting the same geometry mutates nothing an observer can see).
+    // With nothing listening this changes nothing.
+    _beforeLayout(op) {
+        document.dispatchEvent(new CustomEvent('iconostat-before-layout', { detail: { op } }));
     }
 
     minimizeAll() {

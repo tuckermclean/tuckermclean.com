@@ -69,3 +69,236 @@ test('double-clicking a header button does not shade the window', async ({ page 
   await w.locator('.window-header .button.maximize').dblclick();
   await expect(w).not.toHaveClass(/shaded/);
 });
+
+// T06-AC-4 / T06-AC-2: a page load that completes after Minimize All must not
+// un-minimize its window. The fragment request is held so the race happens on
+// every run: Intro's window exists (its load pending), Minimize All runs, then
+// the load completes.
+async function T06_holdIntro(page) {
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  await page.route('**/intro.html', async (route) => { await gate; await route.continue(); });
+  return release;
+}
+
+for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) {
+  test.describe(`T06 late page load vs Minimize All (${label})`, () => {
+    test.use({ reducedMotion: rm });
+
+    test(`T06-AC-4 T06-AC-2: a load completing after Minimize All leaves its window minimized (${label}, forced)`, async ({ page }) => {
+      await openApp(page, 'resume');
+      const release = await T06_holdIntro(page);
+      await openViaMenu(page, 'Intro');
+      await expect(win(page, 'intro')).toHaveCount(1);
+      await openViaMenu(page, 'Minimize All');
+      await expect(page.locator('#tasks #window-intro')).toHaveCount(1);
+      await expect(win(page, 'intro')).toHaveClass(/minimized/);
+
+      release();
+      await expect(page.locator('#intro-container > *').first()).toBeAttached();
+
+      await expect(win(page, 'intro')).toHaveCount(1);
+      await expect(win(page, 'intro')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-intro')).toHaveCount(1);
+      await expect(page.locator('#tasks #window-resume')).toHaveCount(1);
+    });
+
+    test(`T06-AC-4: a load completing after focusing another window still brings its window to the front (${label}, kept behaviour)`, async ({ page }) => {
+      await openApp(page, 'resume');
+      const release = await T06_holdIntro(page);
+      await openViaMenu(page, 'Intro');
+      await expect(win(page, 'intro')).toHaveCount(1);
+      await win(page, 'resume').locator('.window-header').click();
+      await expect(win(page, 'resume')).toHaveClass(/front/);
+
+      release();
+      await expect(page.locator('#intro-container > *').first()).toBeAttached();
+
+      await expect(win(page, 'intro')).toHaveClass(/front/);
+      await expect(win(page, 'intro')).not.toHaveClass(/minimized/);
+    });
+  });
+}
+
+// FX tier needs the media emulation (the auto fixture forces 'reduce') and Tier 1 forced.
+async function T06_forceTier(page, rm) {
+  await page.emulateMedia({ reducedMotion: rm });
+  if (rm === 'no-preference') {
+    await page.addInitScript(() => window.localStorage.setItem('iconostat-fx-tier', '1'));
+  }
+}
+
+// T06-AC-4: after the late load of a minimized window, restoring it from its chip
+// brings it to the front and puts its page in the URL (Tier 0 and FX tier).
+async function T06_lateIntroUnderMinimizeAll(page) {
+  await openApp(page, 'resume');
+  const release = await T06_holdIntro(page);
+  await openViaMenu(page, 'Intro');
+  await expect(win(page, 'intro')).toHaveCount(1);
+  await openViaMenu(page, 'Minimize All');
+  await expect(page.locator('#tasks #window-intro')).toHaveCount(1);
+  release();
+  await expect(page.locator('#intro-container > *').first()).toBeAttached();
+}
+
+for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) {
+  test.describe(`T06 restoring a window whose load completed while minimized (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4: the late load does not change the URL (${label}, forced)`, async ({ page }) => {
+      await T06_lateIntroUnderMinimizeAll(page);
+      await expect(win(page, 'intro')).toHaveClass(/minimized/);
+      await expect(page).toHaveURL(/#\/resume$/);
+    });
+
+    test(`T06-AC-4: restoring Resume then Intro after the late load puts Intro in front at #/intro (${label}, forced)`, async ({ page }) => {
+      await T06_lateIntroUnderMinimizeAll(page);
+      await page.locator('#tasks #window-resume').click();
+      await expect(win(page, 'resume')).not.toHaveClass(/minimized/);
+      await page.locator('#tasks #window-intro').click();
+      await expect(win(page, 'intro')).not.toHaveClass(/minimized/);
+      await expect(win(page, 'intro')).toHaveClass(/front/);
+      await expect(win(page, 'resume')).not.toHaveClass(/front/);
+      await expect(page).toHaveURL(/#\/intro$/);
+    });
+
+    test(`T06-AC-4: restoring only Intro after the late load puts Intro in front at #/intro (${label}, forced)`, async ({ page }) => {
+      await T06_lateIntroUnderMinimizeAll(page);
+      await page.locator('#tasks #window-intro').click();
+      await expect(win(page, 'intro')).not.toHaveClass(/minimized/);
+      await expect(win(page, 'intro')).toHaveClass(/front/);
+      await expect(page).toHaveURL(/#\/intro$/);
+    });
+  });
+
+  test.describe(`T06 post load completing after Minimize All (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4 T06-AC-2: a renamed window whose load completes after Minimize All stays minimized (${label}, forced)`, async ({ page }) => {
+      await openApp(page, 'writings');
+      const slug = 'posts/my-cloud-journey';
+      let release;
+      const gate = new Promise((r) => { release = r; });
+      await page.route('**/posts/my-cloud-journey.html', async (route) => { await gate; await route.continue(); });
+      await win(page, 'writings').locator('.writings-list a[href="#/posts/my-cloud-journey"]').click();
+      await expect(win(page, slug)).toHaveCount(1);
+      await openViaMenu(page, 'Minimize All');
+      await expect(page.locator('#tasks').locator(`[id="window-${slug}"]`)).toHaveCount(1);
+
+      release();
+      await expect(page.locator(`[id="${slug}-container"] > *`).first()).toBeAttached();
+
+      await expect(win(page, slug)).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks').locator(`[id="window-${slug}"]`)).toHaveCount(1);
+      await expect(page).not.toHaveURL(/#\/posts\//);
+    });
+  });
+
+  test.describe(`T06 Back reopens a window minimized before the navigation (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4 S02-AC-22: Back to a window minimized before the navigation brings it to the front (${label}, forced)`, async ({ page }) => {
+      await openApp(page, 'writings');
+      await expect(page).toHaveURL(/#\/writings$/);
+      await win(page, 'writings').locator('.writings-list a[href="#/posts/my-cloud-journey"]').click();
+      await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+      await expect(page.locator('[id="posts/my-cloud-journey-container"] > *').first()).toBeAttached();
+      await openViaMenu(page, 'Minimize All');
+      await expect(page.locator('#tasks #window-writings, #tasks [id="window-posts/my-cloud-journey"]')).toHaveCount(1);
+      await page.goBack();
+      await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+      await page.goBack();
+      await expect(page).toHaveURL(/#\/writings$/);
+      await expect(win(page, 'writings')).toHaveClass(/front/);
+      await expect(win(page, 'writings')).not.toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings.minimized')).toHaveCount(0);
+    });
+  });
+}
+
+// T06-AC-4 / T06-AC-2: Back onto a window minimized before the navigation, then the
+// user minimizes (again) while the page load is held: the late load must not
+// un-minimize it, whatever the window's state was when the navigation started.
+async function T06_backWithHeldWritings(page) {
+  await openApp(page, 'writings');
+  await expect(page).toHaveURL(/#\/writings$/);
+  await win(page, 'writings').locator('.writings-list a[href="#/posts/my-cloud-journey"]').click();
+  await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+  await expect(page.locator('[id="posts/my-cloud-journey-container"] > *').first()).toBeAttached();
+  await openViaMenu(page, 'Minimize All');
+  await expect(page.locator('#tasks [id="window-posts/my-cloud-journey"]')).toHaveCount(1);
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  await page.route('**/writings.html', async (route) => { await gate; await route.continue(); });
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/posts\/my-cloud-journey$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/writings$/);
+  await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+  return release;
+}
+
+for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) {
+  test.describe(`T06 Back onto a minimized window, user minimizes during the load (${label})`, () => {
+    test.use({ reducedMotion: rm });
+    test.beforeEach(async ({ page }) => { await T06_forceTier(page, rm); });
+
+    test(`T06-AC-4 T06-AC-2: restored then minimized again while the Back load is held stays minimized (${label}, forced)`, async ({ page }) => {
+      const release = await T06_backWithHeldWritings(page);
+      await page.locator('#tasks #window-writings').click();
+      await expect(win(page, 'writings')).not.toHaveClass(/minimized/);
+      await expect(page.locator('body > #window-writings')).toBeVisible();
+      await win(page, 'writings').locator('.button.minimize').click();
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+
+      release();
+      await expect(page.locator('[id="writings-container"] > *').first()).toBeAttached();
+
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+    });
+
+    test(`T06-AC-4 T06-AC-2: Minimize All while the Back load is held (already minimized) stays minimized (${label}, forced)`, async ({ page }) => {
+      const release = await T06_backWithHeldWritings(page);
+      await openViaMenu(page, 'Minimize All');
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+
+      release();
+      await expect(page.locator('[id="writings-container"] > *').first()).toBeAttached();
+
+      await expect(win(page, 'writings')).toHaveClass(/minimized/);
+      await expect(page.locator('#tasks #window-writings')).toHaveCount(1);
+    });
+  });
+}
+
+// T06 pins: S02-AC-21 and S02-AC-23 at the node's head.
+test.describe('T06 pin: S02-AC-21 promoted with minimized pushes a history entry', () => {
+  test('S02-AC-21: minimizing the only window pushes one history entry', async ({ page }) => {
+    await openApp(page, 'resume');
+    await expect(win(page, 'resume')).toHaveClass(/front/);
+    const before = await page.evaluate(() => history.length);
+    await win(page, 'resume').locator('.button.minimize').click();
+    await expect(win(page, 'resume')).toHaveClass(/minimized/);
+    await expect.poll(() => page.evaluate(() => history.length)).toBe(before + 1);
+  });
+});
+
+test.describe('T06 pin: S02-AC-23 goTo of a page with no window loads it into the top window', () => {
+  test('S02-AC-23: goTo renames the top window and loads the page into it', async ({ page }) => {
+    await openApp(page, 'resume');
+    await expect(win(page, 'resume').locator('.window-title')).toHaveText('Resume');
+    await page.evaluate(() => goTo('intro', 'T06 Intro', '🧭'));
+    await expect(win(page, 'intro')).toHaveCount(1);
+    await expect(win(page, 'resume')).toHaveCount(0);
+    await expect(page.locator('.window')).toHaveCount(1);
+    await expect(win(page, 'intro')).toHaveClass(/front/);
+    await expect(win(page, 'intro').locator('#intro-container')).not.toBeEmpty();
+    await expect(page).toHaveURL(/#\/intro$/);
+  });
+});
