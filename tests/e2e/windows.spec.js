@@ -276,3 +276,29 @@ for (const [label, rm] of [['Tier 0', 'reduce'], ['FX tier', 'no-preference']]) 
     });
   });
 }
+
+// T06 pins: S02-AC-21 and S02-AC-23 at the node's head.
+test.describe('T06 pin: S02-AC-21 promoted with minimized pushes a history entry', () => {
+  test('S02-AC-21: minimizing the only window pushes one history entry', async ({ page }) => {
+    await openApp(page, 'resume');
+    await expect(win(page, 'resume')).toHaveClass(/front/);
+    const before = await page.evaluate(() => history.length);
+    await win(page, 'resume').locator('.button.minimize').click();
+    await expect(win(page, 'resume')).toHaveClass(/minimized/);
+    await expect.poll(() => page.evaluate(() => history.length)).toBe(before + 1);
+  });
+});
+
+test.describe('T06 pin: S02-AC-23 goTo of a page with no window loads it into the top window', () => {
+  test('S02-AC-23: goTo renames the top window and loads the page into it', async ({ page }) => {
+    await openApp(page, 'resume');
+    await expect(win(page, 'resume').locator('.window-title')).toHaveText('Resume');
+    await page.evaluate(() => goTo('intro', 'T06 Intro', '🧭'));
+    await expect(win(page, 'intro')).toHaveCount(1);
+    await expect(win(page, 'resume')).toHaveCount(0);
+    await expect(page.locator('.window')).toHaveCount(1);
+    await expect(win(page, 'intro')).toHaveClass(/front/);
+    await expect(win(page, 'intro').locator('#intro-container')).not.toBeEmpty();
+    await expect(page).toHaveURL(/#\/intro$/);
+  });
+});
